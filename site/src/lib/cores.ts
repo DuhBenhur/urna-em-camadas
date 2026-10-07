@@ -3,12 +3,15 @@
  * Azul: rampa sequencial da paleta de referência. Vermelho: calculado com a mesma luminosidade
  * OKLCH de cada degrau do azul, no matiz de #e34948 (ver docs/plano_de_analise.md).
  * No modo escuro a âncora inverte: perto do meio fica escuro (recua para a superfície), os extremos acendem.
+ * O extremo escuro não é o degrau 200 (croma 0,08, abaixo do piso de 0,10: no mapa lia como pastel, "fraco");
+ * é o mesmo L de 0,72 com croma máximo no gamut, para "mais votos" continuar parecendo mais intenso.
+ * Cada braço passa no validate_palette.js --ordinal --mode dark --surface #1a1a19.
  */
-const AZUL = { 200: '#9ec5f4', 400: '#3987e5', 600: '#184f95' }
-const VERMELHO = { 200: '#f8aaa3', 400: '#e24a48', 600: '#911e22' }
+const AZUL = { 200: '#9ec5f4', 400: '#3987e5', 600: '#184f95', vivo: '#5fa7ff' }
+const VERMELHO = { 200: '#f8aaa3', 400: '#e24a48', 600: '#911e22', vivo: '#ff716b' }
 
 export const ESCALA_CLARA = [VERMELHO[600], VERMELHO[400], VERMELHO[200], '#f0efec', AZUL[200], AZUL[400], AZUL[600]]
-export const ESCALA_ESCURA = [VERMELHO[200], VERMELHO[400], VERMELHO[600], '#383835', AZUL[600], AZUL[400], AZUL[200]]
+export const ESCALA_ESCURA = [VERMELHO.vivo, VERMELHO[400], VERMELHO[600], '#383835', AZUL[600], AZUL[400], AZUL.vivo]
 
 export function temaEscuro(): boolean {
   const forcado = document.documentElement.dataset.theme

@@ -43,6 +43,32 @@ export type Resumo = {
   ufs: UF[]
 }
 
+type PorCandidato<T> = Record<'13' | '22', T>
+
+export type Pista = 'nada' | 'estado' | 'municipio' | 'escola'
+
+export type CidadeGemea = { cd: number; nome: string; uf: string; validos: number; p13: number; p22: number; uf13: number; uf22: number }
+
+export type Contraria = { cd: number; nome: string; uf: string; estado: string; efeito: number; p: number; p_uf: number }
+
+/** Números da história (pipeline/08_historia.py). Diferenças em pontos percentuais (0–100). */
+export type Historia = {
+  regras: { min_validos_urna: number; min_validos_gemea: number; dist_gemeas_km: number; min_urnas_escola: number; min_validos_contraria: number }
+  adivinhacao: { n_urnas: number } & PorCandidato<{ pista: Pista; erro_medio: number; ate_5pp: number }[]>
+  pares: { n_municipios: number; n_vizinhos_divisa: number; n_vizinhos_mesmo_estado: number } & PorCandidato<{
+    quaisquer_brasil: number
+    quaisquer_mesmo_estado: number
+    vizinhos_divisa: number
+    vizinhos_mesmo_estado: number
+  }>
+  gemeas: { km: number; a: CidadeGemea; b: CidadeGemea }[]
+  resumo_gemeas: { n_pares: number } & PorCandidato<{ dif_cidades: number; dif_estados: number; mais_perto_da_gemea: number; n_cidades: number }>
+  escolas: PorCandidato<{ n_escolas: number; amplitude_mediana: number; pct_10pp_ou_mais: number }>
+  contrariam: PorCandidato<{ a_favor: Contraria[]; contra: Contraria[] }>
+  /** 101 percentis (0 a 100) de |resultado da urna − esperado para o município|, em p.p. */
+  surpresa: PorCandidato<number[]>
+}
+
 export type Municipio = {
   cd: number
   ibge: number
@@ -133,6 +159,8 @@ export function useDados<T>(caminho: string | null, transformar?: (bruto: never)
 }
 
 export const useResumo = () => useDados<Resumo>('resumo.json')
+
+export const useHistoria = () => useDados<Historia>('historia.json')
 
 export type IndiceMunicipios = { lista: Municipio[]; porCodigo: Map<number, Municipio>; porIbge: Map<number, Municipio> }
 

@@ -5,6 +5,7 @@ GitHub Actions antes do build, sem os brutos do TSE. Os JSON gerados não vão p
 
 Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   resumo.json                  totais nacionais, candidatos, modelos nulos e UFs
+  historia.json                números da história da página inicial (cópia de resultados/08_historia.json)
   municipios.json              índice dos 5.571 municípios (busca, mapa, zonas de cada município)
   locais/{cd_tse}.json         locais de votação do município, com coordenadas e votos somados
   zonas/{UF}-{zona}.json       seções da zona eleitoral (o boletim de cada urna) e seus locais,
@@ -141,6 +142,8 @@ def main() -> None:
         shutil.rmtree(SAIDA)
     base, locais, municipios, modelos = carregar()
     gravar(SAIDA / "resumo.json", resumo(base, locais, municipios, modelos))
+    # calculado localmente pelo 08 (precisa de geopandas); aqui só é compactado e copiado
+    gravar(SAIDA / "historia.json", json.loads((RESULTADOS / "08_historia.json").read_text(encoding="utf-8")))
     gravar(SAIDA / "municipios.json", indice_municipios(base, municipios))
     n_mun = exportar_locais(base, locais)
     n_zonas = exportar_zonas(base, locais)

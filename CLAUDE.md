@@ -20,7 +20,7 @@ Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com
 
 ## Estrutura
 
-- `pipeline/` scripts numerados (01 baixa, 02–04 recortes e base, 05+ modelos e contexto, 07 exporta o site)
+- `pipeline/` scripts numerados (01 baixa, 02–04 recortes e base, 05+ modelos e contexto, 08 números da história da página inicial, 07 exporta o site e roda por último)
 - `notebooks/` análise e figuras (renderizados no GitHub e na página de Metodologia)
 - `site/` SPA Vite + React + MapLibre (GitHub Pages); `site/scripts/telas.py` faz a verificação visual com Playwright
 - `data/processed/`, `data/geo/`, `resultados/` artefatos versionados
@@ -28,7 +28,7 @@ Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com
 
 ## Verificação
 
-- Mudou dado ou modelo: rodar `pipeline/03_validar_controle.py` e reexportar com `pipeline/07_exportar_site.py`.
+- Mudou dado ou modelo: rodar `pipeline/03_validar_controle.py`, recalcular `pipeline/08_historia.py` e reexportar com `pipeline/07_exportar_site.py`.
 - Mudou o site: `npm run build` (inclui checagem de tipos) e olhar as telas com `site/scripts/telas.py` antes de dar por pronto. Gráficos seguem a skill de dataviz (paleta validada, sem eixo duplo, tabela equivalente).
 
 ## Estado atual e próximos passos

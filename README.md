@@ -18,6 +18,8 @@ Modelo nulo de três níveis (seção → município → UF), com o logit da pro
 
 A maior parte da diferença entre urnas vem do estado onde elas ficam. Duas seções do mesmo município têm correlação esperada de 84%. Detalhes e testes em [`resultados/05_hlm_nulo.json`](resultados/05_hlm_nulo.json).
 
+Em linguagem simples ([`resultados/08_historia.json`](resultados/08_historia.json)): quem tenta adivinhar o percentual do Lula numa urna erra em média 14,5 p.p. sem saber nada, 9,2 sabendo o estado, 5,7 sabendo o município e 3,5 sabendo a escola. Mas o estado é em boa parte região: dois municípios vizinhos em estados diferentes diferem 8,4 p.p., menos que dois municípios quaisquer do mesmo estado (10,8 p.p.).
+
 ## Como funciona
 
 1. **Dados** ([`pipeline/`](pipeline/)): baixa os boletins de urna das 27 UFs, o perfil do eleitorado por seção e os locais de votação do TSE, conferindo o SHA-512 publicado pelo tribunal. Junta Censo 2022 e PIB (IBGE) e Bolsa Família (MDS) por município, pela tabela oficial de códigos TSE ↔ IBGE.
@@ -37,10 +39,11 @@ python pipeline/04_base_nacional.py
 python pipeline/03_validar_controle.py    # tem que passar
 python pipeline/05_hlm_nulo.py
 python pipeline/06_contexto_municipal.py
+python pipeline/08_historia.py            # números da história da página inicial
 python pipeline/07_exportar_site.py       # dados estáticos do site
 ```
 
-Os passos 01, 02, 04 e 06 precisam da internet e dos brutos. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05 e 07.
+Os passos 01, 02, 04 e 06 precisam da internet e dos brutos. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 08 e 07.
 
 ## O site
 

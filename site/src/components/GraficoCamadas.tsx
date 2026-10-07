@@ -11,7 +11,7 @@ const TOPO = 28
  * aparecem como texto, então o gráfico já é a própria tabela.
  */
 export function GraficoCamadas({ camadas, cor, candidato }: { camadas: Camada[]; cor: string; candidato: string }) {
-  const [ref, largura] = useLargura<HTMLDivElement>()
+  const [ref, largura] = useLargura<HTMLElement>()
   const estreito = largura < 560
   const colunaRotulo = estreito ? 0 : 190
   const colunaValor = estreito ? 0 : 150
@@ -24,7 +24,7 @@ export function GraficoCamadas({ camadas, cor, candidato }: { camadas: Camada[];
 
   return (
     <figure className="grafico" ref={ref} style={{ margin: 0 }}>
-      <svg width={largura} height={altura} role="img" aria-label={`Voto em ${candidato} camada por camada`}>
+      {largura > 0 && <svg width={largura} height={altura} role="img" aria-label={`Voto em ${candidato} camada por camada`}>
         <g className="grade">
           {[0, 0.25, 0.5, 0.75, 1].map((t) => (
             <g key={t}>
@@ -74,7 +74,7 @@ export function GraficoCamadas({ camadas, cor, candidato }: { camadas: Camada[];
             </g>
           )
         })}
-      </svg>
+      </svg>}
       <figcaption className="discreto" style={{ marginTop: 8 }}>
         Percentual de votos válidos em {candidato}. A linha mais escura marca 50%. O círculo vazado é onde a camada anterior
         deixou o ponteiro.

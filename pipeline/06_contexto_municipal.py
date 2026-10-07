@@ -69,13 +69,22 @@ def bolsa_familia(anomes: int) -> pd.DataFrame:
     return df
 
 
+PREPOSICOES = {"De", "Da", "Do", "Das", "Dos", "E", "Del"}
+
+
+def nome_municipio(nome: str) -> str:
+    """A tabela TSE ↔ IBGE capitaliza as preposições: 'Santa Rosa Do Purus' → 'Santa Rosa do Purus'."""
+    return " ".join(p.lower() if i and p in PREPOSICOES else p for i, p in enumerate(nome.split(" ")))
+
+
 def tabela_tse_ibge() -> pd.DataFrame:
     with zipfile.ZipFile(RAW_DIR / "municipio_tse_ibge.zip") as z:
         df = pd.read_csv(z.open("municipio_tse_ibge.csv"), sep=";", encoding="latin-1", dtype=str)
     return pd.DataFrame({"CD_MUNICIPIO": df.CD_MUNICIPIO_TSE.astype(int),
                          "CD_MUNICIPIO_IBGE": df.CD_MUNICIPIO_IBGE.astype(int),
                          "SG_UF": df.SG_UF,
-                         "NM_MUNICIPIO": df.NM_MUNICIPIO_IBGE})  # grafia oficial com acentos (o TSE usa maiúsculas)
+                         # grafia com acentos (no boletim o TSE usa maiúsculas)
+                         "NM_MUNICIPIO": df.NM_MUNICIPIO_IBGE.map(nome_municipio)})
 
 
 def main() -> None:

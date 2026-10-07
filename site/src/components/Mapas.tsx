@@ -249,6 +249,39 @@ export function LegendaEscala({ variavel, candidato }: { variavel: VariavelMapa;
 
 type PropsLocais = { locais: Local[]; selecionado: string | null; aoSelecionar: (chave: string) => void }
 
+// raio cresce com o zoom: na cidade inteira os ~2 mil locais de SP não podem virar uma mancha.
+// `extra` aumenta o círculo do local selecionado em cada parada (o zoom só pode ficar no topo do interpolate).
+const raioLocal = (extra = 0): ExpressionSpecification => [
+  'interpolate', ['linear'], ['zoom'],
+  9, ['+', ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 1.5, 40, 3, 90, 5], extra * 0.6],
+  12, ['+', ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 3, 40, 6, 90, 10], extra * 0.8],
+  15, ['+', ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 5, 40, 10, 90, 16], extra],
+]
+
+/** O local selecionado ganha uma camada própria por cima; os demais recuam. */
+function aplicarSelecao(m: maplibregl.Map, chave: string | null) {
+  if (!m.getLayer('locais-sel')) return
+  m.setFilter('locais-sel', ['==', ['get', 'chave'], chave ?? ''])
+  m.setPaintProperty('locais', 'circle-opacity', chave ? 0.35 : 1)
+  m.setPaintProperty('locais', 'circle-stroke-opacity', chave ? 0.35 : 1)
+}
+
+/** Balão do local selecionado. Nomes vêm dos dados: entram como texto, nunca como HTML. */
+function conteudoBalao(l: Local): HTMLElement {
+  const div = document.createElement('div')
+  const linha = (texto: string, forte = false) => {
+    const el = document.createElement(forte ? 'strong' : 'div')
+    el.textContent = texto
+    if (forte) el.style.display = 'block'
+    div.appendChild(el)
+  }
+  linha(l.nome, true)
+  if (l.bairro) linha(l.bairro)
+  linha(`Lula ${pct(l.v13 / l.validos)} · Flávio ${pct(l.v22 / l.validos)}`)
+  linha(`${l.secoes} ${l.secoes === 1 ? 'seção' : 'seções'} · ${l.validos.toLocaleString('pt-BR')} votos válidos`)
+  return div
+}
+
 /** Locais de votação de um município sobre mapa de ruas (OpenFreeMap). Tamanho = votos válidos; cor = margem. */
 export function MapaLocais({ locais, selecionado, aoSelecionar }: PropsLocais) {
   const container = useRef<HTMLDivElement>(null)
@@ -257,6 +290,9 @@ export function MapaLocais({ locais, selecionado, aoSelecionar }: PropsLocais) {
   const versaoTema = useTema()
   const aoSelecionarRef = useRef(aoSelecionar)
   aoSelecionarRef.current = aoSelecionar
+  const selecionadoRef = useRef(selecionado)
+  selecionadoRef.current = selecionado
+  const balao = useRef<maplibregl.Popup | null>(null)
 
   const comCoordenada = locais.filter((l) => l.lat !== null && l.lon !== null)
   const dados: FeatureCollection = {
@@ -306,17 +342,24 @@ export function MapaLocais({ locais, selecionado, aoSelecionar }: PropsLocais) {
         source: 'locais',
         paint: {
           'circle-color': corPorClasse(),
-          // raio cresce com o zoom: na cidade inteira os ~2 mil locais de SP não podem virar uma mancha
-          'circle-radius': [
-            'interpolate', ['linear'], ['zoom'],
-            9, ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 1.5, 40, 3, 90, 5],
-            12, ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 3, 40, 6, 90, 10],
-            15, ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 5, 40, 10, 90, 16],
-          ],
+          'circle-radius': raioLocal(),
           'circle-stroke-color': cssVar('--superficie'),
-          'circle-stroke-width': ['case', ['boolean', ['feature-state', 'sel'], false], 3, 1.5],
+          'circle-stroke-width': 1.5,
         },
       })
+      m.addLayer({
+        id: 'locais-sel',
+        type: 'circle',
+        source: 'locais',
+        filter: ['==', ['get', 'chave'], ''],
+        paint: {
+          'circle-color': corPorClasse(),
+          'circle-radius': raioLocal(5),
+          'circle-stroke-color': cssVar('--tinta'),
+          'circle-stroke-width': 3,
+        },
+      })
+      aplicarSelecao(m, selecionadoRef.current)
     }
     m.on('load', montar)
     m.on('style.load', montar)
@@ -355,16 +398,17 @@ export function MapaLocais({ locais, selecionado, aoSelecionar }: PropsLocais) {
 
   useEffect(() => {
     const m = mapa.current
-    if (!m || !selecionado) return
-    const [zona, local] = selecionado.split('-').map(Number)
-    const id = zona * 100000 + local
-    const aplicar = () => {
-      m.removeFeatureState({ source: 'locais' })
-      m.setFeatureState({ source: 'locais', id }, { sel: true })
-    }
-    if (m.getSource('locais')) aplicar()
-    const l = comCoordenada.find((x) => x.zona === zona && x.local === local)
-    if (l) m.easeTo({ center: [l.lon!, l.lat!], zoom: Math.max(m.getZoom(), 14) })
+    if (!m) return
+    aplicarSelecao(m, selecionado)
+    balao.current?.remove()
+    balao.current = null
+    const l = selecionado ? comCoordenada.find((x) => `${x.zona}-${x.local}` === selecionado) : undefined
+    if (!l) return
+    m.easeTo({ center: [l.lon!, l.lat!], zoom: Math.max(m.getZoom(), 15) })
+    balao.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 18, maxWidth: '280px' })
+      .setLngLat([l.lon!, l.lat!])
+      .setDOMContent(conteudoBalao(l))
+      .addTo(m)
   }, [selecionado])
 
   if (comCoordenada.length === 0) return <p className="discreto">Sem coordenadas para os locais deste município.</p>

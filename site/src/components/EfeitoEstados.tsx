@@ -3,6 +3,7 @@ import type { Resumo } from '../lib/dados'
 import { pct, pp } from '../lib/formato'
 import { CANDIDATOS, efeitoEstado, type NumeroCandidato } from '../lib/modelo'
 import { useLargura } from '../lib/useLargura'
+import { comPreposicao } from '../lib/ufs'
 
 const ESPESSURA = 14
 const PASSO = 20
@@ -37,7 +38,7 @@ export function EfeitoEstados({ resumo, candidato }: { resumo: Resumo; candidato
   return (
     <div>
       <div className="grafico" ref={ref} onPointerLeave={() => setFoco(null)}>
-        <svg width={largura} height={altura} role="img" aria-label={`Efeito de cada estado no voto em ${CANDIDATOS[candidato].nome}`}>
+        {largura > 0 && <svg width={largura} height={altura} role="img" aria-label={`Efeito de cada estado no voto em ${CANDIDATOS[candidato].nome}`}>
           {linhas.map((l, i) => {
             const y = i * PASSO + 4
             const w = Math.max(1, Math.abs(l.efeito) * escala)
@@ -76,11 +77,11 @@ export function EfeitoEstados({ resumo, candidato }: { resumo: Resumo; candidato
           <text x={centro} y={altura - 6} textAnchor="middle">
             urna típica do Brasil
           </text>
-        </svg>
+        </svg>}
         {focado && (
           <div className="dica" style={{ left: Math.min(Math.max(centro, 90), largura - 90), top: linhas.indexOf(focado) * PASSO + 4 }}>
             <strong>{pp(focado.efeito)}</strong>
-            <span className="secundario">efeito de {focado.nome}</span>
+            <span className="secundario">efeito {comPreposicao('de', focado.uf, focado.nome)}</span>
             <div className="discreto">
               {CANDIDATOS[candidato].curto} teve {pct(focado.share)} dos válidos no estado
             </div>
@@ -96,7 +97,7 @@ export function EfeitoEstados({ resumo, candidato }: { resumo: Resumo; candidato
           <span className="chave" style={{ background: corMenos }} aria-hidden="true" />
           empurra contra {CANDIDATOS[candidato].curto}
         </span>
-        <button className="botao botao-secundario" style={{ minHeight: 32, padding: '4px 12px', marginLeft: 'auto' }} onClick={() => setVerTabela((v) => !v)} aria-expanded={verTabela}>
+        <button className="botao botao-secundario botao-pequeno" style={{ marginLeft: 'auto' }} onClick={() => setVerTabela((v) => !v)} aria-expanded={verTabela}>
           {verTabela ? 'Esconder tabela' : 'Ver como tabela'}
         </button>
       </div>

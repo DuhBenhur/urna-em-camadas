@@ -57,3 +57,14 @@ export function efeitoMunicipio(resumo: Resumo, uf: UF, municipio: Municipio, nu
   const base = g00 + (numero === 13 ? uf.u13 : uf.u22)
   return expit(base + (numero === 13 ? municipio.u13 : municipio.u22)) - expit(base)
 }
+
+/** Posição (0–100) de um valor numa lista crescente de 101 percentis, interpolando entre eles. */
+export function percentil(quantis: number[], valor: number): number {
+  if (valor <= quantis[0]) return 0
+  const ultimo = quantis.length - 1
+  if (valor >= quantis[ultimo]) return 100
+  let i = 0
+  while (quantis[i + 1] <= valor) i++
+  const passo = quantis[i + 1] - quantis[i]
+  return ((i + (passo > 0 ? (valor - quantis[i]) / passo : 0)) / ultimo) * 100
+}

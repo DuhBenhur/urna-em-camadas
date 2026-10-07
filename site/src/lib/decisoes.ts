@@ -1,0 +1,47 @@
+/** Escolhas de método, com o motivo e a alternativa descartada. A inicial mostra as marcadas como `inicio`. */
+export const DECISOES: { escolha: string; porque: string; descartada: string; inicio?: boolean }[] = [
+  {
+    escolha: 'A urna (seção eleitoral) como unidade',
+    porque: 'É a menor unidade com resultado oficial público: são quase 500 mil.',
+    descartada: 'Analisar por município, que esconde a variação dentro de cada cidade.',
+    inicio: true,
+  },
+  {
+    escolha: 'Conferir o SHA-512 de cada arquivo',
+    porque: 'Garante que o arquivo baixado é exatamente o que o TSE publicou.',
+    descartada: 'Confiar no download.',
+  },
+  {
+    escolha: 'Validar a base antes de modelar',
+    porque: 'Um erro na base contamina tudo o que vem depois. Foi assim que apareceu o nulo técnico.',
+    descartada: 'Conferir só no fim, quando o erro já se espalhou.',
+    inicio: true,
+  },
+  {
+    escolha: 'Modelo multinível (seção, município, estado)',
+    porque: 'Urnas da mesma cidade não são independentes. O modelo separa quanto da variação está em cada camada.',
+    descartada: 'Regressão comum, que mistura as camadas e subestima a incerteza.',
+    inicio: true,
+  },
+  {
+    escolha: 'Logit da proporção de votos',
+    porque: 'O percentual fica sempre entre 0% e 100%.',
+    descartada: 'Modelar o percentual direto, que pode prever valores impossíveis.',
+  },
+  {
+    escolha: 'gpboost, conferido com o statsmodels',
+    porque: 'Ajusta o modelo nas 500 mil urnas em segundos. Os dois pacotes chegam ao mesmo resultado.',
+    descartada: 'Só o statsmodels: uns 5 minutos por modelo e falha no modo esparso.',
+  },
+  {
+    escolha: 'Teste de razão de verossimilhança com correção de fronteira',
+    porque: 'Uma variância não pode ser negativa, e o teste precisa levar isso em conta.',
+    descartada: 'Teste Z, que fica errado justamente nesse limite.',
+  },
+  {
+    escolha: 'Previsão do 2º turno pré-registrada',
+    porque: 'Fica registrada antes da eleição, sem chance de ajuste depois de ver o resultado.',
+    descartada: 'Publicar previsões durante a campanha.',
+    inicio: true,
+  },
+]

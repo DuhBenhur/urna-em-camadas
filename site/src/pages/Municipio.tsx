@@ -4,6 +4,7 @@ import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { normalizar, registros, useLocais, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, efeitoMunicipio } from '../lib/modelo'
+import { comPreposicao } from '../lib/ufs'
 
 export function Municipio() {
   const cd = Number(useParams().cd)
@@ -35,6 +36,11 @@ export function Municipio() {
 
   const uf = resumo.ufs.find((u) => u.uf === municipio.uf)!
   const local = selecionado ? locais?.find((l) => `${l.zona}-${l.local}` === selecionado) : undefined
+  // escolhido na tabela: sobe até o mapa, onde o local aparece destacado
+  const selecionarNaTabela = (chave: string) => {
+    setSelecionado(chave)
+    document.getElementById('mapa-locais')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   return (
     <div className="conteudo">
@@ -54,7 +60,7 @@ export function Municipio() {
             </div>
             <div className="valor">{pct((n === 13 ? municipio.v13 : municipio.v22) / municipio.validos)}</div>
             <p className="nota">
-              Efeito do município: {pp(efeitoMunicipio(resumo, uf, municipio, n))} em relação ao esperado para {uf.nome}
+              Efeito do município: {pp(efeitoMunicipio(resumo, uf, municipio, n))} em relação ao esperado {comPreposicao('para', uf.uf, uf.nome)}
             </p>
           </div>
         ))}
@@ -69,7 +75,9 @@ export function Municipio() {
 
       <h2>Locais de votação</h2>
       <p className="secundario">Cada círculo é um local de votação: o tamanho é o número de votos válidos e a cor, quem ficou à frente.</p>
-      {locais ? <MapaLocais locais={locais} selecionado={selecionado} aoSelecionar={setSelecionado} /> : <p className="carregando">Carregando locais…</p>}
+      <div id="mapa-locais">
+        {locais ? <MapaLocais locais={locais} selecionado={selecionado} aoSelecionar={setSelecionado} /> : <p className="carregando">Carregando locais…</p>}
+      </div>
       <LegendaEscala variavel="margem" candidato={13} />
 
       {local && <SecoesDoLocal uf={municipio.uf} zona={local.zona} local={local.local} nome={local.nome} cd={cd} />}
@@ -96,7 +104,7 @@ export function Municipio() {
               return (
                 <tr key={chave} style={chave === selecionado ? { background: 'var(--borda)' } : undefined}>
                   <td>
-                    <button className="link-botao" onClick={() => setSelecionado(chave)} style={{ all: 'unset', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'var(--eixo)', textUnderlineOffset: 3 }}>
+                    <button className="link-botao" onClick={() => selecionarNaTabela(chave)} style={{ all: 'unset', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'var(--eixo)', textUnderlineOffset: 3 }}>
                       {l.nome}
                     </button>
                   </td>

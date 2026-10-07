@@ -6,7 +6,7 @@ scipy>=1.13
 statsmodels>=0.14
 gpboost>=1.7
 scikit-learn>=1.5
-# análise espacial (próximas etapas)
+# análise espacial (08_historia usa geopandas e libpysal; esda e spopt nas próximas etapas)
 geopandas>=1.0
 libpysal>=4.12
 esda>=2.6

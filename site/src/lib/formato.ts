@@ -21,3 +21,6 @@ export const pp = (x: number, casas = 1) =>
 
 export const inteiro = (x: number) => inteiros.format(x)
 export const compactar = (x: number) => compacto.format(x)
+
+/** Valor já em pontos percentuais, sem sinal: 14.5 → "14,5 p.p." */
+export const pontos = (x: number, casas = 1) => (Number.isFinite(x) ? `${decimal(casas).format(x)} p.p.` : '—')

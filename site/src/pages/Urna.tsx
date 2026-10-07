@@ -3,9 +3,10 @@ import { Link, useParams } from 'react-router-dom'
 import { BoletimUrna } from '../components/BoletimUrna'
 import { GraficoCamadas } from '../components/GraficoCamadas'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { registros, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
+import { registros, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { pct, pp } from '../lib/formato'
-import { CANDIDATOS, camadas, type NumeroCandidato } from '../lib/modelo'
+import { CANDIDATOS, camadas, percentil, type NumeroCandidato } from '../lib/modelo'
+import { comPreposicao } from '../lib/ufs'
 
 // Perfil médio do eleitorado brasileiro nas seções (TSE, 2026), para comparação
 const PERFIL = [
@@ -22,6 +23,7 @@ export function Urna() {
   const nSecao = Number(secao)
   const { dados: resumo } = useResumo()
   const { dados: indice } = useMunicipios()
+  const { dados: historia } = useHistoria()
   const { dados: arquivo, erro } = useZona(uf.toUpperCase(), nZona)
   const [candidato, setCandidato] = useState<NumeroCandidato>(13)
   const [copiado, setCopiado] = useState(false)
@@ -64,6 +66,8 @@ export function Urna() {
     flavio: resumo.candidatos.find((c) => c.numero === 22)!.votos / resumo.totais.validos,
   }
   const residuo = cs[3].delta ?? 0
+  // quão longe do esperado para o município, comparado com todas as urnas do país
+  const surpresa = historia && Number.isFinite(residuo) ? percentil(historia.surpresa[String(candidato) as '13' | '22'], Math.abs(residuo) * 100) : null
 
   const compartilhar = async () => {
     const url = window.location.href
@@ -105,12 +109,23 @@ export function Urna() {
           <SeletorCandidato valor={candidato} aoMudar={setCandidato} />
           <GraficoCamadas camadas={cs} cor={cand.cor} candidato={cand.nome} />
           <p style={{ marginTop: 16 }}>
-            Uma urna qualquer do Brasil daria {pct(cs[0].valor)} a {cand.curto}. Só por estar em {ufDados.nome}, o modelo espera{' '}
+            Uma urna qualquer do Brasil daria {pct(cs[0].valor)} a {cand.curto}. Só por estar {comPreposicao('em', ufDados.uf, ufDados.nome)}, o modelo espera{' '}
             {pct(cs[1].valor)} ({pp(cs[1].delta!)}). Em {municipio.nome}, {pct(cs[2].valor)} ({pp(cs[2].delta!)}). Esta seção deu{' '}
             <strong>{pct(cs[3].valor)}</strong>: {Math.abs(residuo) < 0.02 ? 'praticamente o esperado para o município' : `${pp(residuo)} em relação ao esperado para o município`}.
           </p>
+          {surpresa !== null && (
+            <p>
+              <strong>
+                {surpresa >= 50
+                  ? `Mais surpreendente que ${Math.floor(surpresa)}% das urnas do Brasil`
+                  : `Mais previsível que ${Math.floor(100 - surpresa)}% das urnas do Brasil`}
+              </strong>
+              {surpresa >= 90 ? ': poucas se afastam tanto do esperado para o seu município.' : surpresa <= 20 ? ': ficou bem perto do esperado para o município.' : '.'}
+            </p>
+          )}
           <p className="discreto">
-            A última camada é o que estado e município não explicam: o perfil de quem vota nesta seção, a vizinhança, o acaso.
+            Isto descreve a urna, não as pessoas que votaram nela. A última camada é o que estado e município não explicam: o
+            perfil de quem vota nesta seção, a vizinhança, o acaso.
             Na próxima versão, o modelo separa o perfil do eleitorado dessa sobra.
           </p>
           <button className="botao botao-secundario" onClick={compartilhar}>
