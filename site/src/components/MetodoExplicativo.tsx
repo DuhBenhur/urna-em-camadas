@@ -95,7 +95,7 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
         {c13.bootstrap && (
           <>
             {' '}
-            Reamostrando os 27 estados ({c13.bootstrap.repeticoes} vezes), o intervalo de 95% da parte explicada pelo modelo completo
+            Reamostrando os estados dentro de cada região ({c13.bootstrap.repeticoes} vezes), o intervalo de 95% da parte explicada pelo modelo completo
             vai de {pct(c13.bootstrap.queda_uf.M3[0], 0)} a {pct(c13.bootstrap.queda_uf.M3[1], 0)} (Lula).
           </>
         )}
