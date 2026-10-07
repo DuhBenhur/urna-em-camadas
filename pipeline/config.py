@@ -63,6 +63,12 @@ FONTES = {
     "municipio_tse_ibge.zip": f"{TSE_CDN}/odsele/municipio_tse_ibge/municipio_tse_ibge.zip",
     # Totalização oficial por município/zona, com a destinação de cada voto (válido ou anulado)
     "Relatorio_Resultado_Totalizacao_2026_SP.zip": f"{TSE_CDN}/odsele/relatorio_resultado_totalizacao/Relatorio_Resultado_Totalizacao_2026_SP.zip",
+    # Resultado oficial totalizado, em tabelas: a conferência cidadã compara a soma dos boletins com ele
+    # votos de cada candidato a Presidente em cada seção ("BR": cargo de abrangência nacional).
+    # O conjunto por município e zona (votacao_candidato_munzona) ainda não traz Presidente em 07/10/2026.
+    "votacao_secao_2026_BR.zip": f"{TSE_CDN}/odsele/votacao_secao/votacao_secao_2026_BR.zip",
+    # aptos, comparecimento, abstenções, brancos e nulos de cada seção (todos os cargos)
+    "detalhe_votacao_secao_2026.zip": f"{TSE_CDN}/odsele/detalhe_votacao_secao/detalhe_votacao_secao_2026.zip",
 }
 # Arquivos para os quais o TSE publica o hash SHA-512 ao lado (URL + ".sha512")
 COM_HASH = {f"bweb_1t_{uf}_2026.zip" for uf in UFS}

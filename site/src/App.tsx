@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { Cabecalho, Rodape } from './components/Estrutura'
+import { Conferencia } from './pages/Conferencia'
 import { Inicio } from './pages/Inicio'
 import { Metodo } from './pages/Metodo'
 import { Sobre } from './pages/Sobre'
@@ -37,6 +38,7 @@ export function App() {
         <Suspense fallback={<div className="conteudo carregando">Carregando…</div>}>
           <Routes>
             <Route path="/" element={<Inicio />} />
+            <Route path="/conferencia" element={<Conferencia />} />
             <Route path="/urna/:uf/:zona/:secao" element={<Urna />} />
             <Route path="/municipio/:cd" element={<Municipio />} />
             <Route path="/mapa" element={<Mapa />} />

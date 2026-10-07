@@ -13,6 +13,11 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 **Modelo**
 - `pipeline/05_hlm_nulo.py`: OLS nulo → HLM2 → HLM3 para Lula (13) e Flávio (22), com `gpboost`. ICC Lula: UF 62,7%, município 21,7%, seção 15,6%. Flávio: 60,5% / 22,9% / 16,6%. Validado contra o `statsmodels` (log-verossimilhança −225.328,4 x −225.328,8).
 
+**Conferência cidadã (07/10)**
+- `pipeline/09_totalizacao_oficial.py` → `data/processed/totalizacao_secao_2026.parquet` (versionado, 4,8 MB): resultado oficial de Presidente por seção, de `detalhe_votacao_secao_2026` (arquivo `_BR`) e `votacao_secao_2026_BR`. O conjunto por município e zona (`votacao_candidato_munzona_2026`) ainda não tem Presidente.
+- O 03 compara as 497.897 seções campo a campo (aptos, comparecimento, abstenções, brancos, nulos, válidos, 12 candidatos): **todas idênticas**. Nulos = nulo da urna (96) + nulo técnico (28, renúncia), que a tabela de detalhe não soma. Roda no CI: uma divergência bloqueia a publicação.
+- Site: página `#/conferencia` (como conferir com o boletim impresso, tabela por UF, o que a conferência não é), cartão na inicial, selo "Confere com o resultado oficial" na urna (`conf` nos arquivos de zona), título da inicial "A sua urna, conferida e explicada".
+
 **História da página inicial (`pipeline/08_historia.py` → `resultados/08_historia.json`, versionado)**
 - Contas descritivas para os dois candidatos; roda local (geopandas/libpysal), o 07 só copia, então o CI não precisa delas.
 - Achados (Lula; Flávio parecido): erro ao adivinhar uma urna 14,5 → 9,2 (estado) → 5,7 (município) → 3,5 p.p. (escola), deixando a própria urna de fora. Diferença média entre municípios: quaisquer do Brasil 21,8; quaisquer do mesmo estado 10,8; vizinhos com divisa 8,4; vizinhos do mesmo estado 6,5 p.p. Ou seja, o "efeito do estado" é em boa parte região.
@@ -28,7 +33,7 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Publicação: `.github/workflows/site.yml` (valida → exporta → build → GitHub Pages).
 
 **Repositório**
-- Commits na `main`: `13de6a0` (primeira versão) e `a94f767` (correção da tela preta). Remoto `origin` = https://github.com/DuhBenhur/urna-em-camadas.git, **mas o repositório ainda não foi criado no GitHub** e nada foi enviado. A história (sessão de 07/10) ainda não está commitada. Commitar só com autorização do usuário.
+- Repositório público https://github.com/DuhBenhur/urna-em-camadas (criado em 07/10 com uma LICENSE do GitHub em nome de "Eduardo Ben-Hur"; os commits do projeto foram rebaseados sobre ele e a LICENSE ficou com "Eduardo Ben Hur", a assinatura do projeto). Site no ar: https://duhbenhur.github.io/urna-em-camadas/ (Pages com Source = GitHub Actions). Commitar e enviar só com autorização do usuário.
 
 ## Decisões (e por quê)
 
@@ -44,7 +49,7 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 
 ## Pendências, em ordem de prioridade
 
-1. **Publicar no GitHub.** Usuário: `DuhBenhur` (já trocado no código). Commitar a história (pedir autorização). Criar o repositório público `urna-em-camadas`, vazio: o `gh` não está instalado e o acesso à credencial salva do Windows foi negado; o usuário cria pelo site (github.com/new) ou instala e loga o `gh` (`! winget install GitHub.cli`, `! gh auth login`). Depois `git push -u origin main` e Settings → Pages → Source: GitHub Actions (se o push vier antes, rodar o workflow de novo).
+1. **Step-up ("quem mora ali ou onde fica?")**: plano proposto em 07/10, aguardando aprovação. Piloto (Lula, sem ponderar, sem incerteza): variância do estado cai 15% com o perfil das seções, 61% com o perfil dos municípios, 90% com a região; a região sozinha explica 87%. Renda x Bolsa Família: r = −0,91 (um bloco só). O `gh` continua não instalado: para enviar, `git push` (o Git Credential Manager autentica).
 2. **Previsão do 2º turno (tem prazo: registrar até ~20/10).** Baixar os boletins de urna de 2022 (1º e 2º turnos, conjunto `resultados-2022-boletim-de-urna` no Portal de Dados Abertos do TSE). Compatibilizar seções 2022 → 2026 (seções mudam; usar local de votação e coordenadas). Modelar a transição 1T → 2T de 2022 por seção, aplicar ao 1T de 2026 e pré-registrar no OSF com embargo.
 3. **Step-up M2–M6 com `gpboost`** (vira o capítulo 4 da história: quanto dos 63% do estado sobra depois da composição). Nível 1: % mulheres, 16–24, 60+, até fundamental incompleto, superior, abstenção. Nível 2: log da renda média, % pretos e pardos, % evangélicos, % urbana, % no Bolsa Família, log do PIB per capita (checar colinearidade). Nível 3: no máximo 2–3 variáveis (região, alinhamento do governador; a definir). Depois, inclinação aleatória da escolaridade por UF e interações entre níveis. Levar a camada "perfil do eleitorado" para a página da urna.
 4. **Espacial** (completa o capítulo 5). Moran e LISA nos BLUPs dos municípios (pesos de contiguidade da malha do IBGE); regionalização (`spopt`: SKATER ou max-p); zoom por local de votação em SP.

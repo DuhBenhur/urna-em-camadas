@@ -2,6 +2,9 @@
 
 1. Recorte da capital: percentuais da 1ª ZE (Bela Vista) precisam bater com o mapa do g1.
 2. Base nacional: totais de Presidente em SP precisam bater exatamente com o Relatório de Totalização do TSE.
+3. Conferência cidadã: cada uma das seções da base (vinda dos boletins de urna) precisa ser idêntica ao
+   resultado oficial da seção (09_totalizacao_oficial.py) em aptos, comparecimento, abstenções, brancos,
+   nulos (da urna + técnicos) e votos de cada candidato.
 
 Uso: python pipeline/03_validar_controle.py
 """
@@ -9,7 +12,7 @@ import sys
 
 import duckdb
 
-from config import PROCESSED_DIR
+from config import CANDIDATOS_PRESIDENTE, PROCESSED_DIR
 
 # % de votos válidos na 1ª ZE (Bela Vista), conforme o mapa de apuração do g1
 REFERENCIA_G1 = {
@@ -74,8 +77,39 @@ def validar_base_nacional_sp() -> int:
     return sum(not conferir(f"SP Presidente {k}", calculado[k], v) for k, v in REFERENCIA_TOTALIZACAO_SP.items())
 
 
+# campo da base (boletins) → expressão no resultado oficial por seção
+CAMPOS_CONFERENCIA = {
+    "QT_APTOS": "o.QT_APTOS",
+    "QT_COMPARECIMENTO": "o.QT_COMPARECIMENTO",
+    "QT_ABSTENCOES": "o.QT_ABSTENCOES",
+    "QT_BRANCOS": "o.QT_BRANCOS",
+    "QT_NULOS": "o.QT_NULOS_URNA + o.QT_NULOS_TECNICOS",
+    "QT_VALIDOS": " + ".join(f"o.V_{n}" for n in CANDIDATOS_PRESIDENTE),
+    **{f"V_{n}": f"o.V_{n}" for n in CANDIDATOS_PRESIDENTE},
+}
+
+
+def validar_totalizacao_secoes() -> int:
+    base = PROCESSED_DIR / "base_secao_2026.parquet"
+    oficial = PROCESSED_DIR / "totalizacao_secao_2026.parquet"
+    if not (base.exists() and oficial.exists()):
+        print("[aviso] base ou resultado oficial por seção ainda não gerados (04, 09)")
+        return 0
+    difs = ", ".join(f"sum((b.{c} IS DISTINCT FROM {e})::int) AS {c}" for c, e in CAMPOS_CONFERENCIA.items())
+    linha = duckdb.sql(f"""
+        SELECT count(*) AS secoes, count(o.QT_APTOS) AS no_oficial, {difs}
+        FROM '{base.as_posix()}' b
+        FULL JOIN '{oficial.as_posix()}' o USING (SG_UF, CD_MUNICIPIO, NR_ZONA, NR_SECAO)
+    """).fetchone()
+    secoes, no_oficial, *divergencias = linha
+    falhas = not conferir("Brasil: seções da base no resultado oficial", no_oficial, secoes)
+    for campo, n in zip(CAMPOS_CONFERENCIA, divergencias):
+        falhas += not conferir(f"Brasil: seções com {campo} diferente", n, 0)
+    return falhas
+
+
 def main() -> None:
-    falhas = validar_capital_g1() + validar_base_nacional_sp()
+    falhas = validar_capital_g1() + validar_base_nacional_sp() + validar_totalizacao_secoes()
     sys.exit(1 if falhas else 0)
 
 

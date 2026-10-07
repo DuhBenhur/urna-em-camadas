@@ -23,7 +23,7 @@ Em linguagem simples ([`resultados/08_historia.json`](resultados/08_historia.jso
 ## Como funciona
 
 1. **Dados** ([`pipeline/`](pipeline/)): baixa os boletins de urna das 27 UFs, o perfil do eleitorado por seção e os locais de votação do TSE, conferindo o SHA-512 publicado pelo tribunal. Junta Censo 2022 e PIB (IBGE) e Bolsa Família (MDS) por município, pela tabela oficial de códigos TSE ↔ IBGE.
-2. **Validação** ([`pipeline/03_validar_controle.py`](pipeline/03_validar_controle.py)): a base reproduz exatamente a totalização oficial do TSE para SP (seções, aptos, comparecimento, abstenção, válidos, brancos e nulos) e os percentuais da 1ª Zona (Bela Vista) publicados pelo g1.
+2. **Validação** ([`pipeline/03_validar_controle.py`](pipeline/03_validar_controle.py)): a base reproduz exatamente a totalização oficial do TSE para SP (seções, aptos, comparecimento, abstenção, válidos, brancos e nulos) e os percentuais da 1ª Zona (Bela Vista) publicados pelo g1. E cada uma das 497.897 seções é idêntica ao resultado oficial da seção publicado pelo TSE, em todos os campos e para cada candidato ([conferência cidadã](https://duhbenhur.github.io/urna-em-camadas/#/conferencia)).
 3. **Modelos**: regressão multinível com estratégia *step-up* (modelo nulo → variáveis da seção → do município → do estado → inclinações aleatórias → interações entre níveis), estimada com `gpboost` e validada contra o `statsmodels`.
 4. **Espaço**: autocorrelação espacial (Moran, LISA) nos efeitos de cada município e regionalização espacial.
 
@@ -36,6 +36,7 @@ pip install -r requirements.txt
 python pipeline/01_baixar_tse.py          # ~8 GB de dados do TSE em ~/dados/tse (DADOS_RAW)
 python pipeline/02_recortar_capital.py
 python pipeline/04_base_nacional.py
+python pipeline/09_totalizacao_oficial.py # resultado oficial por seção (conferência)
 python pipeline/03_validar_controle.py    # tem que passar
 python pipeline/05_hlm_nulo.py
 python pipeline/06_contexto_municipal.py
@@ -43,7 +44,7 @@ python pipeline/08_historia.py            # números da história da página ini
 python pipeline/07_exportar_site.py       # dados estáticos do site
 ```
 
-Os passos 01, 02, 04 e 06 precisam da internet e dos brutos. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 08 e 07.
+Os passos 01, 02, 04 e 06 precisam da internet e dos brutos. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 08 e 07 (o 08 precisa de geopandas e libpysal).
 
 ## O site
 
@@ -69,7 +70,7 @@ cd site && npm install && npm run dev
 
 | Fonte | Dados |
 |---|---|
-| [TSE, Portal de Dados Abertos](https://dadosabertos.tse.jus.br/) | boletins de urna, perfil do eleitorado por seção, locais de votação, candidaturas, totalização, códigos de municípios |
+| [TSE, Portal de Dados Abertos](https://dadosabertos.tse.jus.br/) | boletins de urna, perfil do eleitorado por seção, locais de votação, candidaturas, totalização, resultado oficial por seção (detalhe e votação), códigos de municípios |
 | [IBGE, API de agregados](https://servicodados.ibge.gov.br/api/docs/agregados?versao=3) | Censo 2022 (cor ou raça, situação do domicílio, religião, rendimento) e PIB dos Municípios |
 | [MDS, MI Social](https://aplicacoes.mds.gov.br/sagi/) | pessoas no Bolsa Família por município (agosto de 2026) |
 | [IBGE, API de malhas](https://servicodados.ibge.gov.br/api/docs/malhas?versao=3) | malhas municipal e estadual |

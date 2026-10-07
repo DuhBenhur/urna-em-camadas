@@ -270,3 +270,21 @@ td.num { white-space: nowrap; }
 .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--superficie) !important; }
 .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--superficie) !important; }
 .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--superficie) !important; }
+
+/* Conferência cidadã */
+:root { --bom: #0ca30c; }
+.selo { display: flex; gap: 10px; align-items: flex-start; max-width: 420px; margin-top: 20px; font-size: 0.9rem; color: var(--tinta-2); }
+.selo svg { flex: none; margin-top: 2px; }
+.selo strong { color: var(--tinta); }
+.passos-conferencia { max-width: 68ch; padding-left: 1.4em; }
+.passos-conferencia li { margin-bottom: 12px; }
+.conferencia-inicio { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; margin-top: 32px; }
+.conferencia-inicio .valor { font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 650; line-height: 1.1; }
+
+/* Celular: marca e tema na primeira linha, menu inteiro na segunda (rola se não couber) */
+@media (max-width: 560px) {
+  .cabecalho .conteudo { gap: 0 12px; padding-block: 4px; }
+  .botao-tema { order: 2; margin-left: auto; }
+  .navegacao { order: 3; width: 100%; margin-left: -8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .navegacao a { padding: 6px 8px; white-space: nowrap; }
+}

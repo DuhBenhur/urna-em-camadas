@@ -101,7 +101,21 @@ export function Urna() {
       </header>
 
       <div className="grade-2" style={{ marginTop: 24 }}>
-        <BoletimUrna secao={s} candidatos={resumo.candidatos} uf={arquivo.uf} municipio={municipio.nome.toUpperCase()} zona={nZona} local={nomeLocal} bairro={bairro} />
+        <div>
+          <BoletimUrna secao={s} candidatos={resumo.candidatos} uf={arquivo.uf} municipio={municipio.nome.toUpperCase()} zona={nZona} local={nomeLocal} bairro={bairro} />
+          {s.conf === 1 && (
+            <p className="selo">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="11" fill="var(--bom)" />
+                <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>
+                <strong>Confere com o resultado oficial desta seção.</strong> Comparecimento, brancos, nulos e votos de cada
+                candidato idênticos à totalização do TSE. <Link to="/conferencia">Como conferir com o boletim impresso</Link>.
+              </span>
+            </p>
+          )}
+        </div>
         <section className="cartao" aria-labelledby="t-camadas">
           <h2 id="t-camadas" style={{ marginTop: 0 }}>
             A urna em camadas

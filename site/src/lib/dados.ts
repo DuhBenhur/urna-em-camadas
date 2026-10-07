@@ -69,6 +69,18 @@ export type Historia = {
   surpresa: PorCandidato<number[]>
 }
 
+/** Cada par é [soma dos boletins de urna, resultado oficial do TSE]. */
+type Pares = { comparecimento: [number, number]; validos: [number, number]; brancos: [number, number]; nulos: [number, number]; v13: [number, number]; v22: [number, number] }
+
+export type LinhaConferencia = { secoes: number; conferem: number } & Pares
+
+export type Conferencia = {
+  fonte: string
+  campos_conferidos: string[]
+  brasil: LinhaConferencia
+  ufs: ({ uf: string; nome: string } & LinhaConferencia)[]
+}
+
 export type Municipio = {
   cd: number
   ibge: number
@@ -111,6 +123,8 @@ export type Secao = {
   '60_mais': number | null
   ate_fund_inc: number | null
   superior: number | null
+  /** 1 se a seção é idêntica ao resultado oficial do TSE em todos os campos (pipeline/03 e 07) */
+  conf: number | null
 } & Record<`v${number}`, number>
 
 export type ArquivoZona = Tabela & {
@@ -161,6 +175,8 @@ export function useDados<T>(caminho: string | null, transformar?: (bruto: never)
 export const useResumo = () => useDados<Resumo>('resumo.json')
 
 export const useHistoria = () => useDados<Historia>('historia.json')
+
+export const useConferencia = () => useDados<Conferencia>('conferencia.json')
 
 export type IndiceMunicipios = { lista: Municipio[]; porCodigo: Map<number, Municipio>; porIbge: Map<number, Municipio> }
 

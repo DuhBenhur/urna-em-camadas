@@ -6,10 +6,12 @@ GitHub Actions antes do build, sem os brutos do TSE. Os JSON gerados não vão p
 Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   resumo.json                  totais nacionais, candidatos, modelos nulos e UFs
   historia.json                números da história da página inicial (cópia de resultados/08_historia.json)
+  conferencia.json             soma dos boletins x resultado oficial do TSE, por UF e no Brasil
   municipios.json              índice dos 5.571 municípios (busca, mapa, zonas de cada município)
   locais/{cd_tse}.json         locais de votação do município, com coordenadas e votos somados
   zonas/{UF}-{zona}.json       seções da zona eleitoral (o boletim de cada urna) e seus locais,
-                               indexados por "{município}-{local}"
+                               indexados por "{município}-{local}"; "conf" = 1 se a seção é idêntica
+                               ao resultado oficial em todos os campos
   geo/municipios.topo.json     malha municipal do IBGE (qualidade mínima)
   geo/ufs.topo.json            malha das UFs
 
@@ -58,6 +60,46 @@ def carregar() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
                          on="CD_MUNICIPIO"))
     modelos = json.loads((RESULTADOS / "05_hlm_nulo.json").read_text(encoding="utf-8"))
     return base, locais, municipios, modelos
+
+
+# campos conferidos: base (boletins) → resultado oficial por seção (09)
+CONFERIDOS = {
+    "QT_APTOS": ["QT_APTOS"], "QT_COMPARECIMENTO": ["QT_COMPARECIMENTO"], "QT_ABSTENCOES": ["QT_ABSTENCOES"],
+    "QT_BRANCOS": ["QT_BRANCOS"], "QT_NULOS": ["QT_NULOS_URNA", "QT_NULOS_TECNICOS"],
+    "QT_VALIDOS": [f"V_{n}" for n in ORDEM_CANDIDATOS], **{f"V_{n}": [f"V_{n}"] for n in ORDEM_CANDIDATOS},
+}
+
+
+def marcar_conferencia(base: pd.DataFrame) -> pd.DataFrame:
+    """Junta o resultado oficial de cada seção à base e marca as seções idênticas em todos os campos."""
+    oficial = pd.read_parquet(PROCESSED_DIR / "totalizacao_secao_2026.parquet")
+    chave = ["SG_UF", "CD_MUNICIPIO", "NR_ZONA", "NR_SECAO"]
+    o = oficial[chave].copy()
+    for campo, partes in CONFERIDOS.items():
+        o[f"OF_{campo}"] = oficial[partes].sum(axis=1)
+    b = base.merge(o, on=chave, how="left")
+    iguais = [(b[c] == b[f"OF_{c}"]) for c in CONFERIDOS]
+    b["conf"] = pd.concat(iguais, axis=1).all(axis=1).astype(int)
+    return b
+
+
+def conferencia(b: pd.DataFrame) -> dict:
+    campos = ["QT_COMPARECIMENTO", "QT_VALIDOS", "QT_BRANCOS", "QT_NULOS", "V_13", "V_22"]
+    nomes = {"QT_COMPARECIMENTO": "comparecimento", "QT_VALIDOS": "validos", "QT_BRANCOS": "brancos",
+             "QT_NULOS": "nulos", "V_13": "v13", "V_22": "v22"}
+
+    def linha(g: pd.DataFrame) -> dict:
+        return {"secoes": len(g), "conferem": int(g.conf.sum()),
+                **{nomes[c]: [int(g[c].sum()), int(g[f"OF_{c}"].sum())] for c in campos}}
+
+    return {
+        "fonte": "TSE, Portal de Dados Abertos: detalhe_votacao_secao_2026 e votacao_secao_2026 (Presidente, 1º turno)",
+        "campos_conferidos": ["aptos", "comparecimento", "abstenções", "brancos", "nulos (da urna + técnicos)",
+                              "votos válidos", "votos de cada um dos 12 candidatos"],
+        # cada par é [soma dos boletins, resultado oficial]
+        "brasil": linha(b),
+        "ufs": [{"uf": uf, "nome": NOMES_UF[uf], **linha(g)} for uf, g in b.groupby("SG_UF")],
+    }
 
 
 def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict) -> dict:
@@ -117,7 +159,7 @@ def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame) -> int:
 
 def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
     colunas = (["NR_SECAO", "NR_LOCAL_VOTACAO", "CD_MUNICIPIO", "QT_APTOS", "QT_COMPARECIMENTO", "QT_VALIDOS",
-                "QT_BRANCOS", "QT_NULOS"] + [f"V_{n}" for n in ORDEM_CANDIDATOS] + PERFIL)
+                "QT_BRANCOS", "QT_NULOS"] + [f"V_{n}" for n in ORDEM_CANDIDATOS] + PERFIL + ["conf"])
     nomes = {"NR_SECAO": "secao", "NR_LOCAL_VOTACAO": "local", "CD_MUNICIPIO": "cd", "QT_APTOS": "aptos",
              "QT_COMPARECIMENTO": "comparecimento", "QT_VALIDOS": "validos", "QT_BRANCOS": "brancos",
              "QT_NULOS": "nulos", **{c: c.removeprefix("ELEIT_").lower() for c in PERFIL},
@@ -144,6 +186,8 @@ def main() -> None:
     gravar(SAIDA / "resumo.json", resumo(base, locais, municipios, modelos))
     # calculado localmente pelo 08 (precisa de geopandas); aqui só é compactado e copiado
     gravar(SAIDA / "historia.json", json.loads((RESULTADOS / "08_historia.json").read_text(encoding="utf-8")))
+    base = marcar_conferencia(base)
+    gravar(SAIDA / "conferencia.json", conferencia(base))
     gravar(SAIDA / "municipios.json", indice_municipios(base, municipios))
     n_mun = exportar_locais(base, locais)
     n_zonas = exportar_zonas(base, locais)

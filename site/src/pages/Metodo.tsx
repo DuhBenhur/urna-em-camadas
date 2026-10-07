@@ -15,6 +15,7 @@ const FONTES: { fonte: string; traz: string; nivel: string; acesso: [string, str
   { fonte: 'TSE: boletins de urna (27 UFs)', traz: 'Votos de cada urna no 1º turno', nivel: 'Seção', acesso: [['Portal de Dados Abertos', PORTAL_TSE], ['SHA-512 conferido', SHA]] },
   { fonte: 'TSE: perfil do eleitorado por seção', traz: 'Gênero, idade e escolaridade dos eleitores cadastrados', nivel: 'Seção', acesso: [['Portal de Dados Abertos', PORTAL_TSE], ['SHA-512 conferido', SHA]] },
   { fonte: 'TSE: locais de votação', traz: 'Escola, bairro e coordenadas de cada local', nivel: 'Seção', acesso: [['Portal de Dados Abertos', PORTAL_TSE], ['SHA-512 conferido', SHA]] },
+  { fonte: 'TSE: resultado oficial por seção', traz: 'Detalhe da votação e votos de cada candidato em cada seção (Presidente)', nivel: 'Seção', acesso: [['Portal de Dados Abertos', PORTAL_TSE]] },
   { fonte: 'TSE: códigos de municípios', traz: 'Tabela oficial TSE ↔ IBGE', nivel: 'Município', acesso: [['Portal de Dados Abertos', PORTAL_TSE]] },
   { fonte: 'IBGE: Censo 2022 e PIB dos Municípios', traz: 'Renda, cor ou raça, religião, urbanização, PIB', nivel: 'Município', acesso: [['API de agregados do IBGE', AGREGADOS_IBGE]] },
   { fonte: 'MDS: Bolsa Família (ago/2026)', traz: 'Pessoas beneficiárias', nivel: 'Município', acesso: [['MI Social (MDS)', MI_SOCIAL]] },
@@ -113,6 +114,11 @@ export function Metodo() {
           <strong>exatamente</strong> com o Relatório de Resultado da Totalização do TSE.
         </li>
         <li>Os 4 percentuais da 1ª Zona (Bela Vista) para Presidente e Governador batem com o mapa de apuração do g1.</li>
+        <li>
+          Cada uma das {resumo ? inteiro(resumo.totais.secoes) : '…'} seções é idêntica ao resultado oficial da seção publicado
+          pelo TSE, em aptos, comparecimento, abstenções, brancos, nulos e votos de cada candidato. Detalhes na{' '}
+          <Link to="/conferencia">Conferência</Link>.
+        </li>
       </ul>
       <p>
         Foi essa conferência que pegou o nulo técnico: sem o ajuste, os percentuais saíam errados na segunda casa decimal. O

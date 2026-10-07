@@ -9,7 +9,7 @@ import { ComoSabemos } from '../components/ComoSabemos'
 import { ContrariamEstado } from '../components/ContrariamEstado'
 import { EfeitoEstados } from '../components/EfeitoEstados'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { useHistoria, useMunicipios, useResumo, type Historia } from '../lib/dados'
+import { useConferencia, useHistoria, useMunicipios, useResumo, type Historia } from '../lib/dados'
 import { inteiro, pct, pontos } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 
@@ -42,6 +42,7 @@ export function Inicio() {
   const { dados: resumo } = useResumo()
   const { dados: indice } = useMunicipios()
   const { dados: historia } = useHistoria()
+  const { dados: conferencia } = useConferencia()
   const [candidato, setCandidato] = useState<NumeroCandidato>(13)
   const n = String(candidato) as '13' | '22'
   const cand = CANDIDATOS[candidato]
@@ -51,17 +52,11 @@ export function Inicio() {
   return (
     <div className="conteudo">
       <section className="heroi">
-        <h1>Dá para adivinhar o resultado de uma urna sem abri-la?</h1>
+        <h1>A sua urna, conferida e explicada</h1>
         <p className="secundario">
-          Em boa parte, sim. O 1º turno presidencial de 2026 teve {resumo ? inteiro(resumo.totais.secoes) : '…'} urnas.
-          {historia && (
-            <>
-              {' '}
-              Sabendo só o estado e o município de uma delas, o erro de quem tenta adivinhar o resultado cai cerca de{' '}
-              {pct(quedaComMunicipio(historia), 0)}.
-            </>
-          )}{' '}
-          Procure a sua e veja o que ela tem de previsível e de surpreendente.
+          O 1º turno presidencial de 2026 teve {resumo ? inteiro(resumo.totais.secoes) : '…'} urnas, e os boletins de todas
+          elas somam exatamente o resultado oficial do TSE. Procure a sua, compare com o boletim impresso da seção e veja
+          quanto do resultado dela vem do estado, do município e da própria seção.
         </p>
       </section>
 
@@ -76,6 +71,23 @@ export function Inicio() {
         .
       </p>
 
+      {conferencia && (
+        <div className="cartao conferencia-inicio">
+          <div>
+            <div className="rotulo-pequeno">Conferência</div>
+            <div className="valor">
+              {inteiro(conferencia.brasil.conferem)} de {inteiro(conferencia.brasil.secoes)} urnas
+            </div>
+            <p className="secundario" style={{ margin: 0 }}>
+              idênticas ao resultado oficial do TSE, em todos os números do boletim
+            </p>
+          </div>
+          <Link className="botao" to="/conferencia">
+            Como conferir a sua
+          </Link>
+        </div>
+      )}
+
       <div id="historia" className="intro-historia">
         <div className="kicker">A história</div>
         <p>
@@ -89,8 +101,10 @@ export function Inicio() {
         <>
           <Capitulo id="c-jogo" numero={1} rotulo="O jogo" titulo="Cada pista sobre o lugar aproxima o palpite">
             <p>
-              Tente adivinhar quanto {cand.nome} teve numa urna sorteada. Sem saber nada, o melhor palpite é o resultado do
-              Brasil. Depois vêm as pistas: o estado, o município e a escola onde a urna fica.
+              Dá para adivinhar o resultado de uma urna sem abri-la? Em boa parte, sim: sabendo só o estado e o município, o
+              erro do palpite cai cerca de {pct(quedaComMunicipio(historia), 0)}. Tente com o voto em {cand.nome} numa urna
+              sorteada. Sem saber nada, o melhor palpite é o resultado do Brasil; depois vêm as pistas: o estado, o município
+              e a escola onde a urna fica.
             </p>
             <Adivinhe resumo={resumo} indice={indice} candidato={candidato} minValidos={historia.regras.min_validos_urna} />
 
