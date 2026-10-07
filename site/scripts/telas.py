@@ -29,7 +29,13 @@ def main() -> None:
     SAIDA.mkdir(exist_ok=True)
 
     with sync_playwright() as pw:
-        navegador = pw.chromium.launch()
+        # o Chrome instalado é o dos visitantes; o Chromium do Playwright fica versões atrás
+        # (ex.: scrollTo passou a devolver Promise e derrubava o React só no Chrome)
+        try:
+            navegador = pw.chromium.launch(channel="chrome")
+        except Exception:
+            navegador = pw.chromium.launch()
+        print(f"navegador: {navegador.browser_type.name} {navegador.version}")
         for nome, largura, tema in MODOS:
             ctx = navegador.new_context(viewport={"width": largura, "height": 900}, color_scheme=tema,
                                         device_scale_factor=2 if args.seletor else 1)

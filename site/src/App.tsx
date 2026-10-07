@@ -12,7 +12,10 @@ const Municipio = lazy(() => import('./pages/Municipio').then((m) => ({ default:
 
 function VoltarAoTopo() {
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  // corpo em bloco: no Chrome recente scrollTo devolve uma Promise, que o React chamaria como limpeza
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
   return null
 }
 
