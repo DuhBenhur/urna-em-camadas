@@ -1,0 +1,42 @@
+import { REPOSITORIO } from '../lib/projeto'
+
+export function Sobre() {
+  return (
+    <div className="conteudo">
+      <h1 style={{ marginTop: 32 }}>Sobre</h1>
+
+      <p>
+        <strong>Urna em Camadas</strong> é um projeto de ciência de dados feito por <strong>Eduardo Ben Hur</strong> com{' '}
+        <a href="https://claude.com/claude-code">Claude Code</a>, o assistente de programação da Anthropic. O código-fonte, os
+        dados processados, as validações e o histórico de cada mudança estão <a href={REPOSITORIO}>no GitHub</a>.
+      </p>
+
+      <h2>Transparência</h2>
+      <ul>
+        <li>Todas as informações vêm de bases públicas: Tribunal Superior Eleitoral (TSE), IBGE e Ministério do Desenvolvimento e Assistência Social (MDS).</li>
+        <li>
+          Qualquer pessoa pode refazer a análise do zero: o pipeline baixa os dados oficiais, confere os hashes publicados pelo
+          TSE e roda as mesmas validações descritas no Método.
+        </li>
+        <li>Erros encontrados podem ser relatados como <em>issue</em> no repositório. Correções ficam registradas no histórico.</li>
+      </ul>
+
+      <h2>O que este site não é</h2>
+      <ul>
+        <li>
+          <strong>Não é pesquisa eleitoral.</strong> Não entrevista eleitores nem mede intenção de voto. Analisa resultados
+          oficiais já apurados.
+        </li>
+        <li>Não tem vínculo com partidos, candidaturas ou campanhas, e não recebe dinheiro de ninguém.</li>
+        <li>Não faz enquetes nem coleta dados de quem visita. A busca pela sua zona e seção acontece só no seu navegador.</li>
+        <li>Não publica conteúdo novo no dia da eleição (25 de outubro de 2026).</li>
+      </ul>
+
+      <h2>Licença</h2>
+      <p>
+        Código sob licença MIT. Dados processados e textos sob Creative Commons Atribuição 4.0 (CC BY 4.0): pode usar,
+        adaptar e republicar, citando a fonte.
+      </p>
+    </div>
+  )
+}

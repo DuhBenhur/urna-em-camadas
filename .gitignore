@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+
+# Site
+node_modules/
+site/dist/
+site/.vite/
+# gerado por pipeline/07_exportar_site.py (no CI, a cada publicação)
+site/public/dados/
+site/scripts/telas/
+
+# Dados brutos do TSE ficam fora do repositório (~20 GB); o pipeline baixa e confere o SHA-512
+data/raw/
+*.zip
+*.part
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini

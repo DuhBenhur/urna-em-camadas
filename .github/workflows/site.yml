@@ -1,0 +1,62 @@
+# Valida a base, gera os dados do site a partir dos Parquets versionados e publica no GitHub Pages.
+# Não precisa dos brutos do TSE (~20 GB): tudo sai de data/processed, data/geo e resultados.
+name: Publicar site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Instalar dependências do pipeline
+        run: pip install duckdb pandas pyarrow
+
+      - name: Validar a base contra o g1 e a totalização oficial do TSE
+        run: python pipeline/03_validar_controle.py
+
+      - name: Exportar dados do site
+        run: python pipeline/07_exportar_site.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Compilar o site
+        working-directory: site
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - id: publicar
+        uses: actions/deploy-pages@v4

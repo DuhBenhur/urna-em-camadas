@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Urna em Camadas: o voto de 2026 em seção, município e estado</title>
+    <meta name="description" content="Digite sua zona e seção e veja o resultado da sua urna no 1º turno de 2026 separado em camadas: Brasil, estado, município e seção. Análise multinível de 497.897 urnas com dados públicos do TSE." />
+    <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Urna em Camadas" />
+    <meta property="og:title" content="Urna em Camadas: quanto do voto da sua urna é do seu estado?" />
+    <meta property="og:description" content="O 1º turno presidencial de 2026 em 497.897 urnas, separado em camadas: Brasil, estado, município e seção. Dados públicos do TSE, código aberto." />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="alternate" type="text/plain" href="./llms.txt" title="llms.txt" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        "name": "Urna em Camadas: 1º turno presidencial de 2026 por seção eleitoral",
+        "description": "Resultados do 1º turno presidencial de 2026 nas 497.897 seções eleitorais do Brasil, com perfil do eleitorado, coordenadas dos locais de votação, contexto municipal (Censo 2022, PIB, Bolsa Família) e efeitos estimados por um modelo multinível de três níveis (seção, município, UF).",
+        "creator": { "@type": "Person", "name": "Eduardo Ben Hur" },
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "isAccessibleForFree": true,
+        "inLanguage": "pt-BR",
+        "temporalCoverage": "2026-10-04",
+        "spatialCoverage": { "@type": "Place", "name": "Brasil" },
+        "keywords": ["eleições 2026", "boletim de urna", "TSE", "modelo multinível", "análise espacial", "seção eleitoral"],
+        "isBasedOn": ["https://dadosabertos.tse.jus.br/", "https://servicodados.ibge.gov.br/api/docs/agregados?versao=3"]
+      }
+    </script>
+  </head>
+  <body>
+    <div id="raiz"></div>
+    <noscript>Este site precisa de JavaScript para carregar os dados das urnas.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

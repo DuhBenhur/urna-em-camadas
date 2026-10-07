@@ -1,0 +1,26 @@
+# Urna em Camadas
+
+> Análise multinível do 1º turno presidencial de 2026 no Brasil, por seção eleitoral (urna). Cada urna é decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município e o que é só da seção. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE e MDS. Não é pesquisa eleitoral.
+
+## Principais resultados (modelo nulo de três níveis, logit da proporção de votos válidos)
+
+- Lula: 62,7% da variação entre urnas está entre estados, 21,7% entre municípios do mesmo estado e 15,6% entre seções do mesmo município.
+- Flávio Bolsonaro: 60,5% estado, 22,9% município, 16,6% seção.
+- 497.897 seções, 5.571 municípios, 27 UFs (eleitores no exterior fora do modelo).
+
+## Páginas
+
+- Início: busca por UF, zona e seção ou por município; efeito de cada estado.
+- /#/urna/{UF}/{zona}/{seção}: boletim de urna e camadas de uma urna específica.
+- /#/municipio/{código TSE}: locais de votação e urnas de um município.
+- /#/mapa: mapa dos municípios (resultado e efeito do município).
+- /#/metodo: dados, validação e modelo.
+
+## Dados
+
+- Arquivos JSON estáticos em /dados/ (resumo.json, municipios.json, zonas/{UF}-{zona}.json, locais/{código}.json).
+- Código-fonte, dados processados (Parquet) e validações no repositório do GitHub do projeto.
+
+## Licença
+
+Código MIT; dados processados e textos CC BY 4.0.
