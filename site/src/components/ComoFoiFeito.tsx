@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { Resumo } from '../lib/dados'
+import type { Explicacao, Resumo } from '../lib/dados'
 import { DECISOES } from '../lib/decisoes'
 import { inteiro, pct } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
@@ -10,8 +10,11 @@ type Etapa = { titulo: string; situacao: 'feito' | 'em andamento' | 'a seguir'; 
 // 4 percentuais do g1 (1ª ZE) + 7 totais oficiais de SP: pipeline/03_validar_controle.py
 const CONFERENCIAS = 11
 
-export function ComoFoiFeito({ resumo, candidato }: { resumo: Resumo; candidato: NumeroCandidato }) {
-  const icc = resumo.modelos[String(candidato) as '13' | '22'].icc
+export function ComoFoiFeito({ resumo, candidato, explicacao }: { resumo: Resumo; candidato: NumeroCandidato; explicacao?: Explicacao | null }) {
+  const n = String(candidato) as '13' | '22'
+  const icc = resumo.modelos[n].icc
+  const shapley = explicacao?.stepup.candidatos[n].shapley.uf.com_regiao.blocos
+  const moran = explicacao?.espacial.candidatos[n].completo.moran_I
   const etapas: Etapa[] = [
     {
       titulo: 'A pergunta',
@@ -40,16 +43,20 @@ export function ComoFoiFeito({ resumo, candidato }: { resumo: Resumo; candidato:
       numero: `${CANDIDATOS[candidato].curto}: estado ${pct(icc.UF, 0)} · município ${pct(icc.município, 0)} · seção ${pct(icc.seção, 0)} da variação`,
     },
     {
-      titulo: 'O espaço',
-      situacao: 'em andamento',
+      titulo: 'As explicações',
+      situacao: explicacao ? 'feito' : 'a seguir',
       texto:
-        'Quem é vizinho de quem, pela malha do IBGE. A seguir: autocorrelação espacial (vizinhos se parecem mais do que o acaso explica?) e regiões de voto parecido.',
+        'Perfil da seção (idade, sexo, escolaridade), perfil do município (renda, cor ou raça, religião, urbanização) e região entram no modelo, um grupo por vez. A média de todas as ordens de entrada (128 modelos) reparte o crédito entre os grupos.',
+      numero: shapley
+        ? `${CANDIDATOS[candidato].curto}, camada do estado: perfil dos municípios ${pct(shapley.renda_economia + shapley.cor_raca + shapley.religiao + shapley.urbanizacao, 0)} · região ${pct(shapley.regiao, 0)} · perfil das seções ${pct(shapley.idade_sexo + shapley.escolaridade, 0)}`
+        : undefined,
     },
     {
-      titulo: 'As explicações',
-      situacao: 'a seguir',
+      titulo: 'O espaço',
+      situacao: explicacao ? 'feito' : 'a seguir',
       texto:
-        'Perfil da seção (idade, escolaridade), contexto do município (renda, religião, Bolsa Família) e do estado entram no modelo, uma camada por vez.',
+        'Quem é vizinho de quem, pela malha do IBGE: os vizinhos se parecem mais do que o acaso explica? Bolsões (LISA), 27 regiões desenhadas pelo voto (SKATER) e um modelo em que o voto pode variar de forma suave pelo mapa.',
+      numero: moran !== undefined ? `índice de Moran do que o modelo não explica: ${moran.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} (0 seria acaso)` : undefined,
     },
     {
       titulo: 'A previsão',

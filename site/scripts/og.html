@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Urna em Camadas: imagem de compartilhamento</title>
+<style>
+  /* Imagem de compartilhamento (1200×630). Gerada por site/scripts/og.py → site/public/og.png */
+  html, body { margin: 0; }
+  body { width: 1200px; height: 630px; background: #f9f9f7; color: #0b0b0b; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
+  .quadro { box-sizing: border-box; width: 1200px; height: 630px; padding: 72px 80px; display: grid; grid-template-columns: 1fr 340px; gap: 48px; align-items: center; }
+  .marca { font-size: 26px; font-weight: 700; color: #52514e; letter-spacing: -0.01em; margin-bottom: 28px; }
+  h1 { font-size: 70px; line-height: 1.04; margin: 0 0 28px; letter-spacing: -0.02em; font-weight: 750; }
+  p { font-size: 30px; line-height: 1.35; margin: 0; color: #52514e; max-width: 640px; }
+  .rodape { margin-top: 40px; font-size: 22px; color: #6f6d68; }
+  .camadas { display: grid; gap: 14px; }
+  .camadas div { height: 46px; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <div class="quadro">
+    <div>
+      <div class="marca">Urna em Camadas</div>
+      <h1>A sua urna, conferida e explicada</h1>
+      <p>O 1º turno de 2026 em 497.897 urnas: o que vem do estado, do município e da própria seção.</p>
+      <div class="rodape">duhbenhur.github.io/urna-em-camadas</div>
+    </div>
+    <!-- as camadas do ícone do site: seção, município, estado, Brasil -->
+    <div class="camadas" aria-hidden="true">
+      <div style="width: 46%; margin: 0 auto; background: #6f6d68"></div>
+      <div style="width: 66%; margin: 0 auto; background: #2a78d6"></div>
+      <div style="width: 84%; margin: 0 auto; background: #e34948"></div>
+      <div style="width: 100%; height: 120px; background: #0b0b0b; position: relative">
+        <div style="position: absolute; left: 25%; right: 25%; top: 44px; height: 14px; border-radius: 7px; background: #f9f9f7"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

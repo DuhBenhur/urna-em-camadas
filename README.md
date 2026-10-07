@@ -20,12 +20,18 @@ A maior parte da diferença entre urnas vem do estado onde elas ficam. Duas seç
 
 Em linguagem simples ([`resultados/08_historia.json`](resultados/08_historia.json)): quem tenta adivinhar o percentual do Lula numa urna erra em média 14,5 p.p. sem saber nada, 9,2 sabendo o estado, 5,7 sabendo o município e 3,5 sabendo a escola. Mas o estado é em boa parte região: dois municípios vizinhos em estados diferentes diferem 8,4 p.p., menos que dois municípios quaisquer do mesmo estado (10,8 p.p.).
 
+**Composição ou contexto?** ([`resultados/10_hlm_stepup.json`](resultados/10_hlm_stepup.json), [notebook](notebooks/10_composicao_contexto.ipynb)) Repartindo a camada do estado entre grupos de características pelo valor de Shapley (128 modelos), para Lula: região 46%, renda/PIB/Bolsa Família do município 22%, cor ou raça 10%, religião 8%, escolaridade da seção 4%, urbanização 1%, idade e sexo 0%; sobram 10%. O perfil de quem vota em cada urna explica pouco da diferença entre estados; o perfil dos lugares explica muito mais; e o resto é quase todo regional. Com quatro níveis, o que parecia ser da seção é do local de votação (20% da variação, contra 3% da urna em si).
+
+**Espaço** ([`resultados/11_espacial.json`](resultados/11_espacial.json)): o que perfil e região não explicam forma bolsões de municípios vizinhos (Moran 0,47); 27 regiões desenhadas só pelo voto explicam 84% da variação entre municípios, contra 74% dos 27 estados.
+
+**Conferência**: as 497.897 urnas são idênticas ao resultado oficial por seção do TSE, em todos os campos e para cada candidato.
+
 ## Como funciona
 
 1. **Dados** ([`pipeline/`](pipeline/)): baixa os boletins de urna das 27 UFs, o perfil do eleitorado por seção e os locais de votação do TSE, conferindo o SHA-512 publicado pelo tribunal. Junta Censo 2022 e PIB (IBGE) e Bolsa Família (MDS) por município, pela tabela oficial de códigos TSE ↔ IBGE.
 2. **Validação** ([`pipeline/03_validar_controle.py`](pipeline/03_validar_controle.py)): a base reproduz exatamente a totalização oficial do TSE para SP (seções, aptos, comparecimento, abstenção, válidos, brancos e nulos) e os percentuais da 1ª Zona (Bela Vista) publicados pelo g1. E cada uma das 497.897 seções é idêntica ao resultado oficial da seção publicado pelo TSE, em todos os campos e para cada candidato ([conferência cidadã](https://duhbenhur.github.io/urna-em-camadas/#/conferencia)).
-3. **Modelos**: regressão multinível com estratégia *step-up* (modelo nulo → variáveis da seção → do município → do estado → inclinações aleatórias → interações entre níveis), estimada com `gpboost` e validada contra o `statsmodels`.
-4. **Espaço**: autocorrelação espacial (Moran, LISA) nos efeitos de cada município e regionalização espacial.
+3. **Modelos**: regressão multinível com estratégia *step-up* (modelo nulo → perfil da seção → perfil do município → região → inclinação aleatória da escolaridade → interações entre níveis), estimada com `gpboost`. A explicação da camada do estado é repartida entre os grupos de características pelo valor de Shapley (média de todas as 128 ordens de entrada); um modelo de Mundlak separa o efeito dentro da cidade do efeito entre cidades.
+4. **Espaço**: autocorrelação espacial (Moran, LISA) nos efeitos de cada município, 27 regiões de voto desenhadas pelo SKATER e um modelo com processo gaussiano nas coordenadas, que separa o degrau da divisa do gradiente regional.
 
 O desenho completo, com hipóteses e limitações, está em [`docs/plano_de_analise.md`](docs/plano_de_analise.md).
 
@@ -40,11 +46,13 @@ python pipeline/09_totalizacao_oficial.py # resultado oficial por seção (confe
 python pipeline/03_validar_controle.py    # tem que passar
 python pipeline/05_hlm_nulo.py
 python pipeline/06_contexto_municipal.py
+python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 100 para os intervalos)
+python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
 python pipeline/08_historia.py            # números da história da página inicial
 python pipeline/07_exportar_site.py       # dados estáticos do site
 ```
 
-Os passos 01, 02, 04 e 06 precisam da internet e dos brutos. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 08 e 07 (o 08 precisa de geopandas e libpysal).
+Os passos 01, 02, 04 e 06 precisam da internet e dos brutos. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 10, 11, 08 e 07 (08 e 11 precisam de geopandas, libpysal, esda e spopt). Os resultados de 10 e 11 estão em [`notebooks/10_composicao_contexto.ipynb`](notebooks/10_composicao_contexto.ipynb).
 
 ## O site
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { useHistoria, useResumo } from '../lib/dados'
+import { MetodoExplicativo } from '../components/MetodoExplicativo'
+import { useExplicacao, useHistoria, useResumo } from '../lib/dados'
 import { DECISOES } from '../lib/decisoes'
 import { inteiro, pct } from '../lib/formato'
 import { REPOSITORIO } from '../lib/projeto'
@@ -23,18 +24,22 @@ const FONTES: { fonte: string; traz: string; nivel: string; acesso: [string, str
 ]
 
 const COMANDOS = `pip install -r requirements.txt
-python pipeline/01_baixar_tse.py          # quase 8 GB do TSE, com SHA-512 conferido
+python pipeline/01_baixar_tse.py          # dados do TSE, com SHA-512 conferido
 python pipeline/02_recortar_capital.py
 python pipeline/04_base_nacional.py
+python pipeline/09_totalizacao_oficial.py # resultado oficial por seção (conferência)
 python pipeline/03_validar_controle.py    # tem que passar
 python pipeline/05_hlm_nulo.py            # modelo de três níveis
 python pipeline/06_contexto_municipal.py
+python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 100 para os intervalos)
+python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
 python pipeline/08_historia.py            # números da página inicial
 python pipeline/07_exportar_site.py       # dados do site`
 
 export function Metodo() {
   const { dados: resumo } = useResumo()
   const { dados: historia } = useHistoria()
+  const { dados: explicacao } = useExplicacao()
   const m13 = resumo?.modelos['13']
   const m22 = resumo?.modelos['22']
   const regras = historia?.regras
@@ -185,7 +190,9 @@ export function Metodo() {
         0,4 numa escala de 225 mil.
       </p>
 
-      <h2>5. Os números da página inicial</h2>
+      {explicacao && <MetodoExplicativo e={explicacao} />}
+
+      <h2>{explicacao ? 7 : 5}. Os números da página inicial</h2>
       <p>
         São contas descritivas, feitas por <code>pipeline/08_historia.py</code> sobre a mesma base, para os dois candidatos.
       </p>
@@ -218,7 +225,7 @@ export function Metodo() {
         </li>
       </ul>
 
-      <h2>6. Decisões e alternativas descartadas</h2>
+      <h2>{explicacao ? 8 : 6}. Decisões e alternativas descartadas</h2>
       <div className="tabela-rolagem">
         <table>
           <thead>
@@ -242,7 +249,7 @@ export function Metodo() {
         </table>
       </div>
 
-      <h2>7. Para reproduzir</h2>
+      <h2>{explicacao ? 9 : 7}. Para reproduzir</h2>
       <p>
         Tudo roda em Python. A partir dos arquivos que já estão no repositório (<code>data/processed/</code>), dá para rodar só
         a validação, os modelos e a exportação.
@@ -251,15 +258,13 @@ export function Metodo() {
         {COMANDOS}
       </pre>
 
-      <h2>8. Próximas etapas</h2>
+      <h2>{explicacao ? 10 : 8}. Próximas etapas</h2>
       <ul>
-        <li>Variáveis de cada nível: perfil do eleitorado (seção); renda, cor ou raça, religião, Bolsa Família (município); variáveis estaduais.</li>
-        <li>Inclinações aleatórias: o efeito da escolaridade muda de estado para estado?</li>
-        <li>Autocorrelação espacial (Moran, LISA) nos efeitos dos municípios e regionalização espacial.</li>
+        <li>O 2º turno (25 de outubro): a mesma decomposição para o resultado final e a comparação entre os dois turnos.</li>
         <li>Previsão do 2º turno por seção, pré-registrada antes de 25 de outubro e publicada só depois da eleição, com a conferência dos acertos.</li>
       </ul>
 
-      <h2>9. Limitações</h2>
+      <h2>{explicacao ? 11 : 9}. Limitações</h2>
       <ul>
         <li>
           A unidade é a seção, não o eleitor. Os resultados descrevem lugares, não pessoas: dizer que urnas com mais diplomados

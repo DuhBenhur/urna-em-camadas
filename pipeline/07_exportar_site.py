@@ -7,6 +7,7 @@ Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   resumo.json                  totais nacionais, candidatos, modelos nulos e UFs
   historia.json                números da história da página inicial (cópia de resultados/08_historia.json)
   conferencia.json             soma dos boletins x resultado oficial do TSE, por UF e no Brasil
+  explicacao.json              modelos explicativos (10) e análise espacial (11): capítulo "quem mora ali ou onde fica?"
   municipios.json              índice dos 5.571 municípios (busca, mapa, zonas de cada município)
   locais/{cd_tse}.json         locais de votação do município, com coordenadas e votos somados
   zonas/{UF}-{zona}.json       seções da zona eleitoral (o boletim de cada urna) e seus locais,
@@ -14,6 +15,11 @@ Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
                                ao resultado oficial em todos os campos
   geo/municipios.topo.json     malha municipal do IBGE (qualidade mínima)
   geo/ufs.topo.json            malha das UFs
+  geo/regioes.json             contorno das regiões de voto (11, SKATER)
+
+Colunas novas vindas dos modelos (10, 11): no índice de municípios, "sp" = o que o perfil não explica (p.p.),
+"lisa" = bolsão espacial e "regiao" = região de voto; nas zonas, "d" = desvio do perfil da seção em relação ao
+município (logit × 10.000); nos locais, "s" = surpresa (resultado − esperado pelo município e pelo perfil).
 
 Uso: python pipeline/07_exportar_site.py
 """
@@ -22,6 +28,7 @@ import shutil
 from datetime import date
 
 import duckdb
+import numpy as np
 import pandas as pd
 
 from config import (CANDIDATOS_PRESIDENTE, GEO_DIR, NOMES_UF, PARTIDOS_PRESIDENTE, PROCESSED_DIR, ROOT)
@@ -128,6 +135,54 @@ def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, m
     }
 
 
+PERFIL_L1 = {"mulher": "ELEIT_MULHER", "16_24": "ELEIT_16_24", "60_mais": "ELEIT_60_MAIS",
+             "ate_fund_inc": "ELEIT_ATE_FUND_INC", "superior": "ELEIT_SUPERIOR"}
+
+
+def expit(x):
+    return 1 / (1 + np.exp(-x))
+
+
+def explicacao() -> dict | None:
+    caminhos = [RESULTADOS / "10_hlm_stepup.json", RESULTADOS / "11_espacial.json"]
+    if not all(c.exists() for c in caminhos):
+        return None
+    stepup, espacial = (json.loads(c.read_text(encoding="utf-8")) for c in caminhos)
+    return {"stepup": stepup, "espacial": espacial}
+
+
+def desvio_perfil(tabela: pd.DataFrame, comp_mun: pd.DataFrame, beta: dict, peso: str = "ELEIT_PERFIL") -> pd.Series:
+    """Σ β_dentro · (composição − composição do município), no logit (camada "perfil da seção")."""
+    t = tabela.merge(comp_mun, on="CD_MUNICIPIO", how="left")
+    d = sum(beta[n] * (t[c] / t[peso] - t[f"mun_{n}"]) for n, c in PERFIL_L1.items())
+    return d.where(t[peso] > 0).set_axis(tabela.index)
+
+
+def composicao_municipal(base: pd.DataFrame) -> pd.DataFrame:
+    com = base[base.ELEIT_PERFIL > 0]
+    soma = com.groupby("CD_MUNICIPIO")[["ELEIT_PERFIL", *PERFIL_L1.values()]].sum()
+    return pd.DataFrame({f"mun_{n}": soma[c] / soma.ELEIT_PERFIL for n, c in PERFIL_L1.items()}).reset_index()
+
+
+def acrescentar_modelos(base: pd.DataFrame, municipios: pd.DataFrame, exp: dict | None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Camada do perfil por seção e colunas dos modelos 10 e 11 por município (vazias se ainda não rodaram)."""
+    if exp is None:
+        return base, municipios
+    comp = composicao_municipal(base)
+    for n in (13, 22):
+        beta = exp["stepup"]["candidatos"][str(n)]["camada_perfil"]["beta_dentro"]
+        base[f"D_{n}"] = (desvio_perfil(base, comp, beta) * 10_000).round()
+    efeitos = pd.read_parquet(PROCESSED_DIR / "efeitos_stepup.parquet").drop(columns="SG_UF")
+    espacial = pd.read_parquet(PROCESSED_DIR / "espacial_municipios.parquet")
+    m = municipios.merge(efeitos, on="CD_MUNICIPIO", how="left").merge(espacial, on="CD_MUNICIPIO", how="left")
+    for n in (13, 22):
+        ref, uf, mun = m[f"ref_completo_{n}"], m[f"u_uf_completo_{n}"], m[f"u_mun_completo_{n}"]
+        m[f"sp{n}"] = (expit(ref + uf + mun) - expit(ref + uf)).round(4)
+        m[f"lisa{n}"] = m[f"lisa_completo_{n}"].astype("Int64")
+    m["regiao"] = m.regiao_voto.astype("Int64")
+    return base, m
+
+
 def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame) -> dict:
     agg = (base.groupby("CD_MUNICIPIO")
            .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"), v13=("V_13", "sum"),
@@ -137,18 +192,32 @@ def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame) -> dict:
     m["u13"] = m.u_mun_13.round(4)
     m["u22"] = m.u_mun_22.round(4)
     colunas = ["CD_MUNICIPIO", "CD_MUNICIPIO_IBGE", "NM_MUNICIPIO", "SG_UF", "secoes", "validos", "v13", "v22",
-               "u13", "u22", "zonas"]
+               "u13", "u22", "zonas"] + [c for c in ["sp13", "sp22", "lisa13", "lisa22", "regiao"] if c in m.columns]
     return tabela(m[colunas].rename(columns={"CD_MUNICIPIO": "cd", "CD_MUNICIPIO_IBGE": "ibge",
                                               "NM_MUNICIPIO": "nome", "SG_UF": "uf"}))
 
 
-def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame) -> int:
+def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict,
+                    exp: dict | None) -> int:
+    perfil = list(PERFIL_L1.values())
     por_local = (base.groupby(["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"])
                  .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"),
-                      v13=("V_13", "sum"), v22=("V_22", "sum"))
+                      v13=("V_13", "sum"), v22=("V_22", "sum"),
+                      ELEIT_PERFIL=("ELEIT_PERFIL", "sum"), **{c: (c, "sum") for c in perfil})
                  .reset_index()
                  .merge(locais.drop(columns="SG_UF"), on=["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"], how="left"))
-    colunas = ["NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL", "NM_BAIRRO", "LAT", "LON", "secoes", "validos", "v13", "v22"]
+    extras = []
+    if exp is not None:
+        comp = composicao_municipal(base)
+        u = municipios.set_index("CD_MUNICIPIO")
+        for n in (13, 22):
+            beta = exp["stepup"]["candidatos"][str(n)]["camada_perfil"]["beta_dentro"]
+            g00 = modelos["candidatos"][str(n)]["intercepto"]["logit"]
+            efeito = por_local.CD_MUNICIPIO.map(u[f"u_uf_{n}"] + u[f"u_mun_{n}"])
+            esperado = expit(g00 + efeito + desvio_perfil(por_local, comp, beta))
+            por_local[f"s{n}"] = (por_local[f"v{n}"] / por_local.validos - esperado).round(4)
+        extras = ["s13", "s22"]
+    colunas = ["NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL", "NM_BAIRRO", "LAT", "LON", "secoes", "validos", "v13", "v22", *extras]
     for cd, grupo in por_local.groupby("CD_MUNICIPIO"):
         gravar(SAIDA / "locais" / f"{cd}.json",
                tabela(grupo[colunas].rename(columns={"NR_ZONA": "zona", "NR_LOCAL_VOTACAO": "local",
@@ -159,11 +228,12 @@ def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame) -> int:
 
 def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
     colunas = (["NR_SECAO", "NR_LOCAL_VOTACAO", "CD_MUNICIPIO", "QT_APTOS", "QT_COMPARECIMENTO", "QT_VALIDOS",
-                "QT_BRANCOS", "QT_NULOS"] + [f"V_{n}" for n in ORDEM_CANDIDATOS] + PERFIL + ["conf"])
+                "QT_BRANCOS", "QT_NULOS"] + [f"V_{n}" for n in ORDEM_CANDIDATOS] + PERFIL + ["conf"]
+               + [c for c in ["D_13", "D_22"] if c in base.columns])
     nomes = {"NR_SECAO": "secao", "NR_LOCAL_VOTACAO": "local", "CD_MUNICIPIO": "cd", "QT_APTOS": "aptos",
              "QT_COMPARECIMENTO": "comparecimento", "QT_VALIDOS": "validos", "QT_BRANCOS": "brancos",
              "QT_NULOS": "nulos", **{c: c.removeprefix("ELEIT_").lower() for c in PERFIL},
-             **{f"V_{n}": f"v{n}" for n in ORDEM_CANDIDATOS}}
+             **{f"V_{n}": f"v{n}" for n in ORDEM_CANDIDATOS}, "D_13": "d13", "D_22": "d22"}
     locais_por_zona = dict(tuple(locais.groupby(["SG_UF", "NR_ZONA"])))
     n = 0
     for (uf, zona), grupo in base.groupby(["SG_UF", "NR_ZONA"]):
@@ -188,12 +258,18 @@ def main() -> None:
     gravar(SAIDA / "historia.json", json.loads((RESULTADOS / "08_historia.json").read_text(encoding="utf-8")))
     base = marcar_conferencia(base)
     gravar(SAIDA / "conferencia.json", conferencia(base))
+    exp = explicacao()
+    if exp is not None:
+        gravar(SAIDA / "explicacao.json", exp)
+    base, municipios = acrescentar_modelos(base, municipios, exp)
     gravar(SAIDA / "municipios.json", indice_municipios(base, municipios))
-    n_mun = exportar_locais(base, locais)
+    n_mun = exportar_locais(base, locais, municipios, modelos, exp)
     n_zonas = exportar_zonas(base, locais)
     (SAIDA / "geo").mkdir(parents=True, exist_ok=True)
     shutil.copy(GEO_DIR / "municipios_br_minima.topo.json", SAIDA / "geo" / "municipios.topo.json")
     shutil.copy(GEO_DIR / "ufs_br_minima.topo.json", SAIDA / "geo" / "ufs.topo.json")
+    if (GEO_DIR / "regioes_voto.geojson").exists():
+        shutil.copy(GEO_DIR / "regioes_voto.geojson", SAIDA / "geo" / "regioes.json")
 
     arquivos = list(SAIDA.rglob("*.json"))
     tamanho = sum(a.stat().st_size for a in arquivos) / 1e6

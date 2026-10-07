@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom'
 import { Adivinhe } from '../components/Adivinhe'
 import { BarrasHorizontais } from '../components/BarrasHorizontais'
 import { Busca } from '../components/Busca'
+import { CapituloExplicacoes } from '../components/CapituloExplicacoes'
 import { CidadesGemeas } from '../components/CidadesGemeas'
 import { ComoFoiFeito } from '../components/ComoFoiFeito'
 import { ComoSabemos } from '../components/ComoSabemos'
 import { ContrariamEstado } from '../components/ContrariamEstado'
 import { EfeitoEstados } from '../components/EfeitoEstados'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { useConferencia, useHistoria, useMunicipios, useResumo, type Historia } from '../lib/dados'
+import { useConferencia, useExplicacao, useHistoria, useMunicipios, useResumo, type Historia } from '../lib/dados'
 import { inteiro, pct, pontos } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 
@@ -43,10 +44,14 @@ export function Inicio() {
   const { dados: indice } = useMunicipios()
   const { dados: historia } = useHistoria()
   const { dados: conferencia } = useConferencia()
+  const { dados: explicacao } = useExplicacao()
   const [candidato, setCandidato] = useState<NumeroCandidato>(13)
   const n = String(candidato) as '13' | '22'
   const cand = CANDIDATOS[candidato]
   const modelo = resumo?.modelos[n]
+  const espacial = explicacao?.espacial.candidatos[n]
+  const regioes = explicacao?.espacial.regioes
+  const sp = explicacao?.espacial.sao_paulo
   const seletor = <SeletorCandidato valor={candidato} aoMudar={setCandidato} />
 
   return (
@@ -222,6 +227,27 @@ export function Inicio() {
               média do próprio estado.
             </p>
             <CidadesGemeas historia={historia} resumo={resumo} candidato={candidato} />
+            {espacial && regioes && (
+              <>
+                <h3 style={{ marginTop: 32 }}>Degrau ou rampa?</h3>
+                <p>
+                  Se o voto mudasse só aos poucos pelo mapa, como uma rampa, a divisa não faria diferença. Num modelo que deixa o voto
+                  variar de forma suave entre municípios próximos (a semelhança cai pela metade a cada cerca de{' '}
+                  {inteiro(Math.round((espacial.degrau_gradiente.com_gp.alcance_km * Math.LN2) / 10) * 10)} km), a camada do estado
+                  encolhe {pct(espacial.degrau_gradiente.queda_uf, 0)}: o voto muda pelo país mais como rampa do que como degrau. O
+                  degrau que sobra na divisa é pequeno, como nas cidades gêmeas.
+                </p>
+                <p>
+                  Outra forma de ver: agrupando municípios vizinhos só pelo voto, {regioes.n} regiões explicam{' '}
+                  {pct(regioes[n].r2_regioes, 0)} da variação entre municípios no voto em {cand.nome}; os {regioes.n} estados explicam{' '}
+                  {pct(regioes[n].r2_estados, 0)}.{' '}
+                  {regioes[n].r2_regioes > regioes[n].r2_estados
+                    ? 'O mapa desenhado pelo voto separa melhor que as divisas.'
+                    : 'As divisas ainda separam o voto melhor que qualquer recorte só geográfico.'}{' '}
+                  <Link to="/mapa?v=regioes">Veja as regiões de voto no mapa</Link>.
+                </p>
+              </>
+            )}
             <ComoSabemos>
               <p>
                 Dois municípios são vizinhos quando os seus territórios se tocam na malha do IBGE. As diferenças são entre os
@@ -231,12 +257,24 @@ export function Inicio() {
                 As cidades gêmeas seguem uma regra fixa, sem escolha a dedo: vizinhas, de estados diferentes, com o centro dos
                 locais de votação a menos de {historia.regras.dist_gemeas_km} km e pelo menos{' '}
                 {inteiro(historia.regras.min_validos_gemea)} votos válidos cada. Medir quanto os vizinhos se parecem além do
-                que estado e município explicam é a próxima etapa: a análise espacial.
+                que estado e município explicam é o papel da análise espacial.
+              </p>
+              <p>
+                A rampa é um processo gaussiano nas coordenadas dos municípios, ao lado do efeito do estado. Degrau e rampa não se
+                separam por completo: estados são blocos contíguos, e um modelo espacial também consegue imitar blocos. Por isso o
+                número é uma indicação, confirmada pela comparação entre vizinhos acima. As regiões de voto saem do SKATER, que só
+                junta municípios vizinhos e procura grupos parecidos no voto em Lula e em Flávio.
               </p>
             </ComoSabemos>
           </Capitulo>
 
-          <Capitulo id="c-explicacoes" numero={4} rotulo="Em análise" titulo="Quem mora ali ou onde fica?">
+          <Capitulo id="c-explicacoes" numero={4} rotulo="Composição ou contexto" titulo="Quem mora ali ou onde fica?">
+            {explicacao ? (
+              <>
+                {seletor}
+                <CapituloExplicacoes explicacao={explicacao} resumo={resumo} candidato={candidato} />
+              </>
+            ) : (
             <div className="cartao em-breve">
               <p>
                 Um estado pode votar diferente porque a sua população é diferente (mais jovem, mais escolarizada, mais
@@ -248,6 +286,7 @@ export function Inicio() {
                 Este capítulo entra no site quando a análise estiver pronta e conferida.
               </p>
             </div>
+            )}
           </Capitulo>
 
           <Capitulo id="c-surpresas" numero={5} rotulo="As surpresas" titulo="Onde o voto foge do esperado">
@@ -261,8 +300,26 @@ export function Inicio() {
             {seletor}
             <ContrariamEstado historia={historia} candidato={candidato} />
             <p style={{ marginTop: 16 }}>
-              Todos os municípios estão no <Link to="/mapa">mapa</Link>, na opção “Efeito do município”.
+              Todos os municípios estão no <Link to="/mapa?v=efeito">mapa</Link>, na opção “Efeito do município”.
             </p>
+            {espacial && sp && (
+              <>
+                <h3 style={{ marginTop: 32 }}>Bolsões</h3>
+                <p>
+                  Mesmo depois do perfil e da região, o que sobra em cada município não se espalha ao acaso: municípios vizinhos se
+                  parecem (índice de Moran {espacial.completo.moran_I.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}, em que 0 seria
+                  acaso). São {inteiro(espacial.completo.lisa['alto cercado de alto'])} municípios em bolsões que votam em {cand.nome} acima
+                  do esperado e {inteiro(espacial.completo.lisa['baixo cercado de baixo'])} em bolsões abaixo.{' '}
+                  <Link to={`/mapa?v=bolsoes&c=${candidato}`}>Veja os bolsões no mapa</Link>.
+                </p>
+                <p>
+                  O mesmo acontece dentro das cidades. Em São Paulo, a surpresa de cada um dos {inteiro(sp.n_locais)} locais de votação
+                  (o resultado menos o esperado pelo município e pelo perfil do eleitorado) forma bolsões entre locais vizinhos (Moran{' '}
+                  {sp[n].moran_I.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}).{' '}
+                  <Link to="/municipio/71072">Veja o mapa da cidade na opção “Surpresa”</Link>.
+                </p>
+              </>
+            )}
             <ComoSabemos>
               <p>
                 O efeito do município é a estimativa do modelo para quanto a cidade se afasta do seu estado, convertida para
@@ -275,7 +332,7 @@ export function Inicio() {
 
           <Capitulo id="c-bastidores" numero={6} rotulo="Os bastidores" titulo="Como foi feito">
             <p>Do arquivo do TSE ao gráfico, cada etapa foi conferida antes da seguinte.</p>
-            <ComoFoiFeito resumo={resumo} candidato={candidato} />
+            <ComoFoiFeito resumo={resumo} candidato={candidato} explicacao={explicacao} />
           </Capitulo>
 
           <Capitulo id="c-importa" numero={7} rotulo="Por que importa" titulo="Por que medir o voto em camadas">

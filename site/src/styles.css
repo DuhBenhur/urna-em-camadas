@@ -288,3 +288,5 @@ td.num { white-space: nowrap; }
   .navegacao { order: 3; width: 100%; margin-left: -8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .navegacao a { padding: 6px 8px; white-space: nowrap; }
 }
+.chave-traco { display: inline-block; width: 14px; height: 0; border-top: 1.5px solid var(--tinta-2); margin-right: 6px; vertical-align: middle; }
+.chave-quadrada { border-radius: 2px; }

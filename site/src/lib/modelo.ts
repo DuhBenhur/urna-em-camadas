@@ -10,7 +10,7 @@ export const CANDIDATOS: Record<NumeroCandidato, { nome: string; curto: string; 
 export const expit = (x: number) => 1 / (1 + Math.exp(-x))
 
 export type Camada = {
-  chave: 'brasil' | 'estado' | 'municipio' | 'secao'
+  chave: 'brasil' | 'estado' | 'municipio' | 'perfil' | 'secao'
   rotulo: string
   detalhe: string
   valor: number
@@ -21,6 +21,8 @@ export type Camada = {
  * Decomposição do modelo nulo de três níveis (seção em município em UF), no logit:
  *   logit(p) = γ00 + u_UF + u_município + e_seção
  * Cada camada soma um termo e volta para a escala de proporção.
+ * Com `perfil` (pipeline/10: Σ β_dentro · (composição da seção − composição do município), no logit), entra a
+ * camada "perfil da seção" antes do resultado: o que o perfil do eleitorado da seção faria esperar dentro do município.
  */
 export function camadas(
   resumo: Resumo,
@@ -29,6 +31,7 @@ export function camadas(
   votos: number,
   validos: number,
   numero: NumeroCandidato,
+  perfil?: number | null,
 ): Camada[] {
   const g00 = resumo.modelos[String(numero) as '13' | '22'].intercepto
   const uUf = numero === 13 ? uf.u13 : uf.u22
@@ -37,12 +40,19 @@ export function camadas(
   const estado = expit(g00 + uUf)
   const mun = expit(g00 + uUf + uMun)
   const secao = validos > 0 ? votos / validos : NaN
-  return [
+  const lista: Camada[] = [
     { chave: 'brasil', rotulo: 'Urna típica do Brasil', detalhe: 'ponto de partida do modelo', valor: brasil, delta: null },
     { chave: 'estado', rotulo: `+ efeito do estado`, detalhe: uf.nome, valor: estado, delta: estado - brasil },
     { chave: 'municipio', rotulo: `+ efeito do município`, detalhe: municipio.nome, valor: mun, delta: mun - estado },
-    { chave: 'secao', rotulo: '= sua urna', detalhe: 'resultado real da seção', valor: secao, delta: secao - mun },
   ]
+  let anterior = mun
+  if (perfil !== undefined && perfil !== null && Number.isFinite(perfil)) {
+    const comPerfil = expit(g00 + uUf + uMun + perfil)
+    lista.push({ chave: 'perfil', rotulo: '+ perfil do eleitorado', detalhe: 'idade, sexo e escolaridade da seção', valor: comPerfil, delta: comPerfil - mun })
+    anterior = comPerfil
+  }
+  lista.push({ chave: 'secao', rotulo: '= sua urna', detalhe: 'resultado real da seção', valor: secao, delta: secao - anterior })
+  return lista
 }
 
 /** Efeito do estado em pontos percentuais, relativo à urna típica do Brasil. */

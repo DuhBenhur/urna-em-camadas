@@ -81,6 +81,53 @@ export type Conferencia = {
   ufs: ({ uf: string; nome: string } & LinhaConferencia)[]
 }
 
+type Variancias = { secao: number; uf: number; mun: number }
+type Queda = { uf: number; mun: number; secao: number }
+type Shapley = { blocos: Record<string, number>; total: number }
+
+export type ExplicacaoCandidato = {
+  n_secoes: number
+  fator_pp: number
+  sequencia: Record<string, Variancias & { loglik: number; k: number; queda: Queda }>
+  testes: Record<string, { LR: number; gl: number; p: number }>
+  shapley: Record<'uf' | 'mun', Record<'com_regiao' | 'sem_regiao', Shapley>>
+  efeito_estado_pp: Record<'nulo' | 'perfis' | 'completo', Record<string, number>>
+  efeitos: Record<string, { rotulo: string; logit: number; ep_logit: number; pp: number; pp_ic: [number, number] }>
+  mundlak: Record<string, { dentro: number; entre: number; pp_dentro: number; pp_entre: number }>
+  /** versão sem o contexto municipal, a que o site mostra (idade, sexo, índice de escolaridade e região) */
+  mundlak_simples: Record<'mulher' | '16_24' | '60_mais' | 'escol', { pp_dentro: number; pp_entre: number }>
+  inclinacao_escolaridade: { variancia: number; LR: number; p: number; fixo_pp: number; por_uf_pp: Record<string, number> }
+  interacoes: { LR: number; gl: number; p: number; escolaridade_por_regiao_pp: Record<string, number>; escolaridade_x_socio_pp: number }
+  quatro_niveis: { variancias: Record<string, number>; icc: Record<'uf' | 'mun' | 'local' | 'secao', number> }
+  robustez: Record<string, { queda?: Queda; queda_uf?: number; queda_mun?: number; n?: number; erro?: string }>
+  surpresa_perfil: number[]
+  bootstrap?: { repeticoes: number; queda_uf: Record<string, [number, number]>; queda_mun: Record<string, [number, number]>; efeitos_pp: Record<string, [number, number]> }
+}
+
+export type EspacialCandidato = {
+  nulo: { moran_I: number; p: number; lisa: Record<string, number> }
+  completo: { moran_I: number; p: number; lisa: Record<string, number> }
+  degrau_gradiente: { sem_gp: { uf: number }; com_gp: { uf: number; gp: number; alcance_km: number }; queda_uf: number }
+}
+
+/** Modelos explicativos (pipeline/10) e análise espacial (pipeline/11). */
+export type Explicacao = {
+  stepup: {
+    n_secoes: number
+    n_municipios: number
+    rotulos_blocos: Record<string, string>
+    pca_socioeconomico: { cargas: Record<string, number>; variancia_explicada: number }
+    candidatos: Record<'13' | '22', ExplicacaoCandidato>
+  }
+  espacial: {
+    n_municipios: number
+    classes_lisa: Record<string, string>
+    candidatos: Record<'13' | '22', EspacialCandidato>
+    regioes: { n: number; estados_por_regiao: { mean: number; max: number } } & Record<'13' | '22', { r2_regioes: number; r2_estados: number }>
+    sao_paulo: { n_locais: number } & Record<'13' | '22', { moran_I: number; p: number; lisa: Record<string, number>; surpresa_dp_pp: number }>
+  }
+}
+
 export type Municipio = {
   cd: number
   ibge: number
@@ -93,6 +140,12 @@ export type Municipio = {
   u13: number
   u22: number
   zonas: number[]
+  /** o que o perfil não explica (p.p.), bolsão espacial (LISA, 0–4) e região de voto (pipeline/10, 11) */
+  sp13?: number | null
+  sp22?: number | null
+  lisa13?: number | null
+  lisa22?: number | null
+  regiao?: number | null
 }
 
 export type Local = {
@@ -106,6 +159,9 @@ export type Local = {
   validos: number
   v13: number
   v22: number
+  /** surpresa: resultado − esperado pelo município e pelo perfil do eleitorado do local (proporção) */
+  s13?: number | null
+  s22?: number | null
 }
 
 export type Secao = {
@@ -125,6 +181,9 @@ export type Secao = {
   superior: number | null
   /** 1 se a seção é idêntica ao resultado oficial do TSE em todos os campos (pipeline/03 e 07) */
   conf: number | null
+  /** perfil do eleitorado da seção em relação ao município, no logit × 10.000 (pipeline/10 e 07) */
+  d13?: number | null
+  d22?: number | null
 } & Record<`v${number}`, number>
 
 export type ArquivoZona = Tabela & {
@@ -177,6 +236,8 @@ export const useResumo = () => useDados<Resumo>('resumo.json')
 export const useHistoria = () => useDados<Historia>('historia.json')
 
 export const useConferencia = () => useDados<Conferencia>('conferencia.json')
+
+export const useExplicacao = () => useDados<Explicacao>('explicacao.json')
 
 export type IndiceMunicipios = { lista: Municipio[]; porCodigo: Map<number, Municipio>; porIbge: Map<number, Municipio> }
 

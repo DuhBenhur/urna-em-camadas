@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { normalizar, registros, useLocais, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
-import { CANDIDATOS, efeitoMunicipio } from '../lib/modelo'
+import { SeletorCandidato } from '../components/SeletorCandidato'
+import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 
 export function Municipio() {
@@ -14,6 +15,8 @@ export function Municipio() {
   const [filtro, setFiltro] = useState('')
   const [selecionado, setSelecionado] = useState<string | null>(null)
   const [limite, setLimite] = useState(30)
+  const [vista, setVista] = useState<'margem' | 'surpresa'>('margem')
+  const [candidato, setCandidato] = useState<NumeroCandidato>(13)
 
   const municipio = indice?.porCodigo.get(cd)
   const visiveis = useMemo(() => {
@@ -74,11 +77,30 @@ export function Municipio() {
       </div>
 
       <h2>Locais de votação</h2>
-      <p className="secundario">Cada círculo é um local de votação: o tamanho é o número de votos válidos e a cor, quem ficou à frente.</p>
-      <div id="mapa-locais">
-        {locais ? <MapaLocais locais={locais} selecionado={selecionado} aoSelecionar={setSelecionado} /> : <p className="carregando">Carregando locais…</p>}
+      <p className="secundario">
+        {vista === 'margem'
+          ? 'Cada círculo é um local de votação: o tamanho é o número de votos válidos e a cor, quem ficou à frente.'
+          : `Cada círculo é um local de votação: a cor é quanto ele votou em ${CANDIDATOS[candidato].nome} acima ou abaixo do esperado para ${municipio.nome} e para o perfil do seu eleitorado (idade, sexo, escolaridade).`}
+      </p>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div className="abas" role="group" aria-label="O que o mapa mostra">
+          <button aria-pressed={vista === 'margem'} onClick={() => setVista('margem')}>
+            Resultado
+          </button>
+          <button aria-pressed={vista === 'surpresa'} onClick={() => setVista('surpresa')}>
+            Surpresa
+          </button>
+        </div>
+        {vista === 'surpresa' && <SeletorCandidato valor={candidato} aoMudar={setCandidato} />}
       </div>
-      <LegendaEscala variavel="margem" candidato={13} />
+      <div id="mapa-locais">
+        {locais ? (
+          <MapaLocais locais={locais} selecionado={selecionado} aoSelecionar={setSelecionado} variavel={vista} candidato={candidato} />
+        ) : (
+          <p className="carregando">Carregando locais…</p>
+        )}
+      </div>
+      <LegendaEscala variavel={vista} candidato={candidato} />
 
       {local && <SecoesDoLocal uf={municipio.uf} zona={local.zona} local={local.local} nome={local.nome} cd={cd} />}
 

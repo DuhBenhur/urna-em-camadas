@@ -46,6 +46,62 @@ Raça/cor não entra no nível 1: no cadastro do TSE, 84% está como "não infor
 
 **Ferramenta:** `statsmodels` MixedLM (grupos = UF, componente de variância = município), na mesma linha do material do MBA, como referência. Os modelos pesados vão no `gpboost`, que ajusta o HLM3 nacional em segundos com álgebra esparsa. Os dois são comparados no modelo nulo antes de seguir.
 
+## Step-up detalhado: composição ou contexto? (fixado em 07/10/2026, antes dos resultados)
+
+Pergunta: quanto da camada do estado (ICC de 63% para Lula) se explica pelo perfil de quem vota (composição) e
+quanto pelo lugar (contexto)? Decisão do usuário: fazer tudo agora, inclusive inclinações, interações e espacial;
+só a parte do 2º turno fica para depois.
+
+Piloto (Lula, gaussiano no logit, sem incerteza), só para calibrar o desenho: a variância do estado cai 15% com o
+perfil das seções, 61% com o perfil dos municípios e 90% com a região; a região sozinha explica 87%. Renda e
+Bolsa Família têm r = −0,91 (VIF 7,5 e 5,9).
+
+**Blocos** (Shapley sobre todas as ordens, para a sobreposição entre blocos não depender da ordem de entrada):
+
+| Bloco | Variáveis | Nível | Fonte |
+|---|---|---|---|
+| Idade e sexo | % mulheres, % 16–24, % 60+ | seção | TSE, perfil do eleitorado |
+| Escolaridade | % até fundamental incompleto, % superior completo | seção | TSE, perfil do eleitorado |
+| Renda e economia | log renda média per capita, log PIB per capita, % da população no Bolsa Família | município | IBGE, MDS |
+| Cor ou raça | % pretos e pardos | município | Censo 2022 |
+| Religião | % evangélicos | município | Censo 2022 |
+| Urbanização | % urbana | município | Censo 2022 |
+| Região | N, NE, CO, S (SE de referência) | UF | IBGE |
+
+- v(S) = 1 − σ²(S)/σ²(nulo) para a UF e para o município; Shapley com e sem o bloco de região. Região é rótulo,
+  não explicação: entra por último na narrativa ("o que sobra é regional").
+- Sequência para os testes: M1 = perfil da seção; M2 = M1 + perfil do município; M3 = M2 + região. LRT (ML).
+- Renda, PIB e Bolsa Família só são interpretados juntos. No gráfico de efeitos, entram como um índice
+  socioeconômico (1º componente principal).
+- Mundlak: variáveis da seção centradas no município + médias do município, para separar o efeito dentro da
+  cidade (composição) do efeito entre cidades (contexto). Os coeficientes "dentro" alimentam a camada
+  "perfil da seção" da página da urna.
+- 4 níveis no modelo nulo: seção < local de votação < município < UF.
+- Inclinação aleatória do % superior por UF (LRT com correção de fronteira) e interações superior × região e
+  superior × renda municipal.
+- Incerteza: bootstrap por UF (reamostra os 27 estados) para as reduções de variância e os efeitos.
+- Robustez: Flávio (22) em tudo; verossimilhança binomial com o número de válidos como tentativas; só seções com
+  100+ válidos.
+- Exclusões: 389 seções sem perfil do eleitorado e Boa Esperança do Norte (MT), sem dados do Censo.
+
+**Espacial**: Moran global e LISA nos efeitos dos municípios (nulo e completo), contiguidade da malha do IBGE;
+regionalização (SKATER, `spopt`); modelo municipal com efeito do estado + processo gaussiano nas coordenadas,
+para separar a divisa (degrau) da região (gradiente suave); "surpresa" de cada local de votação (resultado menos
+o esperado pelo município e pelo perfil das seções) para os mapas de cidade.
+
+**Linguagem**: lugares, nunca pessoas (falácia ecológica); nada causal; os dois candidatos lado a lado.
+
+**Desvios do plano (07/10, depois da primeira rodada, registrados aqui):**
+- Inclinação aleatória, interações e gráfico de efeitos usam um índice de escolaridade da seção (% superior − % até o
+  fundamental incompleto; r = −0,67 entre os dois), e não o % superior sozinho. Com as duas medidas no mesmo modelo, o
+  efeito do % superior é parcial (mantido fixo o % com pouca escolaridade) e ia de −5 a +5,5 p.p. entre estados, sem uma
+  leitura clara. Os blocos do Shapley continuam com as duas variáveis.
+- A tabela "dentro da cidade x entre cidades" usa um Mundlak simples (perfil + região). Com renda, cor ou raça e religião
+  no mesmo modelo, o efeito "entre cidades" da escolaridade trocava de sinal por colinearidade. A versão completa continua
+  no JSON e dá os coeficientes da camada "perfil" da página da urna.
+- A verossimilhança binomial do `gpboost` não saiu dos valores iniciais das variâncias (testado com três inícios
+  diferentes). No lugar, a robustez repete a decomposição na escala de proporção, sem o logit.
+
 ## Conexão entre técnicas
 
 1. **Multinível** separa a variação por nível e estima os efeitos de cada contexto.

@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { BoletimUrna } from '../components/BoletimUrna'
 import { GraficoCamadas } from '../components/GraficoCamadas'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { registros, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
+import { registros, useExplicacao, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { pct, pp } from '../lib/formato'
 import { CANDIDATOS, camadas, percentil, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
@@ -24,6 +24,7 @@ export function Urna() {
   const { dados: resumo } = useResumo()
   const { dados: indice } = useMunicipios()
   const { dados: historia } = useHistoria()
+  const { dados: explicacao } = useExplicacao()
   const { dados: arquivo, erro } = useZona(uf.toUpperCase(), nZona)
   const [candidato, setCandidato] = useState<NumeroCandidato>(13)
   const [copiado, setCopiado] = useState(false)
@@ -58,16 +59,24 @@ export function Urna() {
   const municipio = indice.porCodigo.get(s.cd)!
   const ufDados = resumo.ufs.find((u) => u.uf === arquivo.uf)!
   const [nomeLocal, bairro] = arquivo.locais[`${s.cd}-${s.local}`] ?? ['Local não informado', '']
-  const cs = camadas(resumo, ufDados, municipio, s[`v${candidato}`], s.validos, candidato)
+  const d = candidato === 13 ? s.d13 : s.d22
+  const perfil = d === undefined || d === null ? null : d / 10_000
+  const cs = camadas(resumo, ufDados, municipio, s[`v${candidato}`], s.validos, candidato, perfil)
+  const camada = (chave: string) => cs.find((c) => c.chave === chave)
+  const final = cs[cs.length - 1]
+  const camPerfil = camada('perfil')
   const mesmaEscola = secoes.filter((x) => x.local === s.local && x.cd === s.cd)
   const cand = CANDIDATOS[candidato]
   const nacional = {
     lula: resumo.candidatos.find((c) => c.numero === 13)!.votos / resumo.totais.validos,
     flavio: resumo.candidatos.find((c) => c.numero === 22)!.votos / resumo.totais.validos,
   }
-  const residuo = cs[3].delta ?? 0
-  // quão longe do esperado para o município, comparado com todas as urnas do país
-  const surpresa = historia && Number.isFinite(residuo) ? percentil(historia.surpresa[String(candidato) as '13' | '22'], Math.abs(residuo) * 100) : null
+  const residuo = final.delta ?? 0
+  // quão longe do esperado (município e, se houver, perfil do eleitorado), comparado com todas as urnas do país
+  const quantis = camPerfil && explicacao ? explicacao.stepup.candidatos[String(candidato) as '13' | '22'].surpresa_perfil
+    : historia?.surpresa[String(candidato) as '13' | '22']
+  const surpresa = quantis && Number.isFinite(residuo) ? percentil(quantis, Math.abs(residuo) * 100) : null
+  const esperadoPor = camPerfil ? 'o município e o perfil do eleitorado' : 'o município'
 
   const compartilhar = async () => {
     const url = window.location.href
@@ -124,8 +133,15 @@ export function Urna() {
           <GraficoCamadas camadas={cs} cor={cand.cor} candidato={cand.nome} />
           <p style={{ marginTop: 16 }}>
             Uma urna qualquer do Brasil daria {pct(cs[0].valor)} a {cand.curto}. Só por estar {comPreposicao('em', ufDados.uf, ufDados.nome)}, o modelo espera{' '}
-            {pct(cs[1].valor)} ({pp(cs[1].delta!)}). Em {municipio.nome}, {pct(cs[2].valor)} ({pp(cs[2].delta!)}). Esta seção deu{' '}
-            <strong>{pct(cs[3].valor)}</strong>: {Math.abs(residuo) < 0.02 ? 'praticamente o esperado para o município' : `${pp(residuo)} em relação ao esperado para o município`}.
+            {pct(cs[1].valor)} ({pp(cs[1].delta!)}). Em {municipio.nome}, {pct(cs[2].valor)} ({pp(cs[2].delta!)}).
+            {camPerfil && (
+              <>
+                {' '}
+                Com o perfil de quem vota nesta seção (idade, sexo e escolaridade), {pct(camPerfil.valor)} ({pp(camPerfil.delta!)}).
+              </>
+            )}{' '}
+            Esta seção deu <strong>{pct(final.valor)}</strong>:{' '}
+            {Math.abs(residuo) < 0.02 ? `praticamente o esperado para ${esperadoPor}` : `${pp(residuo)} em relação ao esperado para ${esperadoPor}`}.
           </p>
           {surpresa !== null && (
             <p>
@@ -134,13 +150,14 @@ export function Urna() {
                   ? `Mais surpreendente que ${Math.floor(surpresa)}% das urnas do Brasil`
                   : `Mais previsível que ${Math.floor(100 - surpresa)}% das urnas do Brasil`}
               </strong>
-              {surpresa >= 90 ? ': poucas se afastam tanto do esperado para o seu município.' : surpresa <= 20 ? ': ficou bem perto do esperado para o município.' : '.'}
+              {surpresa >= 90 ? `: poucas se afastam tanto do esperado para ${esperadoPor}.` : surpresa <= 20 ? `: ficou bem perto do esperado para ${esperadoPor}.` : '.'}
             </p>
           )}
           <p className="discreto">
-            Isto descreve a urna, não as pessoas que votaram nela. A última camada é o que estado e município não explicam: o
-            perfil de quem vota nesta seção, a vizinhança, o acaso.
-            Na próxima versão, o modelo separa o perfil do eleitorado dessa sobra.
+            Isto descreve a urna, não as pessoas que votaram nela.{' '}
+            {camPerfil
+              ? 'A última camada é o que estado, município e perfil do eleitorado não explicam: a vizinhança, a história do lugar, o acaso.'
+              : 'A última camada é o que estado e município não explicam: o perfil de quem vota nesta seção, a vizinhança, o acaso.'}
           </p>
           <button className="botao botao-secundario" onClick={compartilhar}>
             {copiado ? 'Link copiado' : 'Compartilhar esta urna'}

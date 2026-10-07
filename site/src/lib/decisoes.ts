@@ -24,6 +24,16 @@ export const DECISOES: { escolha: string; porque: string; descartada: string; in
     inicio: true,
   },
   {
+    escolha: 'Repartir a explicação pela média de todas as ordens (valor de Shapley)',
+    porque: 'Os grupos de características se sobrepõem: o crédito de cada um mudaria conforme a ordem de entrada no modelo.',
+    descartada: 'Uma ordem fixa, que dá o crédito da sobreposição a quem entra primeiro.',
+  },
+  {
+    escolha: 'Renda, PIB e Bolsa Família num índice socioeconômico',
+    porque: 'Andam juntos demais (correlação de −0,91 entre renda e Bolsa Família) para separar o efeito de cada um.',
+    descartada: 'Interpretar cada coeficiente sozinho.',
+  },
+  {
     escolha: 'Logit da proporção de votos',
     porque: 'O percentual fica sempre entre 0% e 100%.',
     descartada: 'Modelar o percentual direto, que pode prever valores impossíveis.',

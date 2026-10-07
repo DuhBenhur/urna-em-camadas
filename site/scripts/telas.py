@@ -8,6 +8,7 @@ Uso:  python site/scripts/telas.py                       # páginas principais
 Saída em site/scripts/telas/ (fora do git). Requer: pip install playwright && python -m playwright install chromium
 """
 import argparse
+import re
 import time
 from pathlib import Path
 
@@ -15,7 +16,7 @@ from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:4173/"
 SAIDA = Path(__file__).parent / "telas"
-PADRAO = ["#/", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/municipio/71072", "#/metodo"]
+PADRAO = ["#/", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes", "#/municipio/71072", "#/metodo"]
 MODOS = [("desktop", 1280, "light"), ("celular", 390, "dark")]
 ESPERA_MAPAS = 8  # os mapas carregam malha e tiles depois do networkidle
 
@@ -50,7 +51,9 @@ def main() -> None:
                 pagina.wait_for_load_state("networkidle")
                 eh_mapa = "mapa" in rota or "municipio" in rota
                 time.sleep(args.espera if args.espera is not None else (ESPERA_MAPAS if eh_mapa else 1.5))
-                arquivo = SAIDA / f"{nome}_{rota.strip('#/').replace('/', '_') or 'inicio'}.png"
+                # "#/mapa?v=bolsoes" → "mapa_v-bolsoes" ("?" e "=" não valem em nome de arquivo no Windows)
+                limpo = re.sub(r"[^\w-]+", "_", rota.strip("#/").replace("=", "-")).strip("_")
+                arquivo = SAIDA / f"{nome}_{limpo or 'inicio'}.png"
                 if args.seletor:
                     pagina.locator(args.seletor).first.screenshot(path=str(arquivo))
                 else:

@@ -13,6 +13,15 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 **Modelo**
 - `pipeline/05_hlm_nulo.py`: OLS nulo → HLM2 → HLM3 para Lula (13) e Flávio (22), com `gpboost`. ICC Lula: UF 62,7%, município 21,7%, seção 15,6%. Flávio: 60,5% / 22,9% / 16,6%. Validado contra o `statsmodels` (log-verossimilhança −225.328,4 x −225.328,8).
 
+**Modelos explicativos e espaço (07/10; `pipeline/10_hlm_stepup.py`, `pipeline/11_espacial.py`)**
+- Desenho fixado em `docs/plano_de_analise.md` antes dos resultados, com os desvios registrados lá (índice de escolaridade, Mundlak simples para a tabela, binomial descartado porque não convergia).
+- Camada do estado (Shapley, 128 modelos, Lula; Flávio quase igual): região 46%, renda/PIB/Bolsa Família 22%, cor ou raça 10%, religião 8%, escolaridade da seção 4%, urbanização 1%, idade e sexo 0%; sobram 10%. Sem a região: perfis explicam 71%.
+- Efeito médio do estado cai de 15,9 para 6,9 p.p. (Lula) com o perfil; SC −24,4 → −1,4; PI +28,1 → +12,3. Acre e Pará se afastam do zero (o perfil previa mais Lula).
+- 4 níveis: estado 56%, município 20%, local de votação 20%, seção 3% (Lula): o que parecia da seção é do bairro.
+- Espacial: Moran/LISA dos efeitos municipais, 27 regiões de voto (SKATER, ~2,5 min), processo gaussiano nas coordenadas (degrau x rampa), surpresa por local de votação em SP. A malha TopoJSON do IBGE não traz CRS: o 11 define EPSG:4674.
+- Site: capítulo 4 completo (componentes `CapituloExplicacoes`, `PontosHorizontais`), mapa com 5 vistas (`#/mapa?v=...`: resultado, efeito, o que o perfil não explica, bolsões, regiões de voto), "Surpresa" no mapa de locais do município, camada "+ perfil do eleitorado" na urna, Método seções 5 e 6, notebook `notebooks/10_composicao_contexto.ipynb`.
+- Bootstrap por UF (`--bootstrap 100`, ~1 h) dá os intervalos das quedas e dos efeitos.
+
 **Conferência cidadã (07/10)**
 - `pipeline/09_totalizacao_oficial.py` → `data/processed/totalizacao_secao_2026.parquet` (versionado, 4,8 MB): resultado oficial de Presidente por seção, de `detalhe_votacao_secao_2026` (arquivo `_BR`) e `votacao_secao_2026_BR`. O conjunto por município e zona (`votacao_candidato_munzona_2026`) ainda não tem Presidente.
 - O 03 compara as 497.897 seções campo a campo (aptos, comparecimento, abstenções, brancos, nulos, válidos, 12 candidatos): **todas idênticas**. Nulos = nulo da urna (96) + nulo técnico (28, renúncia), que a tabela de detalhe não soma. Roda no CI: uma divergência bloqueia a publicação.
@@ -49,11 +58,11 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 
 ## Pendências, em ordem de prioridade
 
-1. **Step-up ("quem mora ali ou onde fica?")**: plano proposto em 07/10, aguardando aprovação. Piloto (Lula, sem ponderar, sem incerteza): variância do estado cai 15% com o perfil das seções, 61% com o perfil dos municípios, 90% com a região; a região sozinha explica 87%. Renda x Bolsa Família: r = −0,91 (um bloco só). O `gh` continua não instalado: para enviar, `git push` (o Git Credential Manager autentica).
-2. **Previsão do 2º turno (tem prazo: registrar até ~20/10).** Baixar os boletins de urna de 2022 (1º e 2º turnos, conjunto `resultados-2022-boletim-de-urna` no Portal de Dados Abertos do TSE). Compatibilizar seções 2022 → 2026 (seções mudam; usar local de votação e coordenadas). Modelar a transição 1T → 2T de 2022 por seção, aplicar ao 1T de 2026 e pré-registrar no OSF com embargo.
-3. **Step-up M2–M6 com `gpboost`** (vira o capítulo 4 da história: quanto dos 63% do estado sobra depois da composição). Nível 1: % mulheres, 16–24, 60+, até fundamental incompleto, superior, abstenção. Nível 2: log da renda média, % pretos e pardos, % evangélicos, % urbana, % no Bolsa Família, log do PIB per capita (checar colinearidade). Nível 3: no máximo 2–3 variáveis (região, alinhamento do governador; a definir). Depois, inclinação aleatória da escolaridade por UF e interações entre níveis. Levar a camada "perfil do eleitorado" para a página da urna.
-4. **Espacial** (completa o capítulo 5). Moran e LISA nos BLUPs dos municípios (pesos de contiguidade da malha do IBGE); regionalização (`spopt`: SKATER ou max-p); zoom por local de votação em SP.
-5. **Site.** Imagem de compartilhamento (og:image 1200×630); página de Dados (downloads + dicionário); card da urna para compartilhar; página da previsão (depois de 25/10); exposição ao tarifaço (Comex Stat) no nível municipal; teste em celular real.
+1. **2º turno** (decisão do usuário em 07/10: "deixar a parte do segundo turno para o segundo turno").
+   - Previsão pré-registrada: se for feita, registrar antes de 25/10 no OSF com embargo; o site promete isso em 4 lugares (capítulo 7, "Como foi feito", decisões e Método). Receita: boletins de urna de 2022 (1º e 2º turnos, `resultados-2022-boletim-de-urna`), compatibilizar seções 2022 → 2026 por local de votação e coordenadas, modelar a transição 1T → 2T de 2022 por seção e aplicar ao 1T de 2026.
+   - Depois de 25/10: baixar o 2º turno, repetir a conferência e a decomposição, comparar os turnos. Nenhum conteúdo novo no dia 25/10.
+2. **Site.** Imagem de compartilhamento (og:image 1200×630); página de Dados (downloads + dicionário); card da urna para compartilhar; exposição ao tarifaço (Comex Stat) no nível municipal; teste em celular real.
+3. Para enviar: `git push` (o Git Credential Manager autentica; o `gh` não está instalado).
 
 ## Problemas conhecidos
 

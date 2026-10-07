@@ -1,0 +1,142 @@
+{
+  "n_municipios": 5570,
+  "ilhas": [
+    30015,
+    65099
+  ],
+  "permutacoes": 999,
+  "alfa": 0.05,
+  "classes_lisa": {
+    "0": "sem padrão",
+    "1": "alto cercado de alto",
+    "2": "baixo cercado de alto",
+    "3": "baixo cercado de baixo",
+    "4": "alto cercado de baixo"
+  },
+  "candidatos": {
+    "13": {
+      "nulo": {
+        "moran_I": 0.5598186246797734,
+        "p": 0.001,
+        "lisa": {
+          "sem padrão": 3678,
+          "alto cercado de alto": 865,
+          "baixo cercado de alto": 53,
+          "baixo cercado de baixo": 912,
+          "alto cercado de baixo": 62
+        }
+      },
+      "completo": {
+        "moran_I": 0.4664580511010143,
+        "p": 0.001,
+        "lisa": {
+          "sem padrão": 3945,
+          "alto cercado de alto": 793,
+          "baixo cercado de alto": 59,
+          "baixo cercado de baixo": 686,
+          "alto cercado de baixo": 87
+        }
+      },
+      "degrau_gradiente": {
+        "sem_gp": {
+          "erro": 0.18305445405545678,
+          "uf": 0.5422025150578619
+        },
+        "com_gp": {
+          "erro": 0.0402012191521094,
+          "uf": 0.03459253354310661,
+          "gp": 0.41304897272342006,
+          "alcance_km": 342.3548791962679
+        },
+        "queda_uf": 0.9361999758717183,
+        "loglik": {
+          "sem_gp": -3253.5411807593346,
+          "com_gp": -1084.3671975377638
+        }
+      }
+    },
+    "22": {
+      "nulo": {
+        "moran_I": 0.5593253841692503,
+        "p": 0.001,
+        "lisa": {
+          "sem padrão": 3648,
+          "alto cercado de alto": 936,
+          "baixo cercado de alto": 73,
+          "baixo cercado de baixo": 857,
+          "alto cercado de baixo": 56
+        }
+      },
+      "completo": {
+        "moran_I": 0.473016918678836,
+        "p": 0.001,
+        "lisa": {
+          "sem padrão": 3884,
+          "alto cercado de alto": 751,
+          "baixo cercado de alto": 80,
+          "baixo cercado de baixo": 794,
+          "alto cercado de baixo": 61
+        }
+      },
+      "degrau_gradiente": {
+        "sem_gp": {
+          "erro": 0.17063398567095694,
+          "uf": 0.49455392602406384
+        },
+        "com_gp": {
+          "erro": 0.03749968135790842,
+          "uf": 0.035578805262391044,
+          "gp": 0.4005463004954568,
+          "alcance_km": 363.2535819575424
+        },
+        "queda_uf": 0.9280587952290165,
+        "loglik": {
+          "sem_gp": -3057.569935200579,
+          "com_gp": -870.2155094542709
+        }
+      }
+    }
+  },
+  "regioes": {
+    "n": 27,
+    "13": {
+      "r2_regioes": 0.8443913757980597,
+      "r2_estados": 0.7437335187780333
+    },
+    "22": {
+      "r2_regioes": 0.8378221990839229,
+      "r2_estados": 0.7310085704583958
+    },
+    "estados_por_regiao": {
+      "mean": 3.1481481481481484,
+      "max": 10.0
+    }
+  },
+  "sao_paulo": {
+    "n_locais": 2044,
+    "13": {
+      "moran_I": 0.7057254614300174,
+      "p": 0.001,
+      "lisa": {
+        "sem padrão": 994,
+        "alto cercado de alto": 450,
+        "baixo cercado de alto": 43,
+        "baixo cercado de baixo": 530,
+        "alto cercado de baixo": 27
+      },
+      "surpresa_dp_pp": 6.324027522935226
+    },
+    "22": {
+      "moran_I": 0.684005822138824,
+      "p": 0.001,
+      "lisa": {
+        "sem padrão": 1006,
+        "alto cercado de alto": 472,
+        "baixo cercado de alto": 39,
+        "baixo cercado de baixo": 482,
+        "alto cercado de baixo": 45
+      },
+      "surpresa_dp_pp": 5.761080743390002
+    }
+  }
+}

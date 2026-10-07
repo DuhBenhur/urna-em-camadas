@@ -1,25 +1,29 @@
 # Urna em Camadas
 
-> Análise multinível do 1º turno presidencial de 2026 no Brasil, por seção eleitoral (urna). Cada urna é decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município e o que é só da seção. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE e MDS. Não é pesquisa eleitoral.
+> Análise multinível e espacial do 1º turno presidencial de 2026 no Brasil, por seção eleitoral (urna). Cada urna é conferida com o resultado oficial do TSE e decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município, o perfil do eleitorado da seção e o que nenhum dado explica. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE e MDS. Não é pesquisa eleitoral. Os resultados descrevem lugares, não pessoas.
 
-## Principais resultados (modelo nulo de três níveis, logit da proporção de votos válidos)
+## Principais resultados
 
-- Lula: 62,7% da variação entre urnas está entre estados, 21,7% entre municípios do mesmo estado e 15,6% entre seções do mesmo município.
-- Flávio Bolsonaro: 60,5% estado, 22,9% município, 16,6% seção.
-- 497.897 seções, 5.571 municípios, 27 UFs (eleitores no exterior fora do modelo).
+- Conferência: as 497.897 urnas do Brasil são idênticas ao resultado oficial por seção do TSE em aptos, comparecimento, abstenções, brancos, nulos (da urna + técnicos) e votos de cada um dos 12 candidatos.
+- Modelo nulo de três níveis (logit da proporção de votos válidos): Lula, 62,7% da variação entre urnas está entre estados, 21,7% entre municípios do mesmo estado e 15,6% entre seções do mesmo município. Flávio Bolsonaro: 60,5% / 22,9% / 16,6%.
+- Com quatro níveis, quase tudo o que parecia da seção é do local de votação (cerca de 20% da variação); só cerca de 3% é da urna em si.
+- O que explica a camada do estado (valor de Shapley sobre 128 modelos, Lula): região 46%, renda/PIB/Bolsa Família do município 22%, cor ou raça 10%, religião 8%, escolaridade da seção 4%, urbanização 1%, idade e sexo 0%; sobram 10%.
+- Vizinhança: dois municípios vizinhos em estados diferentes se parecem mais do que dois municípios quaisquer do mesmo estado. Um modelo com variação espacial suave absorve cerca de 94% da variância do estado; 27 regiões desenhadas pelo voto explicam 84% da variação entre municípios, contra 74% dos 27 estados.
+- O que perfil e região não explicam forma bolsões de municípios vizinhos (Moran 0,47) e, em São Paulo, bolsões de locais de votação (Moran 0,71).
 
 ## Páginas
 
-- Início: busca por UF, zona e seção ou por município; efeito de cada estado.
-- /#/urna/{UF}/{zona}/{seção}: boletim de urna e camadas de uma urna específica.
-- /#/municipio/{código TSE}: locais de votação e urnas de um município.
-- /#/mapa: mapa dos municípios (resultado e efeito do município).
-- /#/metodo: dados, validação e modelo.
+- Início: busca por UF, zona e seção ou por município; a história em sete capítulos (o jogo de adivinhar uma urna, o estado, a vizinhança, composição ou contexto, as surpresas, como foi feito, por que importa).
+- /#/conferencia: como conferir a sua urna com o boletim impresso e a soma das urnas contra o resultado oficial, por estado.
+- /#/urna/{UF}/{zona}/{seção}: boletim de urna, selo de conferência e camadas de uma urna específica.
+- /#/municipio/{código TSE}: locais de votação e urnas de um município; mapa do resultado e da surpresa de cada local.
+- /#/mapa?v={margem|efeito|semperfil|bolsoes|regioes}: mapa dos municípios.
+- /#/metodo: dados, conferência, modelos, espaço, decisões e como reproduzir.
 
 ## Dados
 
-- Arquivos JSON estáticos em /dados/ (resumo.json, municipios.json, zonas/{UF}-{zona}.json, locais/{código}.json).
-- Código-fonte, dados processados (Parquet) e validações no repositório do GitHub do projeto.
+- Arquivos JSON estáticos em /dados/ (resumo.json, conferencia.json, historia.json, explicacao.json, municipios.json, zonas/{UF}-{zona}.json, locais/{código}.json, geo/).
+- Código-fonte, dados processados (Parquet), resultados dos modelos (JSON), notebook e validações no repositório https://github.com/DuhBenhur/urna-em-camadas.
 
 ## Licença
 
