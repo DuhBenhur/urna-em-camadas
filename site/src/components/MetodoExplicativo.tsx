@@ -1,5 +1,6 @@
 import type { Explicacao } from '../lib/dados'
 import { inteiro, pct } from '../lib/formato'
+import { TabelaRolagem } from './TabelaRolagem'
 
 const ROTULOS_SEQUENCIA: Record<string, string> = {
   'M0 nulo': 'M0: sem explicações',
@@ -27,7 +28,7 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
         eleitorado publicado e Boa Esperança do Norte (MT), sem dados do Censo. A parte explicada de cada nível é quanto a
         variância dele cai em relação ao modelo sem explicações.
       </p>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -54,7 +55,7 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
       <p style={{ marginTop: 16 }}>
         <strong>Repartição sem depender da ordem.</strong> Os grupos se sobrepõem (região e renda andam juntas), então a queda
         atribuída a cada um depende de quando ele entra. O valor de Shapley faz a média da contribuição de cada grupo em todas as

@@ -16,7 +16,7 @@ from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:4173/"
 SAIDA = Path(__file__).parent / "telas"
-PADRAO = ["#/", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes", "#/municipio/71072", "#/metodo", "#/dados"]
+PADRAO = ["#/", "#/analise", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes", "#/municipio/71072", "#/metodo", "#/dados"]
 MODOS = [("desktop", 1280, "light"), ("celular", 390, "dark")]
 ESPERA_MAPAS = 8  # os mapas carregam malha e tiles depois do networkidle
 

@@ -6,6 +6,7 @@ import { inteiro, pct, pp } from '../lib/formato'
 import { SeletorCandidato } from '../components/SeletorCandidato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
+import { TabelaRolagem } from '../components/TabelaRolagem'
 
 export function Municipio() {
   const cd = Number(useParams().cd)
@@ -108,7 +109,8 @@ export function Municipio() {
         <label htmlFor="f-local">Procurar local (escola, bairro)</label>
         <input id="f-local" value={filtro} onChange={(e) => setFiltro(e.target.value)} placeholder="ex.: Caetano de Campos" />
       </div>
-      <div className="tabela-rolagem" style={{ marginTop: 12 }}>
+      <div style={{ marginTop: 12 }}>
+        <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -126,7 +128,7 @@ export function Municipio() {
               return (
                 <tr key={chave} style={chave === selecionado ? { background: 'var(--borda)' } : undefined}>
                   <td>
-                    <button className="link-botao" onClick={() => selecionarNaTabela(chave)} style={{ all: 'unset', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'var(--eixo)', textUnderlineOffset: 3 }}>
+                    <button className="link" onClick={() => selecionarNaTabela(chave)} style={{ textAlign: 'left' }}>
                       {l.nome}
                     </button>
                   </td>
@@ -140,6 +142,7 @@ export function Municipio() {
             })}
           </tbody>
         </table>
+        </TabelaRolagem>
         {visiveis.length > limite && (
           <p style={{ marginTop: 12 }}>
             <button className="botao botao-secundario" onClick={() => setLimite((n) => n + 100)}>

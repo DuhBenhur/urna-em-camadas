@@ -13,7 +13,8 @@
 
 ## Páginas
 
-- Início: busca por UF, zona e seção ou por município; a história em sete capítulos (o jogo de adivinhar uma urna, o estado, a vizinhança, composição ou contexto, as surpresas, como foi feito, por que importa).
+- Início: busca por UF, zona e seção ou por município, a conferência e três achados em linguagem simples.
+- /#/analise: a análise completa em sete capítulos (o jogo de adivinhar uma urna, o estado, a vizinhança, composição ou contexto, as surpresas, como foi feito, por que importa); /#/analise?c={id do capítulo} abre direto num capítulo.
 - /#/conferencia: como conferir a sua urna com o boletim impresso e a soma das urnas contra o resultado oficial, por estado.
 - /#/urna/{UF}/{zona}/{seção}: boletim de urna, selo de conferência e camadas de uma urna específica.
 - /#/municipio/{código TSE}: locais de votação e urnas de um município; mapa do resultado e da surpresa de cada local.

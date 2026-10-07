@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { REPOSITORIO } from '../lib/projeto'
+import { TabelaRolagem } from '../components/TabelaRolagem'
 
 type Arquivo = { caminho: string; conteudo: string; linhas: string; tamanho: string; script: string }
 
@@ -19,7 +20,7 @@ const PROCESSADOS: Arquivo[] = [
 
 const RESULTADOS: Arquivo[] = [
   { caminho: 'resultados/05_hlm_nulo.json', conteudo: 'Modelo nulo de três níveis: variâncias, ICC, testes', linhas: '—', tamanho: '2 kB', script: '05' },
-  { caminho: 'resultados/08_historia.json', conteudo: 'Números da história da página inicial', linhas: '—', tamanho: '25 kB', script: '08' },
+  { caminho: 'resultados/08_historia.json', conteudo: 'Números da análise (o jogo, a vizinhança, as surpresas)', linhas: '—', tamanho: '25 kB', script: '08' },
   { caminho: 'resultados/10_hlm_stepup.json', conteudo: 'Modelos explicativos: sequência, Shapley, efeitos, Mundlak, inclinação, interações, robustez', linhas: '—', tamanho: '34 kB', script: '10' },
   { caminho: 'resultados/11_espacial.json', conteudo: 'Moran, LISA, regiões de voto, degrau x rampa, São Paulo por local', linhas: '—', tamanho: '4 kB', script: '11' },
   { caminho: 'resultados/12_tarifaco.json', conteudo: 'Exposição ao tarifaço no modelo de efeitos', linhas: '—', tamanho: '1 kB', script: '12' },
@@ -63,7 +64,7 @@ const DICIONARIO: { arquivo: string; colunas: [string, string][] }[] = [
     arquivo: 'efeitos_stepup.parquet',
     colunas: [
       ['u_uf_{modelo}_{n}, u_mun_{modelo}_{n}', 'Efeito do estado e do município no logit, para o candidato n (13 ou 22), nos modelos nulo, perfis (perfil da seção e do município) e completo (+ região)'],
-      ['ref_{modelo}_{n}', 'Logit da urna típica do modelo (média das previsões fixas), para converter os efeitos em p.p.'],
+      ['ref_{modelo}_{n}', 'Logit da urna típica do modelo (média das previsões fixas), para converter os efeitos em pontos'],
     ],
   },
   {
@@ -78,7 +79,7 @@ const DICIONARIO: { arquivo: string; colunas: [string, string][] }[] = [
 const SITE = [
   ['resumo.json', 'Totais nacionais, candidatos, modelo nulo e estados'],
   ['conferencia.json', 'Soma dos boletins x resultado oficial, por estado'],
-  ['historia.json, explicacao.json', 'Números da página inicial e dos modelos explicativos e espaciais'],
+  ['historia.json, explicacao.json', 'Números da análise e dos modelos explicativos e espaciais'],
   ['municipios.json', 'Índice dos municípios (busca e mapa)'],
   ['zonas/{UF}-{zona}.json', 'O boletim de cada urna da zona, com a marcação da conferência e a camada do perfil'],
   ['locais/{código do município}.json', 'Locais de votação do município, com votos somados e a surpresa'],
@@ -94,7 +95,7 @@ const script = (n: string) => `${REPOSITORIO}/blob/main/pipeline/${SCRIPTS[n]}`
 
 function TabelaArquivos({ arquivos }: { arquivos: Arquivo[] }) {
   return (
-    <div className="tabela-rolagem">
+    <TabelaRolagem>
       <table>
         <thead>
           <tr>
@@ -123,7 +124,7 @@ function TabelaArquivos({ arquivos }: { arquivos: Arquivo[] }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </TabelaRolagem>
   )
 }
 
@@ -153,7 +154,7 @@ export function Dados() {
           <h3 style={{ marginTop: 24 }}>
             <code>{d.arquivo}</code>
           </h3>
-          <div className="tabela-rolagem">
+          <TabelaRolagem>
             <table>
               <thead>
                 <tr>
@@ -172,7 +173,7 @@ export function Dados() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TabelaRolagem>
         </section>
       ))}
 
@@ -181,7 +182,7 @@ export function Dados() {
         JSON estáticos gerados por <code>pipeline/07_exportar_site.py</code> a cada publicação, no endereço{' '}
         <code>/urna-em-camadas/dados/</code>. São tabelas compactas: uma lista de colunas e uma lista de linhas.
       </p>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <tbody>
             {SITE.map(([a, s]) => (
@@ -194,7 +195,7 @@ export function Dados() {
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
 
       <h2>Licença e citação</h2>
       <p>

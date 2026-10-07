@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLargura } from '../lib/useLargura'
+import { TabelaRolagem } from './TabelaRolagem'
 
 export type Ponto = {
   chave: string
@@ -36,9 +37,9 @@ export function PontosHorizontais({
   const [ref, largura] = useLargura<HTMLDivElement>()
   const [foco, setFoco] = useState<number | null>(null)
   const [verTabela, setVerTabela] = useState(false)
-  const passo = rotulosLongos ? 46 : 22
+  const passo = rotulosLongos ? 52 : 28
   const topo = 22
-  const colunaRotulo = rotulosLongos ? 0 : 34
+  const colunaRotulo = rotulosLongos ? 0 : 40
   const valores = pontos.flatMap((p) => [p.valor, p.antes ?? p.valor, ...(p.ic ?? [])])
   const min = Math.min(0, ...valores)
   const max = Math.max(0, ...valores)
@@ -79,7 +80,7 @@ export function PontosHorizontais({
                   aria-label={`${p.rotulo}: ${formatar(p.valor)}${p.antes !== undefined ? `, antes ${formatar(p.antes)}` : ''}`}
                 >
                   <rect x={0} y={topo + i * passo} width={largura} height={passo} fill={ativo ? 'var(--borda)' : 'transparent'} rx={4} />
-                  <text x={rotulosLongos ? x0 : 0} y={rotulosLongos ? y - 12 : y + 4} style={{ fill: ativo ? 'var(--tinta)' : rotulosLongos ? 'var(--tinta)' : undefined, fontWeight: ativo ? 650 : undefined, fontSize: rotulosLongos ? 13 : undefined }}>
+                  <text x={rotulosLongos ? x0 : 0} y={rotulosLongos ? y - 12 : y + 4} style={{ fill: ativo ? 'var(--tinta)' : rotulosLongos ? 'var(--tinta)' : undefined, fontWeight: ativo ? 650 : undefined, fontSize: rotulosLongos ? 15 : undefined }}>
                     {p.rotulo}
                   </text>
                   {p.ic && <line x1={x(p.ic[0])} x2={x(p.ic[1])} y1={y} y2={y} stroke="var(--tinta-2)" strokeWidth={1.5} strokeLinecap="round" />}
@@ -134,7 +135,7 @@ export function PontosHorizontais({
         </button>
       </div>
       {verTabela && (
-        <div className="tabela-rolagem" style={{ marginTop: 12 }}>
+        <TabelaRolagem style={{ marginTop: 12 }}>
           <table>
             <thead>
               <tr>
@@ -156,7 +157,7 @@ export function PontosHorizontais({
               ))}
             </tbody>
           </table>
-        </div>
+        </TabelaRolagem>
       )}
     </div>
   )

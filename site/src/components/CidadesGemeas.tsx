@@ -5,6 +5,7 @@ import { pct } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { useLargura } from '../lib/useLargura'
 import { comPreposicao } from '../lib/ufs'
+import { TabelaRolagem } from './TabelaRolagem'
 
 const PASSO = 56
 const TOPO = 26
@@ -113,7 +114,7 @@ export function CidadesGemeas({ historia, resumo, candidato }: { historia: Histo
         </span>
       </div>
       {verTabela && (
-        <div className="tabela-rolagem" style={{ marginTop: 12 }}>
+        <TabelaRolagem style={{ marginTop: 12 }}>
           <table>
             <thead>
               <tr>
@@ -142,7 +143,7 @@ export function CidadesGemeas({ historia, resumo, candidato }: { historia: Histo
               ))}
             </tbody>
           </table>
-        </div>
+        </TabelaRolagem>
       )}
     </div>
   )

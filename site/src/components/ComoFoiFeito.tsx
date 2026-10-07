@@ -4,6 +4,7 @@ import { DECISOES } from '../lib/decisoes'
 import { inteiro, pct } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { REPOSITORIO } from '../lib/projeto'
+import { TabelaRolagem } from './TabelaRolagem'
 
 type Etapa = { titulo: string; situacao: 'feito' | 'em andamento' | 'a seguir'; texto: string; numero?: string }
 
@@ -95,7 +96,7 @@ export function ComoFoiFeito({ resumo, candidato, explicacao }: { resumo: Resumo
       </div>
 
       <h3 style={{ marginTop: 32 }}>Por que essas escolhas</h3>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -116,7 +117,7 @@ export function ComoFoiFeito({ resumo, candidato, explicacao }: { resumo: Resumo
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
       <p className="discreto" style={{ marginTop: 12 }}>
         As outras escolhas (logit, teste de variância, motor de estimação) estão no <Link to="/metodo">Método</Link>.
       </p>

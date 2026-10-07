@@ -25,7 +25,7 @@ export function Mapa() {
   const porCandidato = variavel === 'efeito' || variavel === 'semperfil' || variavel === 'bolsoes'
 
   const descricao: Record<VariavelMapa, string> = {
-    margem: 'Diferença, em pontos percentuais dos votos válidos, entre Lula e Flávio Bolsonaro em cada município.',
+    margem: 'Diferença entre Lula e Flávio Bolsonaro em cada município, em pontos (1 ponto é 1 voto em cada 100 votos válidos).',
     efeito: `Quanto cada município empurra o voto em ${nome} além do que o seu estado faria prever (efeito do município no modelo de três níveis).`,
     semperfil: `Quanto cada município se afasta do voto em ${nome} que o perfil do eleitorado, o perfil do município (renda, cor ou raça, religião, urbanização) e a região fariam prever. É o que o modelo completo não explica.`,
     bolsoes: `Grupos de municípios vizinhos que votam acima (ou abaixo) do que o perfil e a região preveem para ${nome}, mais do que o acaso explicaria (LISA, p < 0,05).`,

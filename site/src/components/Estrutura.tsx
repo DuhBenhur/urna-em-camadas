@@ -52,6 +52,7 @@ export function Cabecalho() {
         </Link>
         <nav className="navegacao" aria-label="Principal">
           <NavLink to="/" end>Início</NavLink>
+          <NavLink to="/analise">Análise</NavLink>
           <NavLink to="/conferencia">Conferência</NavLink>
           <NavLink to="/mapa">Mapa</NavLink>
           <NavLink to="/metodo">Método</NavLink>

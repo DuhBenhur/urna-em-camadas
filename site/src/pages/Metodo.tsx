@@ -4,6 +4,7 @@ import { useExplicacao, useHistoria, useResumo } from '../lib/dados'
 import { DECISOES } from '../lib/decisoes'
 import { inteiro, pct } from '../lib/formato'
 import { REPOSITORIO } from '../lib/projeto'
+import { TabelaRolagem } from '../components/TabelaRolagem'
 
 const PORTAL_TSE = 'https://dadosabertos.tse.jus.br/'
 const SHA = `${REPOSITORIO}/blob/main/pipeline/01_baixar_tse.py`
@@ -35,7 +36,7 @@ python pipeline/06_contexto_municipal.py
 python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 100 para os intervalos)
 python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
 python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço (API do Comex Stat)
-python pipeline/08_historia.py            # números da página inicial
+python pipeline/08_historia.py            # números da análise
 python pipeline/07_exportar_site.py       # dados do site`
 
 export function Metodo() {
@@ -51,7 +52,7 @@ export function Metodo() {
       <h1 style={{ marginTop: 32 }}>Método</h1>
       <p className="secundario">
         Como os dados foram obtidos, conferidos e modelados, e por que cada escolha foi feita. A versão curta está no capítulo
-        “Como foi feito” da <Link to="/">página inicial</Link>. O código de cada etapa está no{' '}
+        “Como foi feito” da <Link to="/analise?c=c-bastidores">análise</Link>. O código de cada etapa está no{' '}
         <a href={REPOSITORIO}>repositório</a>.
       </p>
 
@@ -66,7 +67,7 @@ export function Metodo() {
 
       <h2>2. De onde vêm os dados</h2>
       <p>Só bases públicas, baixadas pelo próprio pipeline:</p>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -96,7 +97,7 @@ export function Metodo() {
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
       <p style={{ marginTop: 16 }}>Tratamentos que mudam resultados:</p>
       <ul>
         <li>
@@ -138,7 +139,7 @@ export function Metodo() {
         independente e misturaria as camadas. Um modelo multinível (ou hierárquico) estima quanto da variação está em cada
         nível. Para a seção <em>i</em> do município <em>j</em> no estado <em>k</em>:
       </p>
-      <pre className="cartao" style={{ overflowX: 'auto', fontFamily: 'var(--mono)', fontSize: '0.9rem' }}>
+      <pre className="cartao" tabIndex={0} aria-label="Fórmula do modelo" style={{ overflowX: 'auto', fontFamily: 'var(--mono)', fontSize: '0.9375rem' }}>
         logit(p<sub>ijk</sub>) = γ<sub>000</sub> + u<sub>k</sub> + u<sub>jk</sub> + e<sub>ijk</sub>
       </pre>
       <p>
@@ -151,7 +152,7 @@ export function Metodo() {
         A parcela de cada nível na variância total é a <strong>correlação intraclasse (ICC)</strong>:
       </p>
       {m13 && m22 && (
-        <div className="tabela-rolagem">
+        <TabelaRolagem>
           <table>
             <thead>
               <tr>
@@ -178,7 +179,7 @@ export function Metodo() {
               </tr>
             </tbody>
           </table>
-        </div>
+        </TabelaRolagem>
       )}
       <p style={{ marginTop: 16 }}>
         A estratégia é a <em>step-up</em>: parte de um modelo sem níveis (regressão comum) e acrescenta um nível por vez. Cada
@@ -194,7 +195,7 @@ export function Metodo() {
 
       {explicacao && <MetodoExplicativo e={explicacao} />}
 
-      <h2>{explicacao ? 7 : 5}. Os números da página inicial</h2>
+      <h2>{explicacao ? 7 : 5}. Os números da análise</h2>
       <p>
         São contas descritivas, feitas por <code>pipeline/08_historia.py</code> sobre a mesma base, para os dois candidatos.
       </p>
@@ -228,7 +229,7 @@ export function Metodo() {
       </ul>
 
       <h2>{explicacao ? 8 : 6}. Decisões e alternativas descartadas</h2>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -249,14 +250,14 @@ export function Metodo() {
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
 
       <h2>{explicacao ? 9 : 7}. Para reproduzir</h2>
       <p>
         Tudo roda em Python. A partir dos arquivos que já estão no repositório (<code>data/processed/</code>), dá para rodar só
         a validação, os modelos e a exportação.
       </p>
-      <pre className="cartao" style={{ overflowX: 'auto', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>
+      <pre className="cartao" tabIndex={0} aria-label="Comandos para reproduzir (role para os lados)" style={{ overflowX: 'auto', fontFamily: 'var(--mono)', fontSize: '0.875rem' }}>
         {COMANDOS}
       </pre>
 

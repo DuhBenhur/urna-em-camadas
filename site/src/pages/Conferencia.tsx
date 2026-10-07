@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useConferencia, type LinhaConferencia } from '../lib/dados'
 import { inteiro } from '../lib/formato'
 import { REPOSITORIO } from '../lib/projeto'
+import { TabelaRolagem } from '../components/TabelaRolagem'
 
 const PORTAL_TSE = 'https://dadosabertos.tse.jus.br/'
 
@@ -62,7 +63,7 @@ export function Conferencia() {
         válidos, brancos, nulos e os votos dos dois mais votados.
       </p>
       {c ? (
-        <div className="tabela-rolagem">
+        <TabelaRolagem>
           <table>
             <thead>
               <tr>
@@ -95,7 +96,7 @@ export function Conferencia() {
               </tr>
             </tbody>
           </table>
-        </div>
+        </TabelaRolagem>
       ) : (
         <p className="carregando">Carregando…</p>
       )}

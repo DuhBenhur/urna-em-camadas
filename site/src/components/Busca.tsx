@@ -63,7 +63,7 @@ function BuscaTitulo() {
         </button>
       </div>
       <p className="discreto" style={{ marginTop: 12, marginBottom: 0 }}>
-        Zona e seção estão no título de eleitor e no app e-Título. Nada do que você digita sai do seu navegador.
+        Nada do que você digita sai do seu navegador.
       </p>
     </form>
   )

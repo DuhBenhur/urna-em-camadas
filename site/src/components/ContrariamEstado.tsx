@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom'
 import type { Contraria, Historia } from '../lib/dados'
 import { pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
+import { TabelaRolagem } from './TabelaRolagem'
 
 function Lista({ titulo, itens, candidato }: { titulo: string; itens: Contraria[]; candidato: NumeroCandidato }) {
   return (
     <div className="cartao">
       <h3>{titulo}</h3>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -30,7 +31,7 @@ function Lista({ titulo, itens, candidato }: { titulo: string; itens: Contraria[
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
     </div>
   )
 }

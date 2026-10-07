@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { BoletimUrna } from '../components/BoletimUrna'
+import { ComoLer } from '../components/ComoLer'
+import { TabelaRolagem } from '../components/TabelaRolagem'
 import { GraficoCamadas } from '../components/GraficoCamadas'
 import { SeletorCandidato } from '../components/SeletorCandidato'
 import { registros, useExplicacao, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
-import { pct, pp } from '../lib/formato'
+import { cada100, pct, pp } from '../lib/formato'
 import { CANDIDATOS, camadas, percentil, type NumeroCandidato } from '../lib/modelo'
 import { gerarCartao } from '../lib/cartao'
 import { comPreposicao } from '../lib/ufs'
@@ -66,6 +68,18 @@ export function Urna() {
   const camada = (chave: string) => cs.find((c) => c.chave === chave)
   const final = cs[cs.length - 1]
   const camPerfil = camada('perfil')
+  // a frase de abertura fala dos dois candidatos, com a última camada (o que sobra) de cada um
+  const sobra = (num: NumeroCandidato) => {
+    const dd = num === 13 ? s.d13 : s.d22
+    const lista = camadas(resumo, ufDados, municipio, s[`v${num}`], s.validos, num, dd === undefined || dd === null ? null : dd / 10_000)
+    return lista[lista.length - 1].delta ?? 0
+  }
+  const comparacao = (residuo: number) => {
+    const pontos = Math.abs(residuo) * 100
+    if (pontos < 3) return 'perto do que se esperava'
+    return `${pontos >= 8 ? 'bem' : 'um pouco'} ${residuo > 0 ? 'acima' : 'abaixo'} do que se esperava`
+  }
+  const referencia = camPerfil ? ' para o lugar e para quem vota ali' : ' para a cidade'
   const mesmaEscola = secoes.filter((x) => x.local === s.local && x.cd === s.cd)
   const cand = CANDIDATOS[candidato]
   const nacional = {
@@ -140,6 +154,11 @@ export function Urna() {
         </p>
       </header>
 
+      <p className="resumo-urna">
+        Nesta urna, Lula teve <strong>{cada100(s.v13 / s.validos)}</strong> votos válidos, {comparacao(sobra(13))}
+        {referencia}. Flávio Bolsonaro teve <strong>{cada100(s.v22 / s.validos)}</strong>, {comparacao(sobra(22))}.
+      </p>
+
       <div className="grade-2" style={{ marginTop: 24 }}>
         <div>
           <BoletimUrna secao={s} candidatos={resumo.candidatos} uf={arquivo.uf} municipio={municipio.nome.toUpperCase()} zona={nZona} local={nomeLocal} bairro={bairro} />
@@ -180,6 +199,7 @@ export function Urna() {
               {surpresa >= 90 ? `: poucas se afastam tanto do esperado para ${esperadoPor}.` : surpresa <= 20 ? `: ficou bem perto do esperado para ${esperadoPor}.` : '.'}
             </p>
           )}
+          <ComoLer />
           <p className="discreto">
             Isto descreve a urna, não as pessoas que votaram nela.{' '}
             {camPerfil
@@ -220,7 +240,7 @@ export function Urna() {
       )}
 
       <h2>Comparação rápida</h2>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -252,13 +272,13 @@ export function Urna() {
             </tr>
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
 
       {mesmaEscola.length > 1 && (
         <>
           <h2>Outras urnas no mesmo local</h2>
           <p className="secundario">Mesma escola, mesmo bairro: quanto as urnas variam entre si?</p>
-          <div className="tabela-rolagem">
+          <TabelaRolagem>
             <table>
               <thead>
                 <tr>
@@ -281,7 +301,7 @@ export function Urna() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </TabelaRolagem>
         </>
       )}
     </div>

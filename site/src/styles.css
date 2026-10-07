@@ -86,7 +86,7 @@ h2 { font-size: clamp(1.35rem, 2.6vw, 1.75rem); font-weight: 650; margin-top: 2.
 h3 { font-size: 1.1rem; font-weight: 650; }
 p { margin: 0 0 1em; max-width: 68ch; }
 .secundario { color: var(--tinta-2); }
-.discreto { color: var(--tinta-3); font-size: 0.875rem; }
+.discreto { color: var(--tinta-3); font-size: 1rem; }
 .numeros { font-variant-numeric: tabular-nums; }
 
 /* Cabeçalho e rodapé */
@@ -125,12 +125,12 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .heroi { padding-block: clamp(32px, 7vw, 72px) 24px; }
 .heroi p { font-size: clamp(1.05rem, 1.8vw, 1.2rem); }
 
-.tile .rotulo { color: var(--tinta-2); font-size: 0.875rem; }
+.tile .rotulo { color: var(--tinta-2); font-size: 0.9375rem; }
 .tile .valor { font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 650; line-height: 1.1; margin-block: 4px; }
-.tile .nota { color: var(--tinta-3); font-size: 0.85rem; margin: 0; }
+.tile .nota { color: var(--tinta-3); font-size: 1rem; margin: 0; }
 
 /* Formulários */
-label { display: block; font-size: 0.85rem; color: var(--tinta-2); margin-bottom: 4px; }
+label { display: block; font-size: 0.9375rem; color: var(--tinta-2); margin-bottom: 4px; }
 input, select, button { font: inherit; color: inherit; }
 input, select {
   width: 100%;
@@ -161,26 +161,28 @@ input, select {
 /* Gráficos */
 .grafico { position: relative; width: 100%; }
 .grafico svg { display: block; overflow: visible; }
-.grafico text { fill: var(--tinta-2); font-size: 12px; font-family: var(--fonte); }
-.grafico .valor-forte { fill: var(--tinta); font-weight: 650; font-size: 14px; }
+.grafico text { fill: var(--tinta-2); font-size: 14px; font-family: var(--fonte); }
+.grafico .valor-forte { fill: var(--tinta); font-weight: 650; font-size: 15px; }
 .grafico .grade line { stroke: var(--grade); stroke-width: 1; }
 .grafico .linha-base { stroke: var(--eixo); stroke-width: 1; }
 .dica {
   position: absolute; pointer-events: none; z-index: 5;
   background: var(--superficie); border: 1px solid var(--borda); border-radius: 8px; box-shadow: var(--sombra);
-  padding: 8px 10px; font-size: 0.85rem; min-width: 160px; transform: translate(-50%, calc(-100% - 10px));
+  padding: 8px 10px; font-size: 0.9375rem; min-width: 160px; transform: translate(-50%, calc(-100% - 10px));
 }
 .dica strong { display: block; font-size: 1rem; }
-.legenda { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.85rem; color: var(--tinta-2); margin-top: 10px; }
+.legenda { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.875rem; color: var(--tinta-2); margin-top: 10px; }
 .legenda-escala { display: flex; align-items: stretch; margin-top: 12px; max-width: 520px; }
-.legenda-escala > div { flex: 1; text-align: center; font-size: 0.75rem; color: var(--tinta-2); }
+.legenda-escala > div { flex: 1; text-align: center; font-size: 0.875rem; color: var(--tinta-2); }
 .legenda-escala span { display: block; height: 12px; margin: 0 1px 4px; border-radius: 2px; }
 
-table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.9375rem; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--grade); }
-th { color: var(--tinta-2); font-weight: 600; font-size: 0.82rem; }
+th { color: var(--tinta-2); font-weight: 600; font-size: 0.875rem; }
+td a, td .link { display: inline-block; min-height: 24px; min-width: 24px; padding-block: 1px; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .tabela-rolagem { overflow-x: auto; }
+.tabela-rolagem:focus-visible { outline-offset: 4px; }
 
 /* Boletim de urna: o objeto que todo eleitor já viu colado na porta da seção */
 .bu {
@@ -191,9 +193,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   border-radius: 4px;
   box-shadow: var(--sombra);
   padding: 20px 18px 24px;
-  font-size: 0.86rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
-  max-width: 420px;
+  max-width: 440px;
   width: 100%;
   position: relative;
 }
@@ -207,16 +209,16 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .bu .linha { display: flex; justify-content: space-between; gap: 12px; }
 .bu .linha span:last-child { font-variant-numeric: tabular-nums; }
 .bu .destaque { font-weight: 700; }
-.bu .rodape-bu { margin-top: 10px; font-size: 0.75rem; color: var(--tinta-3); text-align: center; }
+.bu .rodape-bu { margin-top: 10px; font-size: 0.875rem; color: var(--tinta-3); text-align: center; }
 
 .mapa { width: 100%; height: clamp(360px, 70vh, 640px); border-radius: var(--raio); overflow: hidden; border: 1px solid var(--borda); background: var(--superficie); }
 .mapa-pequeno { height: clamp(300px, 50vh, 460px); }
-.maplibregl-popup-content { background: var(--superficie) !important; color: var(--tinta); border-radius: 8px !important; box-shadow: var(--sombra) !important; font: 0.85rem/1.4 var(--fonte); }
+.maplibregl-popup-content { background: var(--superficie) !important; color: var(--tinta); border-radius: 8px !important; box-shadow: var(--sombra) !important; font: 0.9375rem/1.4 var(--fonte); }
 
 .aviso { border-left: 3px solid var(--eixo); padding: 4px 0 4px 14px; color: var(--tinta-2); }
 .carregando { color: var(--tinta-3); padding: 24px 0; }
 .migalhas { font-size: 0.875rem; color: var(--tinta-2); margin-top: 24px; }
-.migalhas a { color: var(--tinta-2); }
+.migalhas a { color: var(--tinta-2); display: inline-block; padding-block: 3px; }
 
 @media (prefers-reduced-motion: no-preference) {
   .grafico circle, .grafico rect, .grafico line.mov { transition: cx 0.4s ease, x 0.4s ease, width 0.4s ease, x1 0.4s ease, x2 0.4s ease; }
@@ -226,7 +228,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .intro-historia { margin-top: clamp(48px, 8vw, 88px); padding-top: 24px; border-top: 1px solid var(--borda); }
 .capitulo { margin-top: clamp(56px, 9vw, 104px); }
 .capitulo > h2 { margin-top: 0.2em; font-size: clamp(1.5rem, 3.2vw, 2.1rem); max-width: 30ch; }
-.kicker { color: var(--tinta-3); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+.kicker { color: var(--tinta-3); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
 .capitulo h3 { margin-top: 1.6em; }
 .link { border: 0; background: none; padding: 0; color: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--eixo); text-underline-offset: 3px; }
 .link:hover { text-decoration-color: currentColor; }
@@ -235,15 +237,15 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .chave-anel { background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--tinta-2); }
 
 .como-sabemos { margin-top: 20px; border-top: 1px solid var(--borda); padding-top: 12px; max-width: 68ch; }
-.como-sabemos summary { cursor: pointer; color: var(--tinta-2); font-size: 0.92rem; font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
+.como-sabemos summary { cursor: pointer; color: var(--tinta-2); font-size: 1rem; font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
 .como-sabemos summary::-webkit-details-marker { display: none; }
 .como-sabemos summary::before { content: "+"; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--eixo); font-weight: 500; line-height: 1; }
 .como-sabemos[open] summary::before { content: "−"; }
-.como-sabemos > div { padding-top: 8px; color: var(--tinta-2); font-size: 0.95rem; }
+.como-sabemos > div { padding-top: 8px; color: var(--tinta-2); font-size: 1rem; }
 
 /* O jogo de adivinhar */
 .adivinhe { max-width: 760px; }
-.rotulo-pequeno { color: var(--tinta-3); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.rotulo-pequeno { color: var(--tinta-3); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .adivinhe-onde { font-size: 1.1rem; margin: 4px 0 8px; min-height: 1.6em; }
 .pistas { list-style: none; padding: 0; margin: 8px 0 16px; }
 .pistas li { display: flex; justify-content: space-between; gap: 4px 16px; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid var(--grade); }
@@ -258,7 +260,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .etapa-numero { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 650; font-size: 0.9rem; background: var(--tinta); color: var(--plano); }
 .etapas li:not([data-situacao="feito"]) .etapa-numero { background: var(--superficie); color: var(--tinta-2); box-shadow: inset 0 0 0 1.5px var(--eixo); }
 .etapas .etapa-dado { color: var(--tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
-.pilula { font-size: 0.72rem; font-weight: 600; color: var(--tinta-2); border: 1px solid var(--eixo); border-radius: 999px; padding: 1px 8px; letter-spacing: 0.02em; }
+.pilula { font-size: 0.875rem; font-weight: 600; color: var(--tinta-2); border: 1px solid var(--eixo); border-radius: 999px; padding: 1px 8px; letter-spacing: 0.02em; }
 .destaque { border-left: 3px solid var(--tinta); max-width: 760px; }
 .destaque h3 { margin-top: 0; }
 .destaque p:last-child, .em-breve p:last-child { margin-bottom: 0; }
@@ -273,7 +275,7 @@ td.num { white-space: nowrap; }
 
 /* Conferência cidadã */
 :root { --bom: #0ca30c; }
-.selo { display: flex; gap: 10px; align-items: flex-start; max-width: 420px; margin-top: 20px; font-size: 0.9rem; color: var(--tinta-2); }
+.selo { display: flex; gap: 10px; align-items: flex-start; max-width: 440px; margin-top: 20px; font-size: 1rem; color: var(--tinta-2); }
 .selo svg { flex: none; margin-top: 2px; }
 .selo strong { color: var(--tinta); }
 .passos-conferencia { max-width: 68ch; padding-left: 1.4em; }
@@ -281,12 +283,23 @@ td.num { white-space: nowrap; }
 .conferencia-inicio { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; margin-top: 32px; }
 .conferencia-inicio .valor { font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 650; line-height: 1.1; }
 
-/* Celular: marca e tema na primeira linha, menu inteiro na segunda (rola se não couber) */
+/* Celular: marca e tema na primeira linha; o menu inteiro embaixo, quebrando em duas linhas (nada fica escondido) */
 @media (max-width: 560px) {
   .cabecalho .conteudo { gap: 0 12px; padding-block: 4px; }
   .botao-tema { order: 2; margin-left: auto; }
-  .navegacao { order: 3; width: 100%; margin-left: -8px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .navegacao { order: 3; width: 100%; margin-left: -8px; flex-wrap: wrap; }
   .navegacao a { padding: 6px 8px; white-space: nowrap; }
 }
 .chave-traco { display: inline-block; width: 14px; height: 0; border-top: 1.5px solid var(--tinta-2); margin-right: 6px; vertical-align: middle; }
 .chave-quadrada { border-radius: 2px; }
+
+/* Linguagem simples */
+.resumo-capitulo { font-size: 1.125rem; border-left: 3px solid var(--tinta); padding: 2px 0 2px 14px; margin-bottom: 20px; max-width: 64ch; }
+.resumo-urna { font-size: 1.15rem; max-width: 64ch; margin-top: 20px; padding: 14px 18px; border-radius: var(--raio); background: var(--superficie); border: 1px solid var(--borda); }
+.como-ler { max-width: 68ch; color: var(--tinta-2); border-left: 3px solid var(--eixo); padding: 2px 0 2px 14px; margin-top: 24px; }
+.ajuda-busca { margin-top: 12px; color: var(--tinta-2); }
+.achados { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.achado { display: flex; flex-direction: column; }
+.achado h3 { margin-top: 0; font-size: 1.2rem; }
+.achado p { flex: 1; }
+.achado a { font-weight: 600; min-height: 24px; }

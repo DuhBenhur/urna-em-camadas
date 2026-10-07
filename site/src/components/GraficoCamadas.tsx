@@ -14,7 +14,7 @@ export function GraficoCamadas({ camadas, cor, candidato }: { camadas: Camada[];
   const [ref, largura] = useLargura<HTMLElement>()
   const estreito = largura < 560
   const colunaRotulo = estreito ? 0 : 190
-  const colunaValor = estreito ? 0 : 150
+  const colunaValor = estreito ? 0 : 175
   const x0 = colunaRotulo + 8
   const x1 = largura - colunaValor - 12
   const x = (v: number) => x0 + Math.max(0, Math.min(1, v)) * (x1 - x0)

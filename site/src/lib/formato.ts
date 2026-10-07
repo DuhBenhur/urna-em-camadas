@@ -15,12 +15,28 @@ const compacto = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFr
 /** 0.6058 → "60,6%" */
 export const pct = (x: number, casas = 1) => (Number.isFinite(x) ? `${decimal(casas).format(x * 100)}%` : '—')
 
-/** 0.123 → "+12,3 p.p."; usa o sinal de menos tipográfico */
-export const pp = (x: number, casas = 1) =>
-  Number.isFinite(x) ? `${x >= 0 ? '+' : '−'}${decimal(casas).format(Math.abs(x * 100))} p.p.` : '—'
+/**
+ * Diferenças de percentual em "pontos": 1 ponto = 1 voto a mais (ou a menos) em cada 100 votos válidos.
+ * "Ponto" no singular abaixo de 2 (1,5 ponto), como manda o português para decimais.
+ */
+const unidade = (absoluto: number, casas: number) => (Number(absoluto.toFixed(casas)) < 2 ? 'ponto' : 'pontos')
+
+/** Valor em pontos (0–100) com sinal: 3.2 → "+3,2 pontos"; o que arredonda para zero sai sem sinal */
+export const pontosComSinal = (v: number, casas = 1) => {
+  if (!Number.isFinite(v)) return '—'
+  const absoluto = Math.abs(v)
+  if (Number(absoluto.toFixed(casas)) === 0) return `${decimal(casas).format(0)} ponto`
+  return `${v > 0 ? '+' : '−'}${decimal(casas).format(absoluto)} ${unidade(absoluto, casas)}`
+}
+
+/** Diferença de proporções em pontos: 0.123 → "+12,3 pontos"; usa o sinal de menos tipográfico */
+export const pp = (x: number, casas = 1) => pontosComSinal(x * 100, casas)
 
 export const inteiro = (x: number) => inteiros.format(x)
 export const compactar = (x: number) => compacto.format(x)
 
-/** Valor já em pontos percentuais, sem sinal: 14.5 → "14,5 p.p." */
-export const pontos = (x: number, casas = 1) => (Number.isFinite(x) ? `${decimal(casas).format(x)} p.p.` : '—')
+/** Valor já em pontos, sem sinal: 14.5 → "14,5 pontos" */
+export const pontos = (x: number, casas = 1) => (Number.isFinite(x) ? `${decimal(casas).format(x)} ${unidade(Math.abs(x), casas)}` : '—')
+
+/** Proporção em linguagem de todo dia: 0.68 → "68 de cada 100" */
+export const cada100 = (x: number) => (Number.isFinite(x) ? `${Math.round(x * 100)} de cada 100` : '—')

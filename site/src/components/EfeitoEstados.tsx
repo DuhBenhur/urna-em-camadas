@@ -4,9 +4,10 @@ import { pct, pp } from '../lib/formato'
 import { CANDIDATOS, efeitoEstado, type NumeroCandidato } from '../lib/modelo'
 import { useLargura } from '../lib/useLargura'
 import { comPreposicao } from '../lib/ufs'
+import { TabelaRolagem } from './TabelaRolagem'
 
-const ESPESSURA = 14
-const PASSO = 20
+const ESPESSURA = 16
+const PASSO = 26
 
 /**
  * Barras divergentes: quanto cada estado empurra o voto do candidato em relação à urna típica do Brasil.
@@ -25,8 +26,8 @@ export function EfeitoEstados({ resumo, candidato }: { resumo: Resumo; candidato
     [resumo, candidato],
   )
   const maximo = Math.max(...linhas.map((l) => Math.abs(l.efeito)))
-  const margemRotulo = 34
-  const margemValor = 72
+  const margemRotulo = 40
+  const margemValor = 104
   const centro = margemRotulo + (largura - margemRotulo - margemValor) / 2
   const escala = (largura - margemRotulo - margemValor) / 2 / maximo
   const altura = linhas.length * PASSO + 28
@@ -102,7 +103,7 @@ export function EfeitoEstados({ resumo, candidato }: { resumo: Resumo; candidato
         </button>
       </div>
       {verTabela && (
-        <div className="tabela-rolagem" style={{ marginTop: 12 }}>
+        <TabelaRolagem style={{ marginTop: 12 }}>
           <table>
             <thead>
               <tr>
@@ -121,7 +122,7 @@ export function EfeitoEstados({ resumo, candidato }: { resumo: Resumo; candidato
               ))}
             </tbody>
           </table>
-        </div>
+        </TabelaRolagem>
       )}
     </div>
   )

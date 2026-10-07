@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
 import type { Explicacao, Resumo } from '../lib/dados'
-import { inteiro, pct } from '../lib/formato'
+import { inteiro, pct, pontosComSinal } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import { BarrasHorizontais } from './BarrasHorizontais'
 import { ComoSabemos } from './ComoSabemos'
 import { PontosHorizontais } from './PontosHorizontais'
+import { TabelaRolagem } from './TabelaRolagem'
 
 // ordem de leitura dos blocos: seção, município, região
 const ORDEM = ['idade_sexo', 'escolaridade', 'renda_economia', 'cor_raca', 'religiao', 'urbanizacao', 'regiao']
@@ -26,11 +27,8 @@ const MUNDLAK: Record<'escol' | '60_mais' | '16_24' | 'mulher', string> = {
 }
 const REGIOES: Record<string, string> = { N: 'Norte', NE: 'Nordeste', CO: 'Centro-Oeste', SE: 'Sudeste', S: 'Sul' }
 
-/** p.p. já em pontos percentuais (0–100) → "+3,2 p.p."; o que arredonda para zero sai sem sinal */
-const ppNum = (v: number) =>
-  Math.abs(v) < 0.05
-    ? '0,0 p.p.'
-    : `${v >= 0 ? '+' : '−'}${Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} p.p.`
+/** valores já em pontos (0–100): "+3,2 pontos" */
+const ppNum = pontosComSinal
 /** proporção → "22%"; o que arredonda para zero sai sem sinal */
 const pctSemSinalNoZero = (v: number) => pct(Math.abs(v) < 0.005 ? 0 : v, 0)
 
@@ -140,8 +138,8 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
 
       <h3 style={{ marginTop: 32 }}>O que mais pesa</h3>
       <p className="secundario">
-        Diferença no voto em {cand.nome}, em pontos percentuais, quando cada característica sobe um desvio-padrão e as demais
-        ficam iguais, comparando lugares da mesma região. Renda, PIB e Bolsa Família entram juntos como nível socioeconômico,
+        Quanto muda o voto em {cand.nome}, em pontos, entre um lugar comum e um lugar bem acima da média numa característica
+        (mais alto que 5 de cada 6 lugares), com as demais iguais e comparando lugares da mesma região. Renda, PIB e Bolsa Família entram juntos como nível socioeconômico,
         porque andam juntos demais para separar.
       </p>
       <PontosHorizontais
@@ -149,7 +147,7 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
         formatar={ppNum}
         cor={cand.cor}
         rotuloAria={`Efeito de cada característica no voto em ${cand.nome}`}
-        cabecalho={['Característica', 'Efeito (+1 desvio-padrão)', 'Intervalo de 95%']}
+        cabecalho={['Característica', 'Diferença (lugar bem acima da média)', 'Intervalo de 95%']}
         legenda={{ ponto: 'efeito', intervalo: boot ? `intervalo de 95% (bootstrap, ${boot.repeticoes} reamostragens)` : 'intervalo de 95%' }}
         rotulosLongos
       />
@@ -160,8 +158,8 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
           <p>
             {inteiro(explicacao.tarifaco.municipios_exportam_eua)} municípios exportaram para os Estados Unidos em{' '}
             {explicacao.tarifaco.ano_exportacoes}, o ano antes das tarifas de 50% sobre produtos brasileiros. Acrescentar ao
-            modelo a exposição de cada um (exportações para os EUA por habitante) quase não muda nada: +1 desvio-padrão de
-            exposição está associado a {ppNum(explicacao.tarifaco.candidatos[n].efeito_pp)} no voto em {cand.nome} (intervalo de{' '}
+            modelo a exposição de cada um (exportações para os EUA por habitante) quase não muda nada: um município bem mais
+            exposto que a média tem {ppNum(explicacao.tarifaco.candidatos[n].efeito_pp)} no voto em {cand.nome} (intervalo de{' '}
             {ppNum(explicacao.tarifaco.candidatos[n].ic_pp[0])} a {ppNum(explicacao.tarifaco.candidatos[n].ic_pp[1])}), e a camada do
             estado não encolhe.{' '}
             {explicacao.tarifaco.candidatos[n].p < 0.05
@@ -175,10 +173,10 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
       <h3 style={{ marginTop: 32 }}>A urna ou a cidade?</h3>
       <p className="secundario">
         A mesma característica pode pesar diferente dentro da cidade (urnas mais ou menos escolarizadas que a média local) e
-        entre cidades (cidades mais ou menos escolarizadas). Efeito de +1 desvio-padrão, em p.p., comparando lugares da mesma
+        entre cidades (cidades mais ou menos escolarizadas). Diferença, em pontos, entre o comum e o bem acima da média, comparando lugares da mesma
         região:
       </p>
-      <div className="tabela-rolagem">
+      <TabelaRolagem>
         <table>
           <thead>
             <tr>
@@ -197,11 +195,11 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
             ))}
           </tbody>
         </table>
-      </div>
+      </TabelaRolagem>
 
       <h3 style={{ marginTop: 32 }}>A escolaridade pesa diferente em cada estado</h3>
       <p className="secundario">
-        Diferença no voto em {cand.nome} quando a escolaridade do eleitorado da seção sobe um desvio-padrão, estado a
+        Quanto muda o voto em {cand.nome} entre uma seção de escolaridade comum e uma bem mais escolarizada, estado a
         estado. Vai de {ppNum(menosInclinado.valor)} {comPreposicao('em', menosInclinado.chave, nomeUf(menosInclinado.chave))} a{' '}
         {ppNum(maisInclinado.valor)} {comPreposicao('em', maisInclinado.chave, nomeUf(maisInclinado.chave))}. Por região:{' '}
         {Object.entries(e.interacoes.escolaridade_por_regiao_pp)
@@ -213,7 +211,7 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
         formatar={ppNum}
         cor={cand.cor}
         rotuloAria={`Efeito da escolaridade da seção no voto em ${cand.nome}, por estado`}
-        cabecalho={['Estado', 'Efeito de +1 desvio-padrão na escolaridade']}
+        cabecalho={['Estado', 'Diferença (seção bem mais escolarizada)']}
       />
 
       <ComoSabemos>
@@ -224,6 +222,7 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
           cada um: por isso a conta é a média de todas as ordens possíveis (valor de Shapley, 128 modelos).
         </p>
         <p>
+          “Bem acima da média” é, tecnicamente, um desvio-padrão acima: mais alto que cerca de 5 em cada 6 lugares.
           “Dentro da cidade” e “entre cidades” vêm do modelo de Mundlak, que separa as duas coisas. A escolaridade da seção é um
           índice (% com superior completo menos % até o fundamental incompleto), porque as duas medidas andam juntas. A diferença
           por estado vem de uma inclinação aleatória (testada contra o modelo sem ela), e a por região, de interações entre

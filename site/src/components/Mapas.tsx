@@ -281,7 +281,7 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
 
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={container} className="mapa" role="img" aria-label="Mapa dos municípios do Brasil" />
+      <div ref={container} className="mapa" role="region" aria-roledescription="mapa" aria-label="Mapa dos municípios do Brasil; a mesma informação está na busca por município" />
       <CaixaDica dica={dica} />
       {!geo && <p className="carregando">Carregando o mapa…</p>}
     </div>
@@ -312,10 +312,10 @@ export function LegendaEscala({ variavel, candidato }: { variavel: VariavelMapa 
   const naRegiao = variavel === 'regioes' ? ' na região' : ''
   const titulo =
     escala === 'margem'
-      ? [`Lula à frente${naRegiao} (p.p.)`, `Flávio à frente${naRegiao} (p.p.)`]
+      ? [`Lula à frente${naRegiao} (pontos)`, `Flávio à frente${naRegiao} (pontos)`]
       : candidato === 13
-        ? [`${quem} de Lula (p.p.)`, 'contra Lula']
-        : ['contra Flávio', `${quem} de Flávio (p.p.)`]
+        ? [`${quem} de Lula (pontos)`, 'contra Lula']
+        : ['contra Flávio', `${quem} de Flávio (pontos)`]
   return (
     <div>
       <div className="legenda-escala" aria-hidden="true">
@@ -529,7 +529,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
   if (comCoordenada.length === 0) return <p className="discreto">Sem coordenadas para os locais deste município.</p>
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={container} className="mapa mapa-pequeno" role="img" aria-label="Mapa dos locais de votação do município" />
+      <div ref={container} className="mapa mapa-pequeno" role="region" aria-roledescription="mapa" aria-label="Mapa dos locais de votação do município; a mesma informação está na tabela abaixo" />
       <CaixaDica dica={dica} />
     </div>
   )

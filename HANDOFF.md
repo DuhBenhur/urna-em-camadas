@@ -13,6 +13,12 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 **Modelo**
 - `pipeline/05_hlm_nulo.py`: OLS nulo → HLM2 → HLM3 para Lula (13) e Flávio (22), com `gpboost`. ICC Lula: UF 62,7%, município 21,7%, seção 15,6%. Flávio: 60,5% / 22,9% / 16,6%. Validado contra o `statsmodels` (log-verossimilhança −225.328,4 x −225.328,8).
 
+**Acessibilidade e linguagem simples (07/10, depois de uma auditoria pedida pelo usuário)**
+- Inicial curta (busca, conferência, 3 achados em frases simples, "como ler os números"); os 7 capítulos foram para `#/analise` (`?c=c-estado` abre num capítulo), cada um com uma frase "Em resumo". A urna abre com uma frase do tipo "Nesta urna, Lula teve 68 de cada 100 votos válidos, bem acima do que se esperava…".
+- Unidade "pontos" no lugar de "p.p." (`lib/formato.ts`: 1 ponto = 1 voto em cada 100; "ponto" abaixo de 2); "desvio-padrão" virou "um lugar bem acima da média" fora do Método e dos "Como sabemos".
+- Prosa ≥ 16 px, gráficos ≥ 14 px, linhas clicáveis ≥ 24 px, tabelas com rolagem focáveis (`components/TabelaRolagem.tsx`), mapas como `role="region"`, menu do celular em duas linhas.
+- Auditoria (celular 390 px, CPU 4x, 4G ruim; axe-core): inicial de 20 para 3 telas; texto < 14 px na urna de 29% para 0%; alvos pequenos na inicial de 90 para 1; falhas WCAG de 6 para 0; jargão na inicial de 36 para 0 por mil palavras. Os alvos pequenos que sobram são links dentro de frases (exceção da WCAG 2.5.8) e os créditos do MapLibre.
+
 **Modelos explicativos e espaço (07/10; `pipeline/10_hlm_stepup.py`, `pipeline/11_espacial.py`)**
 - Desenho fixado em `docs/plano_de_analise.md` antes dos resultados, com os desvios registrados lá (índice de escolaridade, Mundlak simples para a tabela, binomial descartado porque não convergia).
 - Camada do estado (Shapley, 128 modelos, Lula; Flávio quase igual): região 46%, renda/PIB/Bolsa Família 22%, cor ou raça 10%, religião 8%, escolaridade da seção 4%, urbanização 1%, idade e sexo 0%; sobram 10%. Sem a região: perfis explicam 71%.
@@ -62,8 +68,9 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 1. **2º turno** (decisão do usuário em 07/10: "deixar a parte do segundo turno para o segundo turno").
    - Previsão pré-registrada: se for feita, registrar antes de 25/10 no OSF com embargo; o site promete isso em 4 lugares (capítulo 7, "Como foi feito", decisões e Método). Receita: boletins de urna de 2022 (1º e 2º turnos, `resultados-2022-boletim-de-urna`), compatibilizar seções 2022 → 2026 por local de votação e coordenadas, modelar a transição 1T → 2T de 2022 por seção e aplicar ao 1T de 2026.
    - Depois de 25/10: baixar o 2º turno, repetir a conferência e a decomposição, comparar os turnos. Nenhum conteúdo novo no dia 25/10.
-2. **Site.** Feito em 07/10: imagem de compartilhamento (`site/scripts/og.py` → `site/public/og.png`), página de Dados (`#/dados`), cartão da urna para compartilhar (`site/src/lib/cartao.ts`, canvas 1200×630; no celular vai junto no compartilhamento, no computador é baixado), tarifaço (`12`). Falta: teste em celular real.
-3. Para enviar: `git push` (o Git Credential Manager autentica; o `gh` não está instalado).
+2. **Próximos passos de alcance** (análise de 07/10): vídeo de 60–90 s com legenda (roteiro com o Claude, produção do usuário); CSV, DOI no Zenodo e resumo em inglês; gráficos para embutir; teste com 5–8 pessoas de idades e escolaridades diferentes ("ache sua urna", "explique o 63%").
+3. **Site.** Feito em 07/10: imagem de compartilhamento (`site/scripts/og.py` → `site/public/og.png`), página de Dados (`#/dados`), cartão da urna para compartilhar (`site/src/lib/cartao.ts`, canvas 1200×630; no celular vai junto no compartilhamento, no computador é baixado), tarifaço (`12`). Falta: teste em celular real.
+4. Para enviar: `git push` (o Git Credential Manager autentica; o `gh` não está instalado).
 
 ## Problemas conhecidos
 

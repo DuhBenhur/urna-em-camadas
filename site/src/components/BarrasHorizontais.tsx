@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLargura } from '../lib/useLargura'
+import { TabelaRolagem } from './TabelaRolagem'
 
 export type Barra = { rotulo: string; valor: number; dica?: string }
 
@@ -27,7 +28,7 @@ export function BarrasHorizontais({
   const [foco, setFoco] = useState<number | null>(null)
   const [verTabela, setVerTabela] = useState(false)
   const maximo = Math.max(...barras.map((b) => b.valor))
-  const espacoValor = 76
+  const espacoValor = 104
   const escala = (largura - espacoValor) / maximo
   const altura = barras.length * PASSO
   const focada = foco !== null ? barras[foco] : null
@@ -52,7 +53,7 @@ export function BarrasHorizontais({
                 aria-label={`${b.rotulo}: ${formatar(b.valor)}`}
               >
                 <rect x={0} y={i * PASSO} width={largura} height={PASSO} fill="transparent" />
-                <text x={0} y={y - 7} style={{ fill: 'var(--tinta)', fontSize: 13 }}>
+                <text x={0} y={y - 7} style={{ fill: 'var(--tinta)', fontSize: 15 }}>
                   {b.rotulo}
                 </text>
                 {/* ponta arredondada no fim do dado, base reta no zero */}
@@ -82,7 +83,7 @@ export function BarrasHorizontais({
         </button>
       </div>
       {verTabela && (
-        <div className="tabela-rolagem" style={{ marginTop: 12 }}>
+        <TabelaRolagem style={{ marginTop: 12 }}>
           <table>
             <thead>
               <tr>
@@ -101,7 +102,7 @@ export function BarrasHorizontais({
               ))}
             </tbody>
           </table>
-        </div>
+        </TabelaRolagem>
       )}
     </div>
   )
