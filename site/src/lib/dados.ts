@@ -110,8 +110,16 @@ export type EspacialCandidato = {
   degrau_gradiente: { sem_gp: { uf: number }; com_gp: { uf: number; gp: number; alcance_km: number }; queda_uf: number }
 }
 
-/** Modelos explicativos (pipeline/10) e análise espacial (pipeline/11). */
+/** Exposição ao tarifaço dos EUA (pipeline/12), extensão do modelo de efeitos. */
+export type Tarifaco = {
+  ano_exportacoes: number
+  municipios_exportam_eua: number
+  candidatos: Record<'13' | '22', { efeito_pp: number; ic_pp: [number, number]; LR: number; p: number; queda_extra_uf: number; queda_extra_mun: number }>
+}
+
+/** Modelos explicativos (pipeline/10), análise espacial (pipeline/11) e tarifaço (pipeline/12). */
 export type Explicacao = {
+  tarifaco?: Tarifaco
   stepup: {
     n_secoes: number
     n_municipios: number

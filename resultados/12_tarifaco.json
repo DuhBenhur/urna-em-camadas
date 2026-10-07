@@ -1,0 +1,44 @@
+{
+  "ano_exportacoes": 2024,
+  "fonte": "API do Comex Stat (MDIC), exportações por município do exportador",
+  "medida": "log(1 + exportações para os EUA por habitante, US$)",
+  "municipios_api": 2500,
+  "sem_par": 8,
+  "fob_sem_par_pct": 0.0004133294391878153,
+  "municipios_exportam_eua": 1517,
+  "fob_eua_total_usd": 40345148219.0,
+  "nomes_sem_par": [
+    "Mogi-Mirim - SP",
+    "Belém de São Francisco - PE",
+    "Piçarras - SC",
+    "Santa Isabel do Pará - PA",
+    "Município Não Declarado - ND",
+    "Presidente Castelo Branco - SC",
+    "Exterior - EX",
+    "Itapagé - CE"
+  ],
+  "candidatos": {
+    "13": {
+      "efeito_pp": 0.1722808342694153,
+      "ic_pp": [
+        -0.049805459067794766,
+        0.39436712760662535
+      ],
+      "LR": 2.311715442163404,
+      "p": 0.12840227386212577,
+      "queda_extra_uf": -3.4635762243814057e-06,
+      "queda_extra_mun": 0.0003092504511523451
+    },
+    "22": {
+      "efeito_pp": -0.48363008593170037,
+      "ic_pp": [
+        -0.7113548264017363,
+        -0.25590534546166455
+      ],
+      "LR": 17.299651583482046,
+      "p": 3.192453821078883e-05,
+      "queda_extra_uf": -1.5984264953284262e-05,
+      "queda_extra_mun": 0.0022227385282026467
+    }
+  }
+}

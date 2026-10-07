@@ -6,6 +6,7 @@ import { SeletorCandidato } from '../components/SeletorCandidato'
 import { registros, useExplicacao, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { pct, pp } from '../lib/formato'
 import { CANDIDATOS, camadas, percentil, type NumeroCandidato } from '../lib/modelo'
+import { gerarCartao } from '../lib/cartao'
 import { comPreposicao } from '../lib/ufs'
 
 // Perfil médio do eleitorado brasileiro nas seções (TSE, 2026), para comparação
@@ -78,11 +79,33 @@ export function Urna() {
   const surpresa = quantis && Number.isFinite(residuo) ? percentil(quantis, Math.abs(residuo) * 100) : null
   const esperadoPor = camPerfil ? 'o município e o perfil do eleitorado' : 'o município'
 
+  const fraseSurpresa =
+    surpresa === null
+      ? null
+      : surpresa >= 50
+        ? `Mais surpreendente que ${Math.floor(surpresa)}% das urnas do Brasil`
+        : `Mais previsível que ${Math.floor(100 - surpresa)}% das urnas do Brasil`
+  const imagem = async () => {
+    const blob = await gerarCartao({
+      titulo: `Zona ${nZona}, seção ${nSecao}`,
+      lugar: `${nomeLocal} · ${municipio.nome} (${arquivo.uf})`,
+      lula: s.v13 / s.validos,
+      flavio: s.v22 / s.validos,
+      candidato: cand.curto,
+      corCandidato: candidato === 13 ? 'lula' : 'flavio',
+      camadas: cs,
+      surpresa: fraseSurpresa,
+    })
+    return new File([blob], `urna-${arquivo.uf}-${nZona}-${nSecao}.png`, { type: 'image/png' })
+  }
   const compartilhar = async () => {
     const url = window.location.href
     const texto = `Minha urna em camadas: zona ${nZona}, seção ${nSecao} (${municipio.nome}-${arquivo.uf})`
     try {
-      if (navigator.share) await navigator.share({ title: 'Urna em Camadas', text: texto, url })
+      const arquivoImagem = await imagem().catch(() => null)
+      if (arquivoImagem && navigator.canShare?.({ files: [arquivoImagem] })) {
+        await navigator.share({ title: 'Urna em Camadas', text: `${texto} ${url}`, files: [arquivoImagem] })
+      } else if (navigator.share) await navigator.share({ title: 'Urna em Camadas', text: texto, url })
       else {
         await navigator.clipboard.writeText(url)
         setCopiado(true)
@@ -91,6 +114,14 @@ export function Urna() {
     } catch {
       /* compartilhamento cancelado */
     }
+  }
+  const baixarImagem = async () => {
+    const arquivoImagem = await imagem()
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(arquivoImagem)
+    link.download = arquivoImagem.name
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
   }
 
   return (
@@ -145,11 +176,7 @@ export function Urna() {
           </p>
           {surpresa !== null && (
             <p>
-              <strong>
-                {surpresa >= 50
-                  ? `Mais surpreendente que ${Math.floor(surpresa)}% das urnas do Brasil`
-                  : `Mais previsível que ${Math.floor(100 - surpresa)}% das urnas do Brasil`}
-              </strong>
+              <strong>{fraseSurpresa}</strong>
               {surpresa >= 90 ? `: poucas se afastam tanto do esperado para ${esperadoPor}.` : surpresa <= 20 ? `: ficou bem perto do esperado para ${esperadoPor}.` : '.'}
             </p>
           )}
@@ -159,9 +186,14 @@ export function Urna() {
               ? 'A última camada é o que estado, município e perfil do eleitorado não explicam: a vizinhança, a história do lugar, o acaso.'
               : 'A última camada é o que estado e município não explicam: o perfil de quem vota nesta seção, a vizinhança, o acaso.'}
           </p>
-          <button className="botao botao-secundario" onClick={compartilhar}>
-            {copiado ? 'Link copiado' : 'Compartilhar esta urna'}
-          </button>
+          <div className="acoes">
+            <button className="botao botao-secundario" onClick={compartilhar}>
+              {copiado ? 'Link copiado' : 'Compartilhar esta urna'}
+            </button>
+            <button className="botao botao-secundario" onClick={baixarImagem}>
+              Baixar imagem
+            </button>
+          </div>
         </section>
       </div>
 

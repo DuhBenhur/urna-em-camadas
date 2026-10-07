@@ -19,6 +19,7 @@
 - /#/municipio/{código TSE}: locais de votação e urnas de um município; mapa do resultado e da surpresa de cada local.
 - /#/mapa?v={margem|efeito|semperfil|bolsoes|regioes}: mapa dos municípios.
 - /#/metodo: dados, conferência, modelos, espaço, decisões e como reproduzir.
+- /#/dados: arquivos processados (Parquet) e resultados (JSON) para baixar, com dicionário e licença.
 
 ## Dados
 

@@ -101,6 +101,9 @@ o esperado pelo município e pelo perfil das seções) para os mapas de cidade.
   no JSON e dá os coeficientes da camada "perfil" da página da urna.
 - A verossimilhança binomial do `gpboost` não saiu dos valores iniciais das variâncias (testado com três inícios
   diferentes). No lugar, a robustez repete a decomposição na escala de proporção, sem o logit.
+- Extensão acrescentada depois dos resultados (`pipeline/12_tarifaco.py`): exposição ao tarifaço dos EUA, medida como
+  log(1 + exportações para os EUA por habitante em 2024, API do Comex Stat), no modelo de efeitos. Estava na lista do
+  nível 2 do plano original; ficou fora dos blocos do Shapley, que já estavam fixados.
 
 ## Conexão entre técnicas
 

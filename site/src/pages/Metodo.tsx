@@ -20,6 +20,7 @@ const FONTES: { fonte: string; traz: string; nivel: string; acesso: [string, str
   { fonte: 'TSE: códigos de municípios', traz: 'Tabela oficial TSE ↔ IBGE', nivel: 'Município', acesso: [['Portal de Dados Abertos', PORTAL_TSE]] },
   { fonte: 'IBGE: Censo 2022 e PIB dos Municípios', traz: 'Renda, cor ou raça, religião, urbanização, PIB', nivel: 'Município', acesso: [['API de agregados do IBGE', AGREGADOS_IBGE]] },
   { fonte: 'MDS: Bolsa Família (ago/2026)', traz: 'Pessoas beneficiárias', nivel: 'Município', acesso: [['MI Social (MDS)', MI_SOCIAL]] },
+  { fonte: 'MDIC: Comex Stat (2024)', traz: 'Exportações por município, para os EUA e no total', nivel: 'Município', acesso: [['API do Comex Stat', 'https://api-comexstat.mdic.gov.br/docs']] },
   { fonte: 'IBGE: malhas territoriais', traz: 'Fronteiras de municípios e estados', nivel: 'Município e UF', acesso: [['API de malhas do IBGE', MALHAS_IBGE]] },
 ]
 
@@ -33,6 +34,7 @@ python pipeline/05_hlm_nulo.py            # modelo de três níveis
 python pipeline/06_contexto_municipal.py
 python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 100 para os intervalos)
 python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
+python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço (API do Comex Stat)
 python pipeline/08_historia.py            # números da página inicial
 python pipeline/07_exportar_site.py       # dados do site`
 

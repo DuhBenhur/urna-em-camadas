@@ -18,7 +18,9 @@ Desenho fixado em docs/plano_de_analise.md (07/10/2026) antes dos resultados. Pa
               interações escolaridade × região e escolaridade × índice socioeconômico
   robustez    mesma decomposição na escala de proporção (em vez do logit) e só seções com 100+ válidos.
               A verossimilhança binomial do gpboost não saiu dos valores iniciais nesta escala: descartada
-  bootstrap   (--bootstrap B) reamostra os 27 estados: intervalos das quedas de variância e dos efeitos
+  bootstrap   (--bootstrap B) reamostra os estados dentro de cada região (a região é parte do desenho; sem
+              estratificar, uma amostra sem nenhum estado de uma região deixa o modelo singular) e acrescenta ao JSON
+              já gravado os intervalos das quedas de variância e dos efeitos, sem refazer os modelos
 
 Y = logit empírico da proporção de votos do candidato nos válidos da seção, como no 05.
 Fora: 389 seções sem perfil do eleitorado e Boa Esperança do Norte (MT), sem dados do Censo.
@@ -27,7 +29,8 @@ Saídas:
   resultados/10_hlm_stepup.json             tudo o que o site e o notebook usam
   data/processed/efeitos_stepup.parquet     efeito do estado e do município por modelo (nulo, perfis, completo)
 
-Uso: python pipeline/10_hlm_stepup.py [--bootstrap 100]
+Uso: python pipeline/10_hlm_stepup.py              (modelos)
+     python pipeline/10_hlm_stepup.py --bootstrap 100 (intervalos, depois dos modelos)
 """
 import json
 import sys
@@ -342,32 +345,38 @@ def modelar(df: pd.DataFrame, numero: int) -> tuple[dict, pd.DataFrame]:
 
 
 def bootstrap(df: pd.DataFrame, numero: int, repeticoes: int, semente: int = 2026) -> dict:
-    """Reamostra os 27 estados com reposição; cada cópia de estado vira um grupo novo."""
+    """Reamostra os estados com reposição dentro de cada região; cada cópia de estado vira um grupo novo."""
     rng = np.random.default_rng(semente)
-    ufs = df.SG_UF.unique()
     por_uf = {uf: g for uf, g in df.groupby("SG_UF")}
     m1, m2, m3 = frozenset(SECAO), frozenset(SECAO + MUNICIPIO), frozenset(BLOCOS)
     amostras = {"queda_uf": {"M1": [], "M2": [], "M3": []}, "queda_mun": {"M1": [], "M2": [], "M3": []},
                 "efeitos_pp": {c: [] for c in EFEITOS}}
+    falhas = 0
     for r in range(repeticoes):
+        sorteio = [uf for ufs in REGIOES.values() for uf in rng.choice(ufs.split(), size=len(ufs.split()), replace=True)]
         partes = [por_uf[uf].assign(SG_UF=f"{uf}#{j}", CD_MUNICIPIO=por_uf[uf].CD_MUNICIPIO.astype(str) + f"#{j}")
-                  for j, uf in enumerate(rng.choice(ufs, size=len(ufs), replace=True))]
+                  for j, uf in enumerate(sorteio)]
         b = pd.concat(partes, ignore_index=True)
         y = logit_empirico(b[f"V_{numero}"], b.validos)
         aj = Ajustes(b, y)
-        nulo = aj.componentes(frozenset())
-        for nome, s in [("M1", m1), ("M2", m2), ("M3", m3)]:
-            q = queda(nulo, aj.componentes(s))
+        try:
+            nulo = aj.componentes(frozenset())
+            quedas = {nome: queda(nulo, aj.componentes(s)) for nome, s in [("M1", m1), ("M2", m2), ("M3", m3)]}
+            coef = np.asarray(aj.ajustar(EFEITOS + DUMMIES_REGIAO).get_coef()).ravel()[1:1 + len(EFEITOS)]
+        except Exception as e:  # uma reamostragem que não converge é pulada e contada, não derruba a rodada
+            falhas += 1
+            print(f"    bootstrap {numero}: {r + 1}/{repeticoes} falhou ({str(e)[:80]})", flush=True)
+            continue
+        for nome, q in quedas.items():
             amostras["queda_uf"][nome].append(q["uf"])
             amostras["queda_mun"][nome].append(q["mun"])
         share = (b[f"V_{numero}"] / b.validos).to_numpy()
         fator = float(np.mean(share * (1 - share))) * 100
-        coef = np.asarray(aj.ajustar(EFEITOS + DUMMIES_REGIAO).get_coef()).ravel()[1:1 + len(EFEITOS)]
         for c, v in zip(EFEITOS, coef):
             amostras["efeitos_pp"][c].append(float(v) * fator)
         print(f"    bootstrap {numero}: {r + 1}/{repeticoes}", flush=True)
     ic = lambda xs: [float(np.percentile(xs, 2.5)), float(np.percentile(xs, 97.5))]
-    return {"repeticoes": repeticoes,
+    return {"repeticoes": repeticoes - falhas, "falhas": falhas, "estratificado_por": "região",
             "queda_uf": {k: ic(v) for k, v in amostras["queda_uf"].items()},
             "queda_mun": {k: ic(v) for k, v in amostras["queda_mun"].items()},
             "efeitos_pp": {k: ic(v) for k, v in amostras["efeitos_pp"].items()}}
@@ -377,14 +386,24 @@ def main() -> None:
     repeticoes = int(sys.argv[sys.argv.index("--bootstrap") + 1]) if "--bootstrap" in sys.argv else 0
     df = carregar()
     print(f"{len(df):,} seções, {df.CD_MUNICIPIO.nunique():,} municípios, {df.SG_UF.nunique()} UFs", flush=True)
+    caminho = RESULTADOS / "10_hlm_stepup.json"
+    if repeticoes:
+        # só os intervalos: acrescenta ao JSON dos modelos, gravando a cada candidato
+        if not caminho.exists():
+            sys.exit("[erro] rode os modelos antes do bootstrap (python pipeline/10_hlm_stepup.py)")
+        saida = json.loads(caminho.read_text(encoding="utf-8"))
+        for numero in CANDIDATOS:
+            print(f"  {CANDIDATOS_PRESIDENTE[numero]} ({numero})", flush=True)
+            saida["candidatos"][str(numero)]["bootstrap"] = bootstrap(df, numero, repeticoes)
+            caminho.write_text(json.dumps(saida, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"[ok] intervalos acrescentados a {caminho.name}")
+        return
     saida = {"n_secoes": len(df), "n_municipios": int(df.CD_MUNICIPIO.nunique()), "blocos": BLOCOS,
              "rotulos_blocos": ROTULOS, "pca_socioeconomico": df.attrs["pca"], "candidatos": {}}
     efeitos = df[["SG_UF", "CD_MUNICIPIO"]].drop_duplicates("CD_MUNICIPIO")
     for numero in CANDIDATOS:
         print(f"  {CANDIDATOS_PRESIDENTE[numero]} ({numero})", flush=True)
         resultado, tabela = modelar(df, numero)
-        if repeticoes:
-            resultado["bootstrap"] = bootstrap(df, numero, repeticoes)
         saida["candidatos"][str(numero)] = resultado
         efeitos = efeitos.merge(tabela.drop(columns="SG_UF"), on="CD_MUNICIPIO")
         s = resultado["shapley"]["uf"]["com_regiao"]

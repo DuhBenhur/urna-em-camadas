@@ -55,6 +55,7 @@ export function Cabecalho() {
           <NavLink to="/conferencia">Conferência</NavLink>
           <NavLink to="/mapa">Mapa</NavLink>
           <NavLink to="/metodo">Método</NavLink>
+          <NavLink to="/dados">Dados</NavLink>
           <NavLink to="/sobre">Sobre</NavLink>
         </nav>
         <button className="botao-tema" onClick={alternar} aria-label={escuroAgora ? 'Usar tema claro' : 'Usar tema escuro'}>

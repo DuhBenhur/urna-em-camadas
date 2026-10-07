@@ -7,7 +7,7 @@ Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   resumo.json                  totais nacionais, candidatos, modelos nulos e UFs
   historia.json                números da história da página inicial (cópia de resultados/08_historia.json)
   conferencia.json             soma dos boletins x resultado oficial do TSE, por UF e no Brasil
-  explicacao.json              modelos explicativos (10) e análise espacial (11): capítulo "quem mora ali ou onde fica?"
+  explicacao.json              modelos explicativos (10), análise espacial (11) e tarifaço (12): capítulo 4
   municipios.json              índice dos 5.571 municípios (busca, mapa, zonas de cada município)
   locais/{cd_tse}.json         locais de votação do município, com coordenadas e votos somados
   zonas/{UF}-{zona}.json       seções da zona eleitoral (o boletim de cada urna) e seus locais,
@@ -148,7 +148,11 @@ def explicacao() -> dict | None:
     if not all(c.exists() for c in caminhos):
         return None
     stepup, espacial = (json.loads(c.read_text(encoding="utf-8")) for c in caminhos)
-    return {"stepup": stepup, "espacial": espacial}
+    saida = {"stepup": stepup, "espacial": espacial}
+    tarifaco = RESULTADOS / "12_tarifaco.json"  # extensão: exposição ao tarifaço dos EUA
+    if tarifaco.exists():
+        saida["tarifaco"] = json.loads(tarifaco.read_text(encoding="utf-8"))
+    return saida
 
 
 def desvio_perfil(tabela: pd.DataFrame, comp_mun: pd.DataFrame, beta: dict, peso: str = "ELEIT_PERFIL") -> pd.Series:

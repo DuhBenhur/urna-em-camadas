@@ -20,7 +20,7 @@ Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com
 
 ## Estrutura
 
-- `pipeline/` scripts numerados (01 baixa, 02–04 recortes e base, 05 modelo nulo, 06 contexto municipal, 08 números da história, 09 resultado oficial por seção para a conferência, 10 modelos explicativos (step-up, Shapley, Mundlak), 11 espacial (Moran, LISA, SKATER, processo gaussiano), 07 exporta o site e roda por último)
+- `pipeline/` scripts numerados (01 baixa, 02–04 recortes e base, 05 modelo nulo, 06 contexto municipal, 08 números da história, 09 resultado oficial por seção para a conferência, 10 modelos explicativos (step-up, Shapley, Mundlak), 11 espacial (Moran, LISA, SKATER, processo gaussiano), 12 tarifaço (Comex Stat), 07 exporta o site e roda por último)
 - `notebooks/` análise e figuras (renderizados no GitHub e na página de Metodologia)
 - `site/` SPA Vite + React + MapLibre (GitHub Pages); `site/scripts/telas.py` faz a verificação visual com Playwright
 - `data/processed/`, `data/geo/`, `resultados/` artefatos versionados

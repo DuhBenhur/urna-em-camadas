@@ -48,6 +48,7 @@ python pipeline/05_hlm_nulo.py
 python pipeline/06_contexto_municipal.py
 python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 100 para os intervalos)
 python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
+python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço (API do Comex Stat)
 python pipeline/08_historia.py            # números da história da página inicial
 python pipeline/07_exportar_site.py       # dados estáticos do site
 ```
@@ -82,6 +83,7 @@ cd site && npm install && npm run dev
 | [IBGE, API de agregados](https://servicodados.ibge.gov.br/api/docs/agregados?versao=3) | Censo 2022 (cor ou raça, situação do domicílio, religião, rendimento) e PIB dos Municípios |
 | [MDS, MI Social](https://aplicacoes.mds.gov.br/sagi/) | pessoas no Bolsa Família por município (agosto de 2026) |
 | [IBGE, API de malhas](https://servicodados.ibge.gov.br/api/docs/malhas?versao=3) | malhas municipal e estadual |
+| [MDIC, API do Comex Stat](https://api-comexstat.mdic.gov.br/docs) | exportações de 2024 por município, para os EUA e no total (exposição ao tarifaço) |
 
 ### Tratamentos que afetam resultados
 

@@ -101,6 +101,17 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
         )}
       </p>
 
+      {e.tarifaco && (
+        <p>
+          <strong>Tarifaço (extensão).</strong> Registrada depois do desenho dos modelos: a exposição de cada município ao tarifaço
+          dos EUA, medida como log(1 + exportações para os EUA por habitante, em US$ de {e.tarifaco.ano_exportacoes}), pela API
+          do Comex Stat, entra no modelo de efeitos. {inteiro(e.tarifaco.municipios_exportam_eua)} municípios exportaram para os
+          EUA; os demais ficam com zero. Lula: χ² = {num(e.tarifaco.candidatos['13'].LR, 1)} (p {valorP(e.tarifaco.candidatos['13'].p)});
+          Flávio: χ² = {num(e.tarifaco.candidatos['22'].LR, 1)} (p {valorP(e.tarifaco.candidatos['22'].p)}). Em nenhum dos dois a
+          variância do estado cai.
+        </p>
+      )}
+
       <h2>6. Espaço</h2>
       <p>
         Vizinhos são municípios cujos territórios se tocam na malha do IBGE (ilhas ligadas ao município mais próximo). O índice de

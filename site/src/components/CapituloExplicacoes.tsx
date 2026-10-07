@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { Explicacao, Resumo } from '../lib/dados'
-import { pct } from '../lib/formato'
+import { inteiro, pct } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import { BarrasHorizontais } from './BarrasHorizontais'
@@ -153,6 +153,24 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
         legenda={{ ponto: 'efeito', intervalo: boot ? `intervalo de 95% (bootstrap, ${boot.repeticoes} reamostragens)` : 'intervalo de 95%' }}
         rotulosLongos
       />
+
+      {explicacao.tarifaco && (
+        <>
+          <h3 style={{ marginTop: 32 }}>E o tarifaço?</h3>
+          <p>
+            {inteiro(explicacao.tarifaco.municipios_exportam_eua)} municípios exportaram para os Estados Unidos em{' '}
+            {explicacao.tarifaco.ano_exportacoes}, o ano antes das tarifas de 50% sobre produtos brasileiros. Acrescentar ao
+            modelo a exposição de cada um (exportações para os EUA por habitante) quase não muda nada: +1 desvio-padrão de
+            exposição está associado a {ppNum(explicacao.tarifaco.candidatos[n].efeito_pp)} no voto em {cand.nome} (intervalo de{' '}
+            {ppNum(explicacao.tarifaco.candidatos[n].ic_pp[0])} a {ppNum(explicacao.tarifaco.candidatos[n].ic_pp[1])}), e a camada do
+            estado não encolhe.{' '}
+            {explicacao.tarifaco.candidatos[n].p < 0.05
+              ? 'A associação é estatisticamente clara, mas pequena perto das outras características.'
+              : 'A diferença não se distingue do acaso.'}{' '}
+            É uma comparação entre lugares, com a exposição medida antes das tarifas: não diz o que cada eleitor pensou delas.
+          </p>
+        </>
+      )}
 
       <h3 style={{ marginTop: 32 }}>A urna ou a cidade?</h3>
       <p className="secundario">

@@ -21,6 +21,7 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Espacial: Moran/LISA dos efeitos municipais, 27 regiões de voto (SKATER, ~2,5 min), processo gaussiano nas coordenadas (degrau x rampa), surpresa por local de votação em SP. A malha TopoJSON do IBGE não traz CRS: o 11 define EPSG:4674.
 - Site: capítulo 4 completo (componentes `CapituloExplicacoes`, `PontosHorizontais`), mapa com 5 vistas (`#/mapa?v=...`: resultado, efeito, o que o perfil não explica, bolsões, regiões de voto), "Surpresa" no mapa de locais do município, camada "+ perfil do eleitorado" na urna, Método seções 5 e 6, notebook `notebooks/10_composicao_contexto.ipynb`.
 - Bootstrap por UF (`--bootstrap 100`, ~1 h) dá os intervalos das quedas e dos efeitos.
+- Tarifaço (`pipeline/12_tarifaco.py`, extensão): exportações de 2024 para os EUA por habitante (API do Comex Stat; o servidor de arquivos em lote recusa conexão daqui, a API funciona; respostas guardadas em `RAW_DIR`). Quase nada: Lula +0,17 p.p./DP (p = 0,13), Flávio −0,48 (p < 0,001), camada do estado não encolhe.
 
 **Conferência cidadã (07/10)**
 - `pipeline/09_totalizacao_oficial.py` → `data/processed/totalizacao_secao_2026.parquet` (versionado, 4,8 MB): resultado oficial de Presidente por seção, de `detalhe_votacao_secao_2026` (arquivo `_BR`) e `votacao_secao_2026_BR`. O conjunto por município e zona (`votacao_candidato_munzona_2026`) ainda não tem Presidente.
@@ -61,8 +62,9 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 1. **2º turno** (decisão do usuário em 07/10: "deixar a parte do segundo turno para o segundo turno").
    - Previsão pré-registrada: se for feita, registrar antes de 25/10 no OSF com embargo; o site promete isso em 4 lugares (capítulo 7, "Como foi feito", decisões e Método). Receita: boletins de urna de 2022 (1º e 2º turnos, `resultados-2022-boletim-de-urna`), compatibilizar seções 2022 → 2026 por local de votação e coordenadas, modelar a transição 1T → 2T de 2022 por seção e aplicar ao 1T de 2026.
    - Depois de 25/10: baixar o 2º turno, repetir a conferência e a decomposição, comparar os turnos. Nenhum conteúdo novo no dia 25/10.
-2. **Site.** Imagem de compartilhamento (og:image 1200×630); página de Dados (downloads + dicionário); card da urna para compartilhar; exposição ao tarifaço (Comex Stat) no nível municipal; teste em celular real.
-3. Para enviar: `git push` (o Git Credential Manager autentica; o `gh` não está instalado).
+2. **Site.** Feito em 07/10: imagem de compartilhamento (`site/scripts/og.py` → `site/public/og.png`), página de Dados (`#/dados`), cartão da urna para compartilhar (`site/src/lib/cartao.ts`, canvas 1200×630; no celular vai junto no compartilhamento, no computador é baixado), tarifaço (`12`). Falta: teste em celular real.
+3. **Intervalos do bootstrap**: `python pipeline/10_hlm_stepup.py --bootstrap 100` (estratificado por região; ~45 s por reamostragem, ~2,5 h para os dois candidatos) acrescenta `bootstrap` ao JSON; depois reexportar (07) e publicar. O site usa o erro-padrão do modelo enquanto não houver bootstrap.
+4. Para enviar: `git push` (o Git Credential Manager autentica; o `gh` não está instalado).
 
 ## Problemas conhecidos
 

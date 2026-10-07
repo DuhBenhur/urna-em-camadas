@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { Cabecalho, Rodape } from './components/Estrutura'
 import { Conferencia } from './pages/Conferencia'
+import { Dados } from './pages/Dados'
 import { Inicio } from './pages/Inicio'
 import { Metodo } from './pages/Metodo'
 import { Sobre } from './pages/Sobre'
@@ -43,6 +44,7 @@ export function App() {
             <Route path="/municipio/:cd" element={<Municipio />} />
             <Route path="/mapa" element={<Mapa />} />
             <Route path="/metodo" element={<Metodo />} />
+            <Route path="/dados" element={<Dados />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="*" element={<NaoEncontrada />} />
           </Routes>
