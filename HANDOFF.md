@@ -2,7 +2,7 @@
 
 Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `CLAUDE.md`). Ao terminar uma sessão de trabalho, atualizar este arquivo.
 
-> **Próxima sessão: comece por [`docs/plano_virar_voto.md`](docs/plano_virar_voto.md).** Em 08/10 o usuário decidiu que "Onde virar voto" passa a ser a história central do projeto, amarrada ao que já existe. O plano traz as decisões, as mudanças por prioridade (P0 até 10/10, P1 até 13/10, P2 até 18/10), os arquivos e linhas a mexer, os critérios de pronto e a verificação. Prazo duro: 2º turno em 25/10; último deploy em 24/10. O usuário autorizou implementar e publicar ("fazer tudo"); seguir o plano sem parar a cada passo, verificando cada etapa.
+> **Próxima sessão.** O plano [`docs/plano_virar_voto.md`](docs/plano_virar_voto.md) ("Onde virar voto" no centro do site) foi executado em 08/10 até o P2.2: P0, P1, P2.1 e P2.2 estão no ar, cada item com commit, deploy e conferência no site ao vivo. Falta: **o teste com 5–8 pessoas (P2.3)**, que precisa do usuário (corrigir o que travar até 22/10); **uma decisão do usuário sobre a 3ª ação** (ver "Onde virar voto" abaixo); e, só depois de 25/10, os itens do fim do plano. Prazo duro: 2º turno em 25/10; último deploy em 24/10; nada novo no dia 25.
 
 ## Onde paramos
 
@@ -31,12 +31,17 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Bootstrap feito em 07/10 (`--bootstrap 100`, estados reamostrados dentro de cada região; ~45 s por reamostragem, ~2,5 h no total; 0 falhas): o modelo completo explica 90% [87%, 93%] da camada do estado (Lula); % de 60+ e % urbana não se distinguem de zero. Se os modelos forem refeitos, rodar o bootstrap de novo (ele só acrescenta ao JSON).
 - Tarifaço (`pipeline/12_tarifaco.py`, extensão): exportações de 2024 para os EUA por habitante (API do Comex Stat; o servidor de arquivos em lote recusa conexão daqui, a API funciona; respostas guardadas em `RAW_DIR`). Quase nada: Lula +0,17 p.p./DP (p = 0,13), Flávio −0,48 (p < 0,001), camada do estado não encolhe.
 
-**Onde virar voto (08/10, pedido do usuário para o 2º turno)**
-- Página `#/virar` (`site/src/pages/Virar.tsx`, contas em `site/src/lib/virar.ts`): escolhe o candidato → ação → lugar (Brasil → estado → município → bairros e escolas, com mapa). Destaque no topo da inicial (os dois candidatos lado a lado) e item "Virar voto" no menu.
-- Duas ações: "Lembrar quem faltou" = saldo possível = faltosos × (votos do candidato − do adversário) ÷ válidos, só onde ele ficou à frente, **calculado escola por escola e somado para cima** (`saldo13`/`saldo22` em municípios e estados, vindos de `07_exportar_site.py`); "Conversar com quem ficou de fora" = outros 10 candidatos + brancos + nulos. Conferido: faltosos (32.894.899) e abertos (15.251.315) fecham entre estados, municípios e locais e batem com as abstenções oficiais.
-- Neutralidade: a mesma conta para os dois; o site não pede voto (dito na página, na inicial e no Sobre). Bloco "Como fazer, dentro da lei" (CE art. 299 e 323; Lei 6.091/74; Lei 9.504/97 art. 37 e 39 §5º) e "Como calculamos" (teto, suposição forte sobre quem falta, por que não priorizar lugares apertados: no 2º turno presidencial todo voto vale igual).
-- `#/municipio/{cd}?local={zona}-{local}` abre com a escola selecionada (link "seções" das tabelas).
-- Depois de 25/10, decidir o que fazer com a página (manter como registro ou trocar pela comparação dos turnos). Nenhum conteúdo novo no dia 25.
+**Onde virar voto: o centro do site (08/10; plano em `docs/plano_virar_voto.md`, executado até o P2.2)**
+- Inicial (`pages/Inicio.tsx`): "Onde a sua conversa pode virar voto". Passo 1 "Para quem?" (`components/EscolhaCandidato.tsx`: os dois com o mesmo peso, nenhum escolhido de antemão); passo 2 "Por onde começar?" (pela minha urna = `Busca`; por um lugar = estado e cidade → `#/virar`); três jeitos de fazer diferença, com os números nacionais; por que pensar em bairros (os achados como argumento); a lei curta (`components/LeiCurta.tsx`); "depois de votar, confira". Em 390 px o passo 1 aparece sem rolar.
+- Candidato que viaja (`lib/candidato.ts`, `useCandidato`): `?c=13|22` na URL e cópia na sessionStorage da aba. Sem escolha, as páginas de análise mostram Lula (a ordem do site); as telas de ação não escolhem ninguém (bloco da urna) ou abrem na conta sem lado (votos em aberto, no mapa e no município). O capítulo da análise passou para `?cap=` (links antigos `?c=c-...` continuam abrindo).
+- Três ações (`lib/virar.ts`, `LENTES`): lembrar quem faltou (saldo), conversar com quem ficou de fora (abertos) e onde o perfil promete mais (experimental: max(0, −surpresa) × válidos). Estados e municípios trazem `saldo13/22` e `gap13/22` somados escola por escola (`pipeline/07`); nas escolas, o navegador calcula. Totais: faltosos 32.894.899 (= abstenções), abertos 15.251.315, saldo Lula 3.888.389 / Flávio 4.656.407, abaixo do perfil Lula 2.421.342 / Flávio 2.080.423.
+- Trava da exportação (`conferir_virar` no 07): antes de gravar o primeiro arquivo, confere que faltosos, abertos, saldos e gaps fecham entre estados, municípios e escolas (tolerância de 1 voto por município), que faltosos = abstenções e que aptos = faltosos + abertos + Lula + Flávio em cada estado e município. Testada quebrando números de propósito. A saída agora é idêntica byte a byte entre execuções (os locais saem ordenados).
+- Urna (`components/AgirUrna.tsx`): bloco "Daqui até o dia 25" com a escola da urna e as escolas a até 2 km (totais, as 3 primeiras da ação, botão para o mapa e o cartão "perto de mim", que só traz os números sem lado). Referência conferida: `#/urna/SP/403/411` (EMEI Elísio Teixeira Leite) = 35 escolas perto, saldo de Lula 5.539, Flávio sem escola à frente, abaixo do perfil para Flávio 3.460.
+- `#/virar?...&perto={zona}-{local}`: anel de 2 km no mapa (prop `anel` do `MapaLocais`) e tabela "Perto de você"; `?ir=como-fazer` ou `?ir=como-calculamos` abre a lei completa ou o "Como calculamos". A lei completa ganhou o impulsionamento pago (Lei 9.504/1997, art. 57-C).
+- Mapa nacional `#/mapa?v=virar&a=...`: cada conta por 100 eleitores aptos, 5 classes fixas e iguais para os dois (`CORTES_VIRAR` em `components/Mapas.tsx`); rampas sequenciais em `lib/cores.ts` (vermelho Lula, azul Flávio, cinza para os votos em aberto), validadas com `validate_palette.js --ordinal` nos dois modos. Município: vista "Virar voto" no mapa de locais.
+- Análise: cada capítulo tem "Para quem vai conversar"; o capítulo 4 ganhou os quatro níveis (a escola pesa mais que a urna); o 7 virou "Do mapa à conversa". Método seção 8 (`components/MetodoVirar.tsx`), três decisões novas em `lib/decisoes.ts`, colunas novas no dicionário de Dados. Vitrine: título, og:*, `og.png` (os dois candidatos com o mesmo peso), llms.txt, README, Sobre.
+- **A 3ª ação precisa de uma decisão do usuário.** Os dados mostram que ela aponta, em boa parte, para bairros onde o adversário é forte por motivos que o modelo não vê (renda do bairro, história política): em São Paulo, as escolas mais abaixo do esperado para Lula ficam em bairros ricos (Campo Belo, Cidade Jardim); para Flávio, no centro expandido (Consolação, Perdizes). O site diz isso no aviso, no "Como calculamos" e no Método. Opções: manter como está (experimental, com o aviso), tirar da inicial ou retirar.
+- Depois de 25/10: decidir o que fazer com a página (registro ou comparação dos turnos). Nenhum conteúdo novo no dia 25.
 
 **Conferência cidadã (07/10)**
 - `pipeline/09_totalizacao_oficial.py` → `data/processed/totalizacao_secao_2026.parquet` (versionado, 4,8 MB): resultado oficial de Presidente por seção, de `detalhe_votacao_secao_2026` (arquivo `_BR`) e `votacao_secao_2026_BR`. O conjunto por município e zona (`votacao_candidato_munzona_2026`) ainda não tem Presidente.
@@ -50,7 +55,7 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Também: amplitude dentro da mesma escola (mediana 9,7 p.p.), municípios que contrariam o estado (BLUP, 20 mil+ válidos) e percentis de "surpresa" de cada urna.
 
 **Site (site/, Vite + React + TypeScript + MapLibre)**
-- Início = história em 7 capítulos (decisão do usuário: na inicial, com a busca no topo): 1 jogo "Adivinhe uma urna" + escada de erro; 2 o estado (ICC + efeito dos estados); 3 vizinhança x divisa + cidades gêmeas; 4 "Quem mora ali ou onde fica?" (aviso: entra com o step-up); 5 surpresas (escolas, municípios que contrariam o estado); 6 "Como foi feito" (linha do tempo das etapas, o caso do nulo técnico, decisões); 7 por que importa. Cada capítulo tem um "Como sabemos" recolhível. Um seletor Lula/Flávio repete nos capítulos.
+- Análise (`#/analise`; até 07/10 ficava na inicial) = história em 7 capítulos: 1 jogo "Adivinhe uma urna" + escada de erro; 2 o estado (ICC + efeito dos estados); 3 vizinhança x divisa + cidades gêmeas; 4 "Quem mora ali ou onde fica?" (aviso: entra com o step-up); 5 surpresas (escolas, municípios que contrariam o estado); 6 "Como foi feito" (linha do tempo das etapas, o caso do nulo técnico, decisões); 7 por que importa. Cada capítulo tem um "Como sabemos" recolhível. Um seletor Lula/Flávio repete nos capítulos.
 - Método reescrito como referência (fontes, conferência, modelo, como cada número da inicial é calculado, decisões e alternativas descartadas em `site/src/lib/decisoes.ts`, comandos). Urna ganhou "mais surpreendente/previsível que N% das urnas" e o aviso de falácia ecológica.
 - Outras páginas: Urna (`#/urna/UF/zona/seção`: boletim de urna + camadas + perfil + seções do mesmo local), Município (mapa de locais OpenFreeMap + tabela), Mapa (coroplético dos municípios), Método, Sobre.
 - Dados estáticos gerados por `pipeline/07_exportar_site.py` em `site/public/dados/` (fora do git; o CI gera).
@@ -66,7 +71,9 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Só Python. `gpboost` é o motor (o `statsmodels` leva ~5 min por modelo e quebra com `use_sparse`).
 - Os dois candidatos do 2º turno são modelados, e o site deixa escolher: decompor só um lado pareceria partidário.
 - Cores: Lula vermelho, Flávio azul (convenção dos mapas eleitorais = polos do par divergente validado). Braço vermelho calculado com a mesma luminosidade OKLCH da rampa azul (`site/src/lib/cores.ts`). Paleta validada com o `validate_palette.js` da skill de dataviz.
-- Previsão do 2º turno: não será feita; a promessa sai do site (plano P0.1).
+- Previsão do 2º turno: não será feita; a promessa saiu do site em 08/10 (P0.1), e o desvio está registrado em `docs/plano_de_analise.md`.
+- Ações sem candidato escolhido: o bloco da urna não escolhe ninguém; o mapa e o município abrem na conta sem lado (votos em aberto). O cartão "perto de mim" só traz números sem lado, e o link compartilhado não leva candidato.
+- Cores do "Onde virar voto" no mapa: uma cor por candidato, cinza para os votos em aberto; 5 classes fixas e iguais para os dois candidatos, para os mapas poderem ser comparados.
 - **Centro do projeto (08/10):** "Onde virar voto". O resto do site serve a essa história (`docs/plano_virar_voto.md`).
 - Ordem combinada com o usuário (07/10): história do site primeiro e publicação logo, previsão em seguida (prazo ~20/10).
 - Escala divergente no modo escuro: extremos `#ff716b` / `#5fa7ff` (L 0,72, croma máximo) no lugar do degrau 200 (croma 0,08, lia como pastel/"fraco"). Cada braço validado com `validate_palette.js --ordinal --mode dark`.
@@ -75,7 +82,7 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 
 ## Pendências, em ordem de prioridade
 
-1. **"Onde virar voto" no centro do site:** seguir `docs/plano_virar_voto.md` (P0 → P1 → P2). Inclui retirar a promessa de previsão do 2º turno (4 lugares: `ComoFoiFeito.tsx:63-65`, `decisoes.ts:52`, `Analise.tsx:322`, `Metodo.tsx:267`).
+1. **Teste com 5–8 pessoas (P2.3):** idades e escolaridades diferentes, tarefa "ache a sua urna e diga onde você conversaria". Anotar onde travam e corrigir até 22/10. Depois, **decidir a 3ª ação** (acima). O resto do plano (P0, P1, P2.1, P2.2) está no ar desde 08/10.
    - Depois de 25/10: baixar o 2º turno, repetir a conferência e a decomposição, comparar os turnos. Nenhum conteúdo novo no dia 25/10.
    - Previsão do 2º turno: **não será feita** (decisão de 07/10; plano de 08/10). Se o usuário mudar de ideia, a receita era: boletins de 2022 (1º e 2º turnos), compatibilizar seções 2022 → 2026 por local e coordenadas, transição 1T → 2T por seção, registro no OSF com embargo antes de 25/10.
 2. **Próximos passos de alcance** (análise de 07/10): vídeo de 60–90 s com legenda (roteiro com o Claude, produção do usuário); CSV, DOI no Zenodo e resumo em inglês; gráficos para embutir; teste com 5–8 pessoas de idades e escolaridades diferentes ("ache sua urna", "explique o 63%").
@@ -91,6 +98,8 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Gráficos SVG só desenham depois de medir a largura (`useLargura` devolve 0 até lá); desenhar com largura provisória fazia os pontos deslizarem na carga.
 - Corrigido em 08/10: 258 das 2.640 zonas não abriam no site ("Zona não encontrada"). As coordenadas anuladas dos locais (sentinela −1 do TSE) saíam como `NaN` no JSON, que o navegador não lê. Agora `07_exportar_site.py` converte para `null` e grava com `allow_nan=False` (um `NaN` novo derruba a exportação em vez de publicar arquivo quebrado). O site distingue zona inexistente (404) de falha de leitura. Isso provavelmente explica o "Sortear uma urna" que, uma vez no Playwright, não mostrou as pistas: o sorteio caía numa zona quebrada em cerca de 10% das vezes.
 - O modelo não pondera as seções (nenhum dos dois motores aceita pesos no caso usado).
+- `site/scripts/telas.py`: nas rotas com mapa, a foto é só da janela, crescida até a altura da página. A foto de página inteira redimensionava a janela no meio da captura e o canvas do mapa (WebGL) saía desenhado pela metade (não era defeito do site).
+- No Chrome de desktop, "Compartilhar" abre a folha de compartilhamento do sistema (Web Share); onde não há, o link é copiado.
 
 ## Comandos
 

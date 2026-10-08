@@ -4,6 +4,17 @@ Escrito em 08/10/2026 para a sessão que vai implementar (e para o Eduardo revis
 
 Antes de começar, leia o `HANDOFF.md` (estado do projeto) e o `CLAUDE.md` (convenções). Este arquivo diz **o que mudar, em que ordem e como saber que ficou pronto**.
 
+> **Estado da execução (08/10, fim da sessão):** P0, P1, P2.1 e P2.2 feitos, publicados e conferidos no site ao vivo (testes no navegador para cada critério de pronto). **Pendente:** P2.3 (teste com pessoas, precisa do usuário) e os itens de depois de 25/10.
+>
+> Onde a implementação se afastou do texto do plano, para o usuário revisar:
+> - **Bloco de ação da urna (P0.4):** sem candidato escolhido, o seletor fica sem nenhum marcado e o bloco mostra só o que não tem lado (quem faltou, quem ficou de fora), pedindo a escolha, como o `#/virar` já fazia. As camadas da urna continuam mostrando Lula por padrão, como antes.
+> - **Mapa nacional (P1.2):** os votos em aberto, que não têm lado, usam uma rampa cinza, não a cor do candidato; sem candidato escolhido, a vista abre nessa conta. A mesma regra vale para a vista "Virar voto" do município (P1.3).
+> - **Inicial (P0.3):** a frase do topo não repete "A mesma conta para os dois", porque a frase padrão vem logo abaixo, junto dos botões. O terceiro cartão (P1.1) mostra, sem candidato escolhido, os números dos dois lado a lado.
+> - **3ª ação (P1.1):** os dados mostraram um limite que o texto do plano não previa: as escolas mais abaixo do esperado ficam, em boa parte, onde o adversário é forte por motivos que o modelo não vê (renda do bairro, história política). Em São Paulo, para Lula, bairros ricos; para Flávio, o centro expandido. O aviso, o "Como calculamos" e o Método dizem isso. Fica para o usuário decidir se mantém a ação (experimental, com o aviso), se tira da inicial ou se retira.
+> - **Imagem de compartilhamento (P1.5):** a pirâmide de camadas saiu (a barra vermelha era mais larga que a azul); entrou um desenho neutro das escolas perto de você, com o anel de 2 km.
+> - **Cartão "perto de mim" (P2.2):** só números sem lado (quem faltou e quem votou em outro candidato, branco ou nulo), sem cor nem conta de candidato; o link compartilhado não leva candidato.
+> - **Também:** o capítulo da análise passou de `?c=` para `?cap=` (o `?c=` ficou para o candidato; links antigos continuam valendo); a lei completa ganhou o impulsionamento pago (art. 57-C); o capítulo 4 ganhou os quatro níveis, que a inicial cita; trechos abertos por link não ficam mais embaixo do cabeçalho fixo.
+
 ---
 
 ## 1. A história nova
