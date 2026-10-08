@@ -49,6 +49,23 @@ export const DECISOES: { escolha: string; porque: string; descartada: string; in
     descartada: 'Teste Z, que fica errado justamente nesse limite.',
   },
   {
+    escolha: 'Somar o saldo escola por escola',
+    porque:
+      'Um estado onde o candidato perdeu ainda tem escolas onde ele ganhou. Somando as escolas, estado, município e escola contam a mesma história.',
+    descartada: 'Calcular o saldo com o total do estado ou do município, que zera o saldo onde o candidato perdeu no total.',
+  },
+  {
+    escolha: 'Não priorizar lugares apertados',
+    porque:
+      'No 2º turno para presidente, cada voto conta igual no país inteiro. O que importa é quantas pessoas alcançáveis há perto, não a margem do lugar.',
+    descartada: 'Ordenar os lugares pela margem do 1º turno, como se houvesse estado-pêndulo.',
+  },
+  {
+    escolha: 'Três ações com contas separadas',
+    porque: 'Três números simples podem ser conferidos um a um. A terceira, que depende do modelo, leva o selo de experimental.',
+    descartada: 'Um índice único que misturasse as três contas: uma caixa-preta.',
+  },
+  {
     escolha: 'Sem previsão do 2º turno',
     porque:
       'O foco ficou na ferramenta de ação (Onde virar voto). Uma previsão publicada antes da eleição pareceria pesquisa eleitoral, e o site não é pesquisa.',

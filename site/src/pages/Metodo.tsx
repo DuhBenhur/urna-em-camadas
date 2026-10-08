@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { MetodoExplicativo } from '../components/MetodoExplicativo'
+import { MetodoVirar } from '../components/MetodoVirar'
 import { useExplicacao, useHistoria, useResumo } from '../lib/dados'
 import { DECISOES } from '../lib/decisoes'
 import { inteiro, pct } from '../lib/formato'
@@ -46,6 +47,8 @@ export function Metodo() {
   const m13 = resumo?.modelos['13']
   const m22 = resumo?.modelos['22']
   const regras = historia?.regras
+  // seções numeradas a partir dos números da análise (5 sem os modelos explicativos, 7 com eles)
+  const n = explicacao ? 7 : 5
 
   return (
     <div className="conteudo">
@@ -195,7 +198,7 @@ export function Metodo() {
 
       {explicacao && <MetodoExplicativo e={explicacao} />}
 
-      <h2>{explicacao ? 7 : 5}. Os números da análise</h2>
+      <h2>{n}. Os números da análise</h2>
       <p>
         São contas descritivas, feitas por <code>pipeline/08_historia.py</code> sobre a mesma base, para os dois candidatos.
       </p>
@@ -228,7 +231,9 @@ export function Metodo() {
         </li>
       </ul>
 
-      <h2>{explicacao ? 8 : 6}. Decisões e alternativas descartadas</h2>
+      <MetodoVirar numero={n + 1} resumo={resumo} />
+
+      <h2>{n + 2}. Decisões e alternativas descartadas</h2>
       <TabelaRolagem>
         <table>
           <thead>
@@ -252,7 +257,7 @@ export function Metodo() {
         </table>
       </TabelaRolagem>
 
-      <h2>{explicacao ? 9 : 7}. Para reproduzir</h2>
+      <h2>{n + 3}. Para reproduzir</h2>
       <p>
         Tudo roda em Python. A partir dos arquivos que já estão no repositório (<code>data/processed/</code>), dá para rodar só
         a validação, os modelos e a exportação.
@@ -261,14 +266,14 @@ export function Metodo() {
         {COMANDOS}
       </pre>
 
-      <h2>{explicacao ? 10 : 8}. Próximas etapas</h2>
+      <h2>{n + 4}. Próximas etapas</h2>
       <ul>
         <li>Depois de 25 de outubro: conferir o 2º turno com o resultado oficial, urna por urna, como no 1º turno.</li>
         <li>Comparar os dois turnos urna por urna, com a mesma decomposição em camadas.</li>
         <li>Sem previsão do 2º turno: o foco ficou na ferramenta “Onde virar voto” (ver as decisões acima).</li>
       </ul>
 
-      <h2>{explicacao ? 11 : 9}. Limitações</h2>
+      <h2>{n + 5}. Limitações</h2>
       <ul>
         <li>
           A unidade é a seção, não o eleitor. Os resultados descrevem lugares, não pessoas: dizer que urnas com mais diplomados

@@ -74,15 +74,26 @@ const DICIONARIO: { arquivo: string; colunas: [string, string][] }[] = [
       ['regiao_voto', 'Região de voto do SKATER (0 a 26)'],
     ],
   },
+  {
+    arquivo: 'site: resumo.json (estados), municipios.json e locais/{código}.json',
+    colunas: [
+      ['aptos', 'Eleitores aptos (estados e municípios); o mapa do "Onde virar voto" mostra cada conta por 100 aptos'],
+      ['faltosos', 'Aptos que não votaram no 1º turno (aptos − comparecimento); a soma do Brasil é igual às abstenções oficiais'],
+      ['abertos', 'Votos nos outros 10 candidatos + brancos + nulos no 1º turno: os votos que não foram para nenhum dos dois finalistas'],
+      ['saldo13, saldo22', 'Saldo possível ao lembrar quem faltou, somado escola por escola (estados e municípios): faltosos × (votos do candidato − do adversário) ÷ válidos, só onde ele ficou à frente'],
+      ['gap13, gap22', 'Votos abaixo do esperado, somados escola por escola (estados e municípios): max(0, −surpresa) × válidos; experimental'],
+      ['s13, s22', 'Surpresa de cada local de votação: proporção do candidato − esperado pela cidade e pelo perfil do eleitorado, com 4 casas (locais/{código}.json)'],
+    ],
+  },
 ]
 
 const SITE = [
   ['resumo.json', 'Totais nacionais, candidatos, modelo nulo e estados'],
   ['conferencia.json', 'Soma dos boletins x resultado oficial, por estado'],
   ['historia.json, explicacao.json', 'Números da análise e dos modelos explicativos e espaciais'],
-  ['municipios.json', 'Índice dos municípios (busca e mapa)'],
+  ['municipios.json', 'Índice dos municípios (busca e mapa), com as contas do "Onde virar voto"'],
   ['zonas/{UF}-{zona}.json', 'O boletim de cada urna da zona, com a marcação da conferência e a camada do perfil'],
-  ['locais/{código do município}.json', 'Locais de votação do município, com votos somados e a surpresa'],
+  ['locais/{código do município}.json', 'Locais de votação do município, com votos somados, faltosos, votos em aberto e a surpresa'],
   ['geo/', 'Malhas do IBGE e contorno das regiões de voto'],
 ]
 
