@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { baixarImagem, compartilharImagem, gerarCartaoPerto } from '../lib/cartao'
 import { useCandidato } from '../lib/candidato'
 import { useLocais, type Local } from '../lib/dados'
 import { inteiro } from '../lib/formato'
@@ -62,7 +63,9 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
           <NaSuaEscola escola={escola} candidato={candidato} />
           {perto ? (
             <PertoDeVoce perto={perto} escola={escola} candidato={candidato} lente={lente} mudarLente={mudarLente}
-              link={noVirar({ perto: chaveLocal(escola) })} />
+              link={noVirar({ perto: chaveLocal(escola) })} lugar={`${municipio} (${uf})`}
+              // o link compartilhado não leva candidato: quem recebe escolhe o seu
+              linkCompartilhado={`${window.location.origin}${window.location.pathname}#/virar?${new URLSearchParams({ a: 'abertos', uf, m: String(cd), perto: chaveLocal(escola) })}`} />
           ) : (
             <div className="agir-bloco">
               <h3>Perto de você</h3>
@@ -133,14 +136,17 @@ function NaSuaEscola({ escola, candidato }: { escola: Local; candidato: NumeroCa
   )
 }
 
-function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link }: {
+function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar, linkCompartilhado }: {
   perto: (Local & { km: number })[]
   escola: Local
   candidato: NumeroCandidato | null
   lente: Lente
   mudarLente: (l: Lente) => void
   link: string
+  lugar: string
+  linkCompartilhado: string
 }) {
+  const [copiado, setCopiado] = useState(false)
   const cand = candidato ? CANDIDATOS[candidato] : null
   const total = somar(perto)
   const saldo = candidato ? potencialSomado(perto, candidato, 'faltosos') : 0
@@ -243,6 +249,50 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link }: {
       <Link className="botao" to={link} style={{ marginTop: 16 }}>
         Ver as escolas perto daqui no mapa
       </Link>
+      <CompartilharPerto escola={escola} lugar={lugar} escolas={perto.length} faltaram={total.faltosos} abertos={total.abertos}
+        url={linkCompartilhado} copiado={copiado} aoCopiar={() => {
+          setCopiado(true)
+          setTimeout(() => setCopiado(false), 2500)
+        }} />
     </div>
+  )
+}
+
+/** Cartão "perto de mim": só os números sem lado, para mandar a quem também vota no bairro. */
+function CompartilharPerto({ escola, lugar, escolas, faltaram, abertos, url, copiado, aoCopiar }: {
+  escola: Local
+  lugar: string
+  escolas: number
+  faltaram: number
+  abertos: number
+  url: string
+  copiado: boolean
+  aoCopiar: () => void
+}) {
+  const imagem = async () => {
+    const blob = await gerarCartaoPerto({ escola: escola.nome, lugar, escolas, raioKm: RAIO_PERTO_KM, faltaram, abertos })
+    return new File([blob], `perto-de-mim-${chaveLocal(escola)}.png`, { type: 'image/png' })
+  }
+  const texto = `Perto da minha escola, no 1º turno: ${inteiro(faltaram)} pessoas faltaram e ${inteiro(abertos)} votaram em outro candidato, branco ou nulo.`
+  return (
+    <>
+      <div className="acoes" style={{ marginTop: 12 }}>
+        <button
+          className="botao botao-secundario"
+          onClick={async () => {
+            if (await compartilharImagem(imagem(), texto, url)) aoCopiar()
+          }}
+        >
+          {copiado ? 'Link copiado' : 'Compartilhar “perto de mim”'}
+        </button>
+        <button className="botao botao-secundario" onClick={async () => baixarImagem(await imagem())}>
+          Baixar imagem
+        </button>
+      </div>
+      <p className="discreto" style={{ marginTop: 8, marginBottom: 0 }}>
+        A imagem mostra o nome da sua escola e só os números sem lado: quem faltou e quem votou em outro candidato, branco ou
+        nulo. Nenhum candidato.
+      </p>
+    </>
   )
 }

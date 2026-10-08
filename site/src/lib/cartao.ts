@@ -139,3 +139,122 @@ export function gerarCartao(d: DadosCartao): Promise<Blob> {
 
   return new Promise((ok, falha) => canvas.toBlob((b) => (b ? ok(b) : falha(new Error('sem imagem'))), 'image/png'))
 }
+
+export type DadosCartaoPerto = {
+  escola: string // escola de partida
+  lugar: string // "São Paulo (SP)"
+  escolas: number // escolas a até `raioKm`, contando a de partida
+  raioKm: number
+  faltaram: number
+  abertos: number
+}
+
+/**
+ * Cartão "perto de mim" (1200×630): só os números que não têm lado (quem faltou e quem votou em outro candidato, branco
+ * ou nulo nas escolas perto), sem cor nem conta de candidato. O cartão informa, não pede voto.
+ */
+export function gerarCartaoPerto(d: DadosCartaoPerto): Promise<Blob> {
+  const L = 1200
+  const A = 630
+  const canvas = document.createElement('canvas')
+  canvas.width = L
+  canvas.height = A
+  const ctx = canvas.getContext('2d')!
+  ctx.fillStyle = COR.fundo
+  ctx.fillRect(0, 0, L, A)
+  const m = 64
+  const coluna = 660
+  const inteiro = (x: number) => x.toLocaleString('pt-BR')
+
+  ctx.fillStyle = COR.tinta2
+  ctx.font = `700 24px ${FONTE}`
+  ctx.fillText('Urna em Camadas', m, 88)
+  ctx.fillStyle = COR.tinta
+  ctx.font = `750 52px ${FONTE}`
+  ctx.fillText('Perto da minha escola', m, 160)
+  ctx.fillStyle = COR.tinta2
+  ctx.font = `400 22px ${FONTE}`
+  // espaço que não quebra: "São Paulo (SP)" e "1º turno" ficam na mesma linha
+  quebrar(ctx, `${d.escola} · ${d.lugar.replace(/ \(/, '\u00a0(')}`, coluna).slice(0, 2).forEach((linha, i) => ctx.fillText(linha, m, 202 + i * 30))
+
+  ctx.fillStyle = COR.tinta
+  ctx.font = `400 26px ${FONTE}`
+  quebrar(ctx, `Nas ${inteiro(d.escolas)} escolas a até ${d.raioKm}\u00a0km, contando a minha, no 1º\u00a0turno:`, coluna)
+    .slice(0, 2)
+    .forEach((linha, i) => ctx.fillText(linha, m, 300 + i * 34))
+
+  // os dois números, lado a lado
+  ;([
+    [d.faltaram, 'pessoas faltaram'],
+    [d.abertos, 'votaram em outro candidato, branco ou nulo'],
+  ] as const).forEach(([valor, rotulo], i) => {
+    const x = m + i * 330
+    ctx.fillStyle = COR.tinta
+    ctx.font = `700 56px ${FONTE}`
+    ctx.fillText(inteiro(valor), x, 420)
+    ctx.fillStyle = COR.tinta2
+    ctx.font = `400 22px ${FONTE}`
+    quebrar(ctx, rotulo, 300).slice(0, 2).forEach((linha, j) => ctx.fillText(linha, x, 458 + j * 28))
+  })
+
+  // desenho neutro: escolas em volta da de partida, com o anel do "perto de você"
+  const cx = 960
+  const cy = 310
+  const r = 170
+  ctx.fillStyle = '#9c9a93'
+  ctx.globalAlpha = 0.85
+  for (const [dx, dy, raio] of [[-70, -80, 16], [56, -95, 10], [90, -8, 22], [-92, 18, 11], [-35, 80, 19], [62, 82, 13], [18, -55, 8], [-45, -22, 7], [32, 30, 9], [112, 64, 7], [-112, -46, 8], [0, 124, 10]]) {
+    ctx.beginPath()
+    ctx.arc(cx + dx, cy + dy, raio, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.globalAlpha = 1
+  ctx.strokeStyle = COR.tinta
+  ctx.lineWidth = 3
+  ctx.setLineDash([12, 10])
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.setLineDash([])
+  ctx.fillStyle = COR.tinta
+  ctx.beginPath()
+  ctx.arc(cx, cy, 16, 0, Math.PI * 2)
+  ctx.fill()
+
+  ctx.fillStyle = COR.tinta3
+  ctx.font = `400 20px ${FONTE}`
+  ctx.fillText('A mesma conta para os dois candidatos · Urna em Camadas · duhbenhur.github.io/urna-em-camadas', m, A - 40)
+
+  return new Promise((ok, falha) => canvas.toBlob((b) => (b ? ok(b) : falha(new Error('sem imagem'))), 'image/png'))
+}
+
+/**
+ * Compartilha a imagem com o link (celular), só o link, ou copia o link quando não há como compartilhar.
+ * Devolve true quando copiou o link (para avisar "Link copiado"); cancelar o compartilhamento não é erro.
+ */
+export async function compartilharImagem(imagem: Promise<File>, texto: string, url: string): Promise<boolean> {
+  try {
+    const arquivo = await imagem.catch(() => null)
+    if (arquivo && navigator.canShare?.({ files: [arquivo] })) {
+      await navigator.share({ title: 'Urna em Camadas', text: `${texto} ${url}`, files: [arquivo] })
+      return false
+    }
+    if (navigator.share) {
+      await navigator.share({ title: 'Urna em Camadas', text: texto, url })
+      return false
+    }
+    await navigator.clipboard.writeText(url)
+    return true
+  } catch {
+    return false // compartilhamento cancelado
+  }
+}
+
+/** Baixa a imagem (no computador, onde não há compartilhamento de arquivo). */
+export function baixarImagem(arquivo: File) {
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(arquivo)
+  link.download = arquivo.name
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+}

@@ -10,7 +10,7 @@ import { useCandidato } from '../lib/candidato'
 import { registros, useExplicacao, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { cada100, pct, pp } from '../lib/formato'
 import { CANDIDATOS, camadas, percentil, type NumeroCandidato } from '../lib/modelo'
-import { gerarCartao } from '../lib/cartao'
+import { baixarImagem as baixar, compartilharImagem, gerarCartao } from '../lib/cartao'
 import { comPreposicao } from '../lib/ufs'
 
 // Perfil médio do eleitorado brasileiro nas seções (TSE, 2026), para comparação
@@ -134,28 +134,12 @@ export function Urna() {
     // o link leva o candidato da imagem, mesmo quando a escolha veio de outra página e não está na URL
     const url = `${window.location.origin}${window.location.pathname}#/urna/${arquivo.uf}/${nZona}/${nSecao}?c=${candidato}`
     const texto = `Minha urna em camadas: zona ${nZona}, seção ${nSecao} (${municipio.nome}-${arquivo.uf})`
-    try {
-      const arquivoImagem = await imagem().catch(() => null)
-      if (arquivoImagem && navigator.canShare?.({ files: [arquivoImagem] })) {
-        await navigator.share({ title: 'Urna em Camadas', text: `${texto} ${url}`, files: [arquivoImagem] })
-      } else if (navigator.share) await navigator.share({ title: 'Urna em Camadas', text: texto, url })
-      else {
-        await navigator.clipboard.writeText(url)
-        setCopiado(true)
-        setTimeout(() => setCopiado(false), 2500)
-      }
-    } catch {
-      /* compartilhamento cancelado */
+    if (await compartilharImagem(imagem(), texto, url)) {
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2500)
     }
   }
-  const baixarImagem = async () => {
-    const arquivoImagem = await imagem()
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(arquivoImagem)
-    link.download = arquivoImagem.name
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000)
-  }
+  const baixarImagem = async () => baixar(await imagem())
 
   return (
     <div className="conteudo">
