@@ -35,6 +35,13 @@ export const pp = (x: number, casas = 1) => pontosComSinal(x * 100, casas)
 export const inteiro = (x: number) => inteiros.format(x)
 export const compactar = (x: number) => compacto.format(x)
 
+/** Para frases: 32_894_899 → "32,9 milhões"; abaixo de 1 milhão, o número inteiro */
+export const milhoes = (x: number) => {
+  if (Math.abs(x) < 1e6) return inteiro(Math.round(x))
+  const m = Number((x / 1e6).toFixed(1))
+  return `${decimal(1).format(m)} ${m < 2 ? 'milhão' : 'milhões'}`
+}
+
 /** Valor já em pontos, sem sinal: 14.5 → "14,5 pontos" */
 export const pontos = (x: number, casas = 1) => (Number.isFinite(x) ? `${decimal(casas).format(x)} ${unidade(Math.abs(x), casas)}` : '—')
 

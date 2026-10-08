@@ -76,6 +76,35 @@ export function potencialSomado<T extends Lugar>(itens: T[], n: NumeroCandidato,
   return itens.reduce((s, l) => s + potencial(l, n, lente), 0)
 }
 
+/** "Perto de você": até 2 km, uma caminhada de meia hora, no mesmo município. */
+export const RAIO_PERTO_KM = 2
+
+/** Chave de uma escola dentro do município: "{zona}-{local}" (o número do local só é único dentro dele). */
+export const chaveLocal = (l: { zona: number; local: number }) => `${l.zona}-${l.local}`
+
+type Ponto = { lat: number; lon: number }
+
+/** Distância em km entre dois pontos (haversine, raio médio da Terra). */
+export function distanciaKm(a: Ponto, b: Ponto): number {
+  const rad = Math.PI / 180
+  const dLat = (b.lat - a.lat) * rad
+  const dLon = (b.lon - a.lon) * rad
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2
+  return 2 * 6371.0088 * Math.asin(Math.min(1, Math.sqrt(h)))
+}
+
+/** Escolas com coordenada a até `km` do centro, da mais perto para a mais longe (a do centro entra, a 0 km). */
+export function escolasPerto<T extends { lat: number | null; lon: number | null }>(locais: T[], centro: Ponto, km = RAIO_PERTO_KM): (T & { km: number })[] {
+  return locais
+    .filter((l) => l.lat !== null && l.lon !== null)
+    .map((l) => ({ ...l, km: distanciaKm(centro, { lat: l.lat!, lon: l.lon! }) }))
+    .filter((l) => l.km <= km)
+    .sort((a, b) => a.km - b.km)
+}
+
+/** "0,8 km" */
+export const km = (x: number) => `${x.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`
+
 /** Ordena por potencial e devolve os primeiros. */
 export function ranquear<T extends Lugar>(itens: T[], n: NumeroCandidato, lente: Lente, quantos: number): (T & { valor: number })[] {
   return itens

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { AgirUrna } from '../components/AgirUrna'
 import { BoletimUrna } from '../components/BoletimUrna'
 import { ComoLer } from '../components/ComoLer'
 import { TabelaRolagem } from '../components/TabelaRolagem'
@@ -176,6 +177,12 @@ export function Urna() {
         Nesta urna, Lula teve <strong>{cada100(s.v13 / s.validos)}</strong> votos válidos, {comparacao(sobra(13))}
         {referencia}. Flávio Bolsonaro teve <strong>{cada100(s.v22 / s.validos)}</strong>, {comparacao(sobra(22))}.
       </p>
+      <p className="ir-agir">
+        <button className="link-botao" onClick={() => document.getElementById('agir')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+          Daqui até o dia 25: onde conversar perto desta urna
+        </button>{' '}
+        <span aria-hidden="true">↓</span>
+      </p>
 
       <div className="grade-2" style={{ marginTop: 24 }}>
         <div>
@@ -234,6 +241,8 @@ export function Urna() {
           </div>
         </section>
       </div>
+
+      <AgirUrna uf={arquivo.uf} cd={s.cd} zona={nZona} local={s.local} municipio={municipio.nome} />
 
       <h2>Quem vota nesta seção</h2>
       <p className="secundario">

@@ -347,6 +347,25 @@ type PropsLocais = {
   linhaExtra?: (l: Local) => string
   /** muda quando `tamanho` ou `linhaExtra` mudam (ação, candidato), para o mapa refazer os dados */
   chave?: string
+  /** "Perto de você": anel tracejado de `km` em volta de uma escola; o mapa abre enquadrando o anel */
+  anel?: { lat: number; lon: number; km: number } | null
+}
+
+/** Contorno de um círculo de `km` em volta do centro (72 lados; aproximação plana, boa para poucos km). */
+function contornoAnel({ lat, lon, km }: { lat: number; lon: number; km: number }): [number, number][] {
+  const graus = (km / 6371.0088) * (180 / Math.PI)
+  const cosLat = Math.cos((lat * Math.PI) / 180)
+  return Array.from({ length: 73 }, (_, i) => {
+    const t = (i / 72) * 2 * Math.PI
+    return [lon + (graus * Math.sin(t)) / cosLat, lat + graus * Math.cos(t)]
+  })
+}
+
+function limitesAnel(anel: { lat: number; lon: number; km: number }): [[number, number], [number, number]] {
+  const c = contornoAnel(anel)
+  const lons = c.map((p) => p[0])
+  const lats = c.map((p) => p[1])
+  return [[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]]
 }
 
 // raio cresce com o zoom: na cidade inteira os ~2 mil locais de SP não podem virar uma mancha.
@@ -399,7 +418,7 @@ function conteudoBalao(l: Local, extra = ''): HTMLElement {
 }
 
 /** Locais de votação de um município sobre mapa de ruas (OpenFreeMap). Tamanho = votos válidos; cor = margem. */
-export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'margem', candidato = 13, tamanho, linhaExtra, chave = '' }: PropsLocais) {
+export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'margem', candidato = 13, tamanho, linhaExtra, chave = '', anel = null }: PropsLocais) {
   const container = useRef<HTMLDivElement>(null)
   const mapa = useRef<maplibregl.Map | null>(null)
   const [dica, setDica] = useState<Dica>(null)
@@ -418,6 +437,8 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
   maxRaizRef.current = maxRaiz
   const linhaExtraRef = useRef(linhaExtra)
   linhaExtraRef.current = linhaExtra
+  const anelRef = useRef(anel)
+  anelRef.current = anel
   const dados: FeatureCollection = {
     type: 'FeatureCollection',
     features: comCoordenada.map((l) => ({
@@ -452,7 +473,9 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
     const m = new maplibregl.Map({
       container: container.current,
       style: `https://tiles.openfreemap.org/styles/${temaEscuro() ? 'dark' : 'positron'}`,
-      bounds: [[quantil(lons, corte), quantil(lats, corte)], [quantil(lons, 1 - corte), quantil(lats, 1 - corte)]],
+      bounds: anelRef.current
+        ? limitesAnel(anelRef.current)
+        : [[quantil(lons, corte), quantil(lats, corte)], [quantil(lons, 1 - corte), quantil(lats, 1 - corte)]],
       fitBoundsOptions: { padding: 40, maxZoom: 15 },
       dragRotate: false,
       pitchWithRotate: false,
@@ -461,6 +484,19 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
     const montar = () => {
       if (m.getSource('locais')) return
+      // o anel vem antes dos círculos: a linha passa por baixo das escolas
+      if (anelRef.current) {
+        m.addSource('anel', {
+          type: 'geojson',
+          data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: contornoAnel(anelRef.current) } },
+        })
+        m.addLayer({
+          id: 'anel',
+          type: 'line',
+          source: 'anel',
+          paint: { 'line-color': cssVar('--tinta'), 'line-width': 2, 'line-dasharray': [2, 2], 'line-opacity': 0.8 },
+        })
+      }
       m.addSource('locais', { type: 'geojson', data: dados })
       m.addLayer({
         id: 'locais',
@@ -547,7 +583,8 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
     balao.current = null
     const l = selecionado ? comCoordenada.find((x) => `${x.zona}-${x.local}` === selecionado) : undefined
     if (!l) return
-    m.easeTo({ center: [l.lon!, l.lat!], zoom: Math.max(m.getZoom(), 15) })
+    // com o anel, o enquadramento dos 2 km continua: só centraliza a escola escolhida
+    m.easeTo({ center: [l.lon!, l.lat!], zoom: anelRef.current ? m.getZoom() : Math.max(m.getZoom(), 15) })
     balao.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 18, maxWidth: '280px' })
       .setLngLat([l.lon!, l.lat!])
       .setDOMContent(conteudoBalao(l, linhaExtraRef.current?.(l) ?? ''))

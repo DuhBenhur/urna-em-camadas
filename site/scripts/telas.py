@@ -16,7 +16,9 @@ from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:4173/"
 SAIDA = Path(__file__).parent / "telas"
-PADRAO = ["#/", "#/analise", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes", "#/municipio/71072", "#/metodo", "#/dados"]
+PADRAO = ["#/", "#/analise", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes", "#/municipio/71072",
+          "#/metodo", "#/dados", "#/virar?c=13", "#/virar?c=22&a=abertos&uf=SP&m=71072", "#/urna/SP/403/411?c=13",
+          "#/virar?c=13&uf=SP&m=71072&perto=403-1554"]
 MODOS = [("desktop", 1280, "light"), ("celular", 390, "dark")]
 ESPERA_MAPAS = 8  # os mapas carregam malha e tiles depois do networkidle
 
@@ -49,7 +51,7 @@ def main() -> None:
                 erros.clear()
                 pagina.goto(BASE + rota)
                 pagina.wait_for_load_state("networkidle")
-                eh_mapa = "mapa" in rota or "municipio" in rota
+                eh_mapa = any(p in rota for p in ("mapa", "municipio", "m="))  # "m=": o "Onde virar voto" de um município
                 time.sleep(args.espera if args.espera is not None else (ESPERA_MAPAS if eh_mapa else 1.5))
                 # "#/mapa?v=bolsoes" → "mapa_v-bolsoes" ("?" e "=" não valem em nome de arquivo no Windows)
                 limpo = re.sub(r"[^\w-]+", "_", rota.strip("#/").replace("=", "-")).strip("_")

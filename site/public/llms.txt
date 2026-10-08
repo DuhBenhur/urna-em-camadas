@@ -13,11 +13,11 @@
 
 ## Páginas
 
-- Início: busca por UF, zona e seção ou por município, a conferência e três achados em linguagem simples.
+- Início: "Onde a sua conversa pode virar voto". Escolha o candidato (Lula ou Flávio Bolsonaro, a mesma conta para os dois), comece pela sua urna (UF, zona e seção) ou por um lugar (estado ou cidade); os números nacionais de cada ação, por que pensar em bairros (achados da análise), as regras da lei e como conferir o boletim depois de votar.
 - /#/analise: a análise completa em sete capítulos (o jogo de adivinhar uma urna, o estado, a vizinhança, composição ou contexto, as surpresas, como foi feito, por que importa); /#/analise?cap={id do capítulo} abre direto num capítulo.
-- /#/virar?c={13|22}&a={faltosos|abertos}&uf={UF}&m={código TSE}: "Onde virar voto" para o 2º turno (25/10/2026). Para o candidato escolhido, ordena estados, municípios, bairros e escolas por "saldo possível ao lembrar quem faltou" (faltosos × vantagem do candidato na escola, só onde ele ficou à frente, somado escola por escola) ou por "votos em aberto" (outros candidatos + brancos + nulos no 1º turno). A mesma conta para os dois candidatos; traz as regras da lei eleitoral (compra de voto, transporte de eleitores, boca de urna, propaganda em prédio público).
+- /#/virar?c={13|22}&a={faltosos|abertos}&uf={UF}&m={código TSE}&perto={zona}-{local}: "Onde virar voto" para o 2º turno (25/10/2026). Para o candidato escolhido, ordena estados, municípios, bairros e escolas por "saldo possível ao lembrar quem faltou" (faltosos × vantagem do candidato na escola, só onde ele ficou à frente, somado escola por escola) ou por "votos em aberto" (outros candidatos + brancos + nulos no 1º turno). A mesma conta para os dois candidatos; traz as regras da lei eleitoral (compra de voto, transporte de eleitores, boca de urna, propaganda em prédio público, notícia falsa, impulsionamento pago). Com perto={zona}-{local}, mostra as escolas a até 2 km daquela escola, com um anel no mapa.
 - /#/conferencia: como conferir a sua urna com o boletim impresso e a soma das urnas contra o resultado oficial, por estado.
-- /#/urna/{UF}/{zona}/{seção}: boletim de urna, selo de conferência e camadas de uma urna específica.
+- /#/urna/{UF}/{zona}/{seção}: boletim de urna, selo de conferência, camadas de uma urna específica e "Daqui até o dia 25": quem faltou e quem votou em outro candidato, branco ou nulo na escola da urna e nas escolas a até 2 km.
 - /#/municipio/{código TSE}: locais de votação e urnas de um município; mapa do resultado e da surpresa de cada local.
 - /#/mapa?v={margem|efeito|semperfil|bolsoes|regioes}: mapa dos municípios.
 - /#/metodo: dados, conferência, modelos, espaço, decisões e como reproduzir.

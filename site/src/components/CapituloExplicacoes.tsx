@@ -170,6 +170,15 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
         </>
       )}
 
+      <h3 style={{ marginTop: 32 }}>Dentro da cidade, a escola pesa mais que a urna</h3>
+      <p>
+        Separando também o local de votação, a diferença entre as urnas do país no voto em {cand.nome} fica assim:{' '}
+        {pct(e.quatro_niveis.icc.uf, 0)} entre estados, {pct(e.quatro_niveis.icc.mun, 0)} entre cidades do mesmo estado,{' '}
+        {pct(e.quatro_niveis.icc.local, 0)} entre escolas da mesma cidade e só {pct(e.quatro_niveis.icc.secao, 0)} entre urnas
+        da mesma escola. O que parecia ser da urna é, quase todo, da escola e do bairro em volta. Por isso o{' '}
+        <Link to={`/virar?c=${candidato}`}>“Onde virar voto”</Link> fala de escolas e bairros, não de seções.
+      </p>
+
       <h3 style={{ marginTop: 32 }}>A urna ou a cidade?</h3>
       <p className="secundario">
         A mesma característica pode pesar diferente dentro da cidade (urnas mais ou menos escolarizadas que a média local) e

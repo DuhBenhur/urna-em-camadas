@@ -1,13 +1,18 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { CampoMunicipio } from '../components/CampoMunicipio'
+import { EscolhaCandidato } from '../components/EscolhaCandidato'
 import { LegendaEscala, MapaLocais } from '../components/Mapas'
+import { Passo } from '../components/Passo'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { useCandidato } from '../lib/candidato'
-import { normalizar, useLocais, useMunicipios, useResumo, type Local } from '../lib/dados'
+import { useLocais, useMunicipios, useResumo, type Local } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
-import { LENTES, potencial, potencialSomado, ranquear, somar, vantagem, type Lente, type Lugar } from '../lib/virar'
+import {
+  LENTES, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, potencial, potencialSomado, ranquear, somar, vantagem, type Lente, type Lugar,
+} from '../lib/virar'
 
 const adversario = (n: NumeroCandidato): NumeroCandidato => (n === 13 ? 22 : 13)
 const votos = (l: Lugar, n: NumeroCandidato) => (n === 13 ? l.v13 : l.v22)
@@ -17,21 +22,36 @@ const resultado = (l: Lugar) => `Lula ${pct(l.v13 / l.validos, 0)} · Flávio ${
 
 export function Virar() {
   const [params, setParams] = useSearchParams()
-  const [candidato, definirCandidato] = useCandidato()
+  const [candidato] = useCandidato()
   const lente: Lente = params.get('a') === 'abertos' ? 'abertos' : 'faltosos'
   const uf = params.get('uf') ?? ''
   const cd = Number(params.get('m')) || null
+  // "?perto={zona}-{local}": escola de partida (vinda da página da urna), com o anel de 2 km no mapa
+  const perto = params.get('perto')
+  // "?ir=como-fazer" (lista completa da lei) ou "?ir=como-calculamos": abre a página nesse trecho
+  const ir = params.get('ir')
 
   const { dados: resumo } = useResumo()
   const { dados: indice } = useMunicipios()
   const municipio = cd ? indice?.porCodigo.get(cd) : undefined
   const ufAtual = uf || municipio?.uf || ''
 
+  // espera os dados que ficam acima do trecho, senão ele desce quando a tabela chega
+  const prontoParaIr = Boolean(ir) && (!candidato || Boolean(resumo && indice))
+  useEffect(() => {
+    if (!prontoParaIr || !ir) return
+    const alvo = document.getElementById(ir)
+    if (alvo instanceof HTMLDetailsElement) alvo.open = true
+    alvo?.scrollIntoView({ block: 'start' })
+  }, [prontoParaIr, ir])
+
   /** Muda parâmetros da URL; descer de nível (estado, município) entra no histórico, para o "voltar" subir. */
   const mudar = (novos: Record<string, string | null>, historico = false) => {
     const p = new URLSearchParams(params)
     // a escolha pode ter vindo de outra página (cópia da aba): entra na URL para o link compartilhado levar tudo
     if (candidato && !p.has('c')) p.set('c', String(candidato))
+    // a escola de partida é de um município: trocar de lugar a desfaz
+    if ('m' in novos) p.delete('perto')
     for (const [k, v] of Object.entries(novos)) {
       if (v === null) p.delete(k)
       else p.set(k, v)
@@ -46,19 +66,12 @@ export function Virar() {
         <h1>Onde virar voto</h1>
         <p className="secundario">
           Escolha o candidato e o lugar. Com os números do 1º turno, o site mostra em que bairros e escolas uma conversa pode
-          render mais votos. A conta é a mesma para os dois candidatos.
+          render mais votos.
         </p>
       </section>
 
       <Passo numero={1} titulo="Para quem?">
-        <div className="escolha-candidato" role="group" aria-label="Candidato">
-          {([13, 22] as const).map((n) => (
-            <button key={n} aria-pressed={candidato === n} onClick={() => definirCandidato(n)}>
-              <span className="chave" style={{ background: CANDIDATOS[n].cor }} aria-hidden="true" />
-              {CANDIDATOS[n].nome} ({CANDIDATOS[n].partido})
-            </button>
-          ))}
-        </div>
+        <EscolhaCandidato />
       </Passo>
 
       {candidato && resumo && indice && (
@@ -103,12 +116,12 @@ export function Virar() {
                   ))}
                 </select>
               </div>
-              <BuscaMunicipio uf={ufAtual} aoEscolher={(m) => mudar({ uf: m.uf, m: String(m.cd) }, true)} />
+              <CampoMunicipio id="v-mun" uf={ufAtual} aoEscolher={(m) => mudar({ uf: m.uf, m: String(m.cd) }, true)} />
             </div>
           </Passo>
 
           {municipio ? (
-            <NivelMunicipio cd={municipio.cd} nome={municipio.nome} uf={municipio.uf} total={municipio} candidato={candidato} lente={lente} />
+            <NivelMunicipio cd={municipio.cd} nome={municipio.nome} uf={municipio.uf} total={municipio} candidato={candidato} lente={lente} perto={perto} />
           ) : ufAtual ? (
             <NivelLista
               titulo={`Municípios ${comPreposicao('de', ufAtual, resumo.ufs.find((u) => u.uf === ufAtual)!.nome)}`}
@@ -136,60 +149,6 @@ export function Virar() {
 
       <ComoFazer />
       <ComoCalculamos />
-    </div>
-  )
-}
-
-function Passo({ numero, titulo, children }: { numero: number; titulo: string; children: ReactNode }) {
-  return (
-    <section className="passo" aria-labelledby={`passo-${numero}`}>
-      <h2 id={`passo-${numero}`}>
-        <span className="passo-numero" aria-hidden="true">
-          {numero}
-        </span>
-        {titulo}
-      </h2>
-      {children}
-    </section>
-  )
-}
-
-function BuscaMunicipio({ uf, aoEscolher }: { uf: string; aoEscolher: (m: { cd: number; uf: string }) => void }) {
-  const { dados: indice } = useMunicipios()
-  const [texto, setTexto] = useState('')
-  const sugestoes = useMemo(() => {
-    const q = normalizar(texto)
-    if (!indice || q.length < 2) return []
-    const lista = indice.lista.filter((m) => !uf || m.uf === uf)
-    const comeca = lista.filter((m) => normalizar(m.nome).startsWith(q))
-    const contem = lista.filter((m) => !normalizar(m.nome).startsWith(q) && normalizar(m.nome).includes(q))
-    const porTamanho = (a: { validos: number }, b: { validos: number }) => b.validos - a.validos
-    return [...comeca.sort(porTamanho), ...contem.sort(porTamanho)].slice(0, 8)
-  }, [indice, texto, uf])
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <label htmlFor="v-mun">Município</label>
-      <input id="v-mun" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Digite o nome" autoComplete="off" />
-      {sugestoes.length > 0 && (
-        <ul className="sugestoes">
-          {sugestoes.map((m) => (
-            <li key={m.cd}>
-              <button
-                className="sugestao"
-                onClick={() => {
-                  setTexto('')
-                  aoEscolher(m)
-                }}
-              >
-                <span>
-                  {m.nome} <span className="secundario">({m.uf})</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   )
 }
@@ -273,18 +232,22 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
   )
 }
 
-function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = false }: {
-  linhas: (Lugar & { valor: number; nome: ReactNode; bairro?: string })[]
+function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = false, comDistancia = false, vazio }: {
+  linhas: (Lugar & { valor: number; nome: ReactNode; bairro?: string; km?: number })[]
   candidato: NumeroCandidato
   lente: Lente
   rotuloLugar: string
   comBairro?: boolean
+  /** "Perto de você": distância até a escola de partida */
+  comDistancia?: boolean
+  /** aviso quando nenhum lugar tem potencial */
+  vazio?: string
 }) {
   const cand = CANDIDATOS[candidato]
   if (linhas.length === 0) {
     return (
       <p className="aviso">
-        {lente === 'faltosos' ? `${cand.nome} não ficou à frente em nenhum lugar deste nível.` : 'Nenhum voto em aberto neste nível.'}
+        {vazio ?? (lente === 'faltosos' ? `${cand.nome} não ficou à frente em nenhum lugar deste nível.` : 'Nenhum voto em aberto neste nível.')}
       </p>
     )
   }
@@ -295,6 +258,7 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
           <tr>
             <th>{rotuloLugar}</th>
             {comBairro && <th className="col-sec">Bairro</th>}
+            {comDistancia && <th className="num">Distância</th>}
             <th className="num">{lente === 'faltosos' ? `Saldo possível para ${cand.curto}` : 'Votos em aberto'}</th>
             {lente === 'faltosos' && <th className="num col-sec">Faltaram</th>}
             {lente === 'faltosos' && <th className="num col-sec">Vantagem de {cand.curto} no total</th>}
@@ -310,6 +274,7 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
                 {comBairro && l.bairro && <span className="bairro-celular">{l.bairro}</span>}
               </td>
               {comBairro && <td className="col-sec">{l.bairro}</td>}
+              {comDistancia && <td className="num">{l.km === undefined ? '' : l.km === 0 ? 'a sua' : km(l.km)}</td>}
               <td className="num">
                 <strong>{inteiro(Math.round(l.valor))}</strong>
               </td>
@@ -325,18 +290,34 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
 }
 
 /** Município: mapa das escolas, bairros e escolas ordenados. */
-function NivelMunicipio({ cd, nome, uf, total, candidato, lente }: {
+function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
   cd: number
   nome: string
   uf: string
   total: Lugar
   candidato: NumeroCandidato
   lente: Lente
+  /** "{zona}-{local}" da escola de partida, ou null */
+  perto: string | null
 }) {
   const { dados: locais } = useLocais(cd)
-  const [selecionado, setSelecionado] = useState<string | null>(null)
+  const [selecionado, setSelecionado] = useState<string | null>(perto)
   const [quantas, setQuantas] = useState(20)
+  const [quantasPerto, setQuantasPerto] = useState(10)
   const cand = CANDIDATOS[candidato]
+
+  // a escola de partida só vale se existe neste município e tem coordenada
+  const partida = perto ? locais?.find((l) => chaveLocal(l) === perto && l.lat !== null && l.lon !== null) : undefined
+  const anel = useMemo(() => (partida ? { lat: partida.lat!, lon: partida.lon!, km: RAIO_PERTO_KM } : null), [partida])
+  const vizinhas = useMemo(
+    () => (locais && anel ? escolasPerto(locais, anel).map((l) => ({ ...l, valor: potencial(l, candidato, lente) })) : []),
+    [locais, anel, candidato, lente],
+  )
+  const comPotencial = vizinhas.filter((l) => l.valor > 0).sort((a, b) => b.valor - a.valor)
+  const selecionarNoMapa = (chave: string) => {
+    setSelecionado(chave)
+    document.getElementById('mapa-virar')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const bairros = useMemo(() => {
     if (!locais) return []
@@ -376,9 +357,50 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente }: {
           tamanho={tamanho}
           linhaExtra={(l) => `${LENTES[lente].medida} para ${cand.curto}: ${inteiro(Math.round(tamanho(l)))}`}
           chave={`${candidato}-${lente}`}
+          anel={anel}
         />
       </div>
       <LegendaEscala variavel="margem" candidato={candidato} />
+      {partida && (
+        <p className="legenda" style={{ marginTop: 8 }}>
+          <span>
+            <span className="chave-traco chave-tracejada" aria-hidden="true" />
+            {RAIO_PERTO_KM} km em volta de {partida.nome}
+          </span>
+        </p>
+      )}
+
+      {partida && (
+        <>
+          <h2>Perto de você</h2>
+          <p className="secundario">
+            As {vizinhas.length} escolas a até {RAIO_PERTO_KM} km de {partida.nome} (contando ela), ordenadas pelo{' '}
+            {LENTES[lente].medida}
+            {lente === 'faltosos' ? ` para ${cand.nome}` : ''}. Toque no nome para ver a escola no mapa.
+          </p>
+          <TabelaRanking
+            rotuloLugar="Escola"
+            comBairro
+            comDistancia
+            linhas={comPotencial.slice(0, quantasPerto).map((l) => ({
+              ...l,
+              nome: (
+                <button className="link-botao" onClick={() => selecionarNoMapa(chaveLocal(l))}>
+                  {l.nome}
+                </button>
+              ),
+            }))}
+            candidato={candidato}
+            lente={lente}
+            vazio={`${cand.nome} não ficou à frente em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km. Lembrar quem faltou não soma para ele neste pedaço da cidade; conversar com quem ficou de fora vale em qualquer lugar.`}
+          />
+          {comPotencial.length > quantasPerto && (
+            <button className="botao botao-secundario" style={{ marginTop: 12 }} onClick={() => setQuantasPerto((q) => q + 30)}>
+              Mostrar todas ({inteiro(comPotencial.length - quantasPerto)} restantes)
+            </button>
+          )}
+        </>
+      )}
 
       <h2>Bairros</h2>
       <p className="secundario">Soma das escolas de cada bairro (o nome do bairro é o do endereço da escola no cadastro do TSE).</p>
@@ -398,13 +420,7 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente }: {
           ...l,
           nome: (
             <>
-              <button
-                className="link-botao"
-                onClick={() => {
-                  setSelecionado(`${l.zona}-${l.local}`)
-                  document.getElementById('mapa-virar')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }}
-              >
+              <button className="link-botao" onClick={() => selecionarNoMapa(chaveLocal(l))}>
                 {l.nome}
               </button>{' '}
               <Link className="discreto" to={`/municipio/${cd}?local=${l.zona}-${l.local}`}>
@@ -463,6 +479,10 @@ function ComoFazer() {
           <strong>Só informação verdadeira e com fonte.</strong> Divulgar fato que se sabe falso sobre candidato é crime
           (Código Eleitoral, art. 323).
         </li>
+        <li>
+          <strong>Não pague para impulsionar</strong> conteúdo eleitoral nas redes: só candidatos, partidos e coligações podem
+          contratar impulsionamento (Lei 9.504/1997, art. 57-C). Este site não impulsiona nada.
+        </li>
       </ul>
       <p className="discreto" style={{ marginBottom: 0 }}>
         Resumo para orientação, não é aconselhamento jurídico. Em caso de dúvida, consulte o TSE ou o TRE do seu estado.
@@ -473,7 +493,7 @@ function ComoFazer() {
 
 function ComoCalculamos() {
   return (
-    <details className="como-sabemos" style={{ marginTop: 24 }}>
+    <details className="como-sabemos" id="como-calculamos" style={{ marginTop: 24 }}>
       <summary>Como calculamos (e o que os números não dizem)</summary>
       <ul>
         <li>
