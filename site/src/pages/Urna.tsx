@@ -35,7 +35,7 @@ export function Urna() {
   const secoes = useMemo(() => (arquivo ? registros<Secao>(arquivo) : []), [arquivo])
   const s = secoes.find((x) => x.secao === nSecao)
 
-  if (erro) {
+  if (erro === 'não encontrado') {
     return (
       <div className="conteudo">
         <h1>Zona não encontrada</h1>
@@ -43,6 +43,21 @@ export function Urna() {
           Não existe a zona {zona} em {uf.toUpperCase()} na eleição de 2026. Confira o título de eleitor ou{' '}
           <Link to="/">procure pelo município</Link>.
         </p>
+      </div>
+    )
+  }
+  if (erro) {
+    // falha de rede ou arquivo ilegível: não dizer que a zona não existe
+    return (
+      <div className="conteudo">
+        <h1>Não deu para abrir esta urna</h1>
+        <p>
+          Os dados da zona {zona} ({uf.toUpperCase()}) não carregaram. Pode ser a conexão; tente de novo. Se continuar,
+          avise pelo GitHub do projeto (link no rodapé).
+        </p>
+        <button className="botao" onClick={() => window.location.reload()}>
+          Tentar de novo
+        </button>
       </div>
     )
   }

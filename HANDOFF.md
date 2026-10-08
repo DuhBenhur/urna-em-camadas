@@ -79,7 +79,7 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - O estilo escuro do OpenFreeMap avisa que falta o ícone "circle-11" (externo, inofensivo).
 - `gpboost` `get_cov_pars(std_err=True)` estoura a memória nessa escala: inferência das variâncias por LRT.
 - Gráficos SVG só desenham depois de medir a largura (`useLargura` devolve 0 até lá); desenhar com largura provisória fazia os pontos deslizarem na carga.
-- Uma vez, no Playwright, o "Sortear uma urna" não mostrou as pistas em 30 s; não se repetiu em 6 execuções e as 6.106 combinações município × zona têm urnas válidas. Observar.
+- Corrigido em 08/10: 258 das 2.640 zonas não abriam no site ("Zona não encontrada"). As coordenadas anuladas dos locais (sentinela −1 do TSE) saíam como `NaN` no JSON, que o navegador não lê. Agora `07_exportar_site.py` converte para `null` e grava com `allow_nan=False` (um `NaN` novo derruba a exportação em vez de publicar arquivo quebrado). O site distingue zona inexistente (404) de falha de leitura. Isso provavelmente explica o "Sortear uma urna" que, uma vez no Playwright, não mostrou as pistas: o sorteio caía numa zona quebrada em cerca de 10% das vezes.
 - O modelo não pondera as seções (nenhum dos dois motores aceita pesos no caso usado).
 
 ## Comandos

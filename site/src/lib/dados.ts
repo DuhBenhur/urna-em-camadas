@@ -207,7 +207,10 @@ export function carregar<T>(caminho: string): Promise<T> {
   let promessa = cache.get(caminho)
   if (!promessa) {
     promessa = fetch(`${import.meta.env.BASE_URL}dados/${caminho}`).then((r) => {
-      if (!r.ok) throw new Error(r.status === 404 ? 'não encontrado' : `erro ${r.status}`)
+      // alguns servidores (ex.: vite preview) devolvem a página HTML com status 200 para arquivo inexistente
+      const html = (r.headers.get('content-type') ?? '').includes('text/html')
+      if (r.status === 404 || (r.ok && html)) throw new Error('não encontrado')
+      if (!r.ok) throw new Error(`erro ${r.status}`)
       return r.json()
     })
     promessa.catch(() => cache.delete(caminho))

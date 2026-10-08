@@ -156,13 +156,15 @@ export function Municipio() {
 }
 
 function SecoesDoLocal({ uf, zona, local, nome, cd }: { uf: string; zona: number; local: number; nome: string; cd: number }) {
-  const { dados: arquivo } = useZona(uf, zona)
+  const { dados: arquivo, erro } = useZona(uf, zona)
   const secoes = useMemo(() => (arquivo ? registros<Secao>(arquivo).filter((s) => s.local === local && s.cd === cd) : []), [arquivo, local, cd])
   return (
     <section className="cartao" style={{ marginTop: 16 }} aria-live="polite">
       <h3>{nome}</h3>
       <p className="secundario">Zona {zona}. Escolha a seção para abrir a urna:</p>
-      {!arquivo ? (
+      {erro ? (
+        <p className="aviso">Não deu para carregar as seções deste local. Tente de novo em instantes.</p>
+      ) : !arquivo ? (
         <p className="carregando">Carregando seções…</p>
       ) : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

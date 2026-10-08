@@ -43,7 +43,14 @@ PERFIL = ["ELEIT_PERFIL", "ELEIT_MULHER", "ELEIT_16_24", "ELEIT_60_MAIS", "ELEIT
 
 def gravar(caminho, objeto) -> None:
     caminho.parent.mkdir(parents=True, exist_ok=True)
-    caminho.write_text(json.dumps(objeto, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # allow_nan=False: o json do Python escreveria NaN, que não é JSON válido e quebra a leitura no navegador
+    # (foi o que deixou 258 zonas sem abrir em 08/10/2026). Melhor falhar aqui do que publicar o arquivo.
+    caminho.write_text(json.dumps(objeto, ensure_ascii=False, separators=(",", ":"), allow_nan=False), encoding="utf-8")
+
+
+def nulo(valor):
+    """NaN/NA do pandas → None (null no JSON)."""
+    return None if pd.isna(valor) else valor
 
 
 def tabela(df: pd.DataFrame) -> dict:
@@ -245,7 +252,9 @@ def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
         gravar(SAIDA / "zonas" / f"{uf}-{zona}.json", {
             "uf": uf, "zona": int(zona),
             # o número do local só é único dentro do município (uma zona pode cobrir vários municípios)
-            "locais": {f"{int(r.CD_MUNICIPIO)}-{int(r.NR_LOCAL_VOTACAO)}": [r.NM_LOCAL, r.NM_BAIRRO, r.LAT, r.LON]
+            # locais sem coordenada (sentinela -1 do TSE, presídios) vêm como NaN e precisam virar null
+            "locais": {f"{int(r.CD_MUNICIPIO)}-{int(r.NR_LOCAL_VOTACAO)}":
+                       [nulo(r.NM_LOCAL), nulo(r.NM_BAIRRO), nulo(r.LAT), nulo(r.LON)]
                        for r in lz.itertuples()},
             **tabela(grupo.sort_values("NR_SECAO")[colunas].rename(columns=nomes).astype("Int64")),
         })
