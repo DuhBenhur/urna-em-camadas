@@ -4,6 +4,7 @@ import { CampoMunicipio } from '../components/CampoMunicipio'
 import { EscolhaCandidato } from '../components/EscolhaCandidato'
 import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { Passo } from '../components/Passo'
+import { SeloExperimental } from '../components/SeloExperimental'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { useCandidato } from '../lib/candidato'
 import { useLocais, useMunicipios, useResumo, type Local } from '../lib/dados'
@@ -11,7 +12,8 @@ import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import {
-  LENTES, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, potencial, potencialSomado, ranquear, somar, vantagem, type Lente, type Lugar,
+  LENTES, RAIO_PERTO_KM, TODAS_LENTES, chaveLocal, escolasPerto, km, lerLente, potencial, potencialSomado, ranquear, rotuloValor,
+  somar, vantagem, type Lente, type Lugar,
 } from '../lib/virar'
 
 const adversario = (n: NumeroCandidato): NumeroCandidato => (n === 13 ? 22 : 13)
@@ -20,10 +22,20 @@ const votos = (l: Lugar, n: NumeroCandidato) => (n === 13 ? l.v13 : l.v22)
 /** "Lula 61% · Flávio 31%": sempre os dois, na mesma ordem do resto do site. */
 const resultado = (l: Lugar) => `Lula ${pct(l.v13 / l.validos, 0)} · Flávio ${pct(l.v22 / l.validos, 0)}`
 
+/** "Saldo possível para Lula": cabeçalho de tabela */
+const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+/** O que cada ação quer dizer, em uma frase, para o candidato escolhido */
+function explicarLente(l: Lente, curto: string): string {
+  if (l === 'faltosos') return `Quem não votou no 1º turno. Onde ${curto} ficou à frente, cada pessoa que for votar tende a somar.`
+  if (l === 'abertos') return 'Quem votou em outro candidato, branco ou nulo. No 2º turno, todos escolhem entre os dois.'
+  return `Escolas onde ${curto} teve menos votos do que escolas de perfil parecido na mesma cidade. Pista, não certeza.`
+}
+
 export function Virar() {
   const [params, setParams] = useSearchParams()
   const [candidato] = useCandidato()
-  const lente: Lente = params.get('a') === 'abertos' ? 'abertos' : 'faltosos'
+  const lente = lerLente(params.get('a'))
   const uf = params.get('uf') ?? ''
   const cd = Number(params.get('m')) || null
   // "?perto={zona}-{local}": escola de partida (vinda da página da urna), com o anel de 2 km no mapa
@@ -78,14 +90,12 @@ export function Virar() {
         <>
           <Passo numero={2} titulo="Que tipo de conversa?">
             <div className="lentes" role="group" aria-label="Tipo de conversa">
-              {(['faltosos', 'abertos'] as const).map((l) => (
+              {TODAS_LENTES.map((l) => (
                 <button key={l} aria-pressed={lente === l} onClick={() => mudar({ a: l })}>
-                  <strong>{LENTES[l].titulo}</strong>
-                  <span>
-                    {l === 'faltosos'
-                      ? `Quem não votou no 1º turno. Onde ${CANDIDATOS[candidato].curto} ficou à frente, cada pessoa que for votar tende a somar.`
-                      : 'Quem votou em outro candidato, branco ou nulo. No 2º turno, todos escolhem entre os dois.'}
-                  </span>
+                  <strong>
+                    {LENTES[l].titulo} {LENTES[l].experimental && <SeloExperimental />}
+                  </strong>
+                  <span>{explicarLente(l, CANDIDATOS[candidato].curto)}</span>
                 </button>
               ))}
             </div>
@@ -172,11 +182,19 @@ function Totais({ total, saldo, candidato, lente, onde }: { total: Lugar; saldo:
             <p className="nota">votos, se quem faltou onde {cand.curto} ficou à frente votasse como os vizinhos</p>
           </div>
         </>
-      ) : (
+      ) : lente === 'abertos' ? (
         <div className="cartao tile">
           <div className="rotulo">votos em aberto {onde}</div>
           <div className="valor">{inteiro(total.abertos)}</div>
           <p className="nota">em outros candidatos, brancos e nulos no 1º turno</p>
+        </div>
+      ) : (
+        <div className="cartao tile">
+          <div className="rotulo">
+            votos abaixo do esperado para {cand.curto} {onde} <SeloExperimental />
+          </div>
+          <div className="valor">{inteiro(Math.round(saldo))}</div>
+          <p className="nota">nas escolas onde {cand.curto} teve menos votos do que escolas de perfil parecido na mesma cidade</p>
         </div>
       )}
       <div className="cartao tile">
@@ -188,6 +206,15 @@ function Totais({ total, saldo, candidato, lente, onde }: { total: Lugar; saldo:
           {adv.curto} {pct(votos(total, adversario(candidato)) / total.validos, 0)} dos votos válidos
         </p>
       </div>
+      {lente === 'perfil' && (
+        <p className="aviso" style={{ gridColumn: '1 / -1', margin: 0 }}>
+          <strong>Experimental.</strong> O esperado vem do modelo do capítulo 4 da análise: o efeito da cidade e a idade, o sexo e
+          a escolaridade de quem vota em cada escola. Pode indicar onde há mais gente parecida com quem vota em {cand.curto}, mas
+          que não votou nele. Só que o modelo não conhece a renda do bairro nem a história política do lugar, e parte da
+          diferença vem daí: muitas vezes é um bairro onde o adversário é forte por motivos que o modelo não vê. Compara lugares,
+          não pessoas: trate como pista, não como certeza.
+        </p>
+      )}
     </div>
   )
 }
@@ -215,7 +242,8 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
       <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={onde} />
       <h2>{titulo}</h2>
       <p className="secundario">
-        Ordenados pelo {LENTES[lente].medida} para {CANDIDATOS[candidato].nome}. Escolha um para descer de nível.
+        Ordenados {LENTES[lente].pelo}
+        {LENTES[lente].porCandidato ? ` para ${CANDIDATOS[candidato].nome}` : ''}. Escolha um para descer de nível.
       </p>
       <TabelaRanking
         rotuloLugar={rotuloLugar}
@@ -233,7 +261,7 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
 }
 
 function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = false, comDistancia = false, vazio }: {
-  linhas: (Lugar & { valor: number; nome: ReactNode; bairro?: string; km?: number })[]
+  linhas: (Lugar & { valor: number; nome: ReactNode; bairro?: string; km?: number; s13?: number | null; s22?: number | null })[]
   candidato: NumeroCandidato
   lente: Lente
   rotuloLugar: string
@@ -247,21 +275,30 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
   if (linhas.length === 0) {
     return (
       <p className="aviso">
-        {vazio ?? (lente === 'faltosos' ? `${cand.nome} não ficou à frente em nenhum lugar deste nível.` : 'Nenhum voto em aberto neste nível.')}
+        {vazio ??
+          (lente === 'faltosos'
+            ? `${cand.nome} não ficou à frente em nenhum lugar deste nível.`
+            : lente === 'perfil'
+              ? `${cand.nome} não ficou abaixo do esperado em nenhum lugar deste nível.`
+              : 'Nenhum voto em aberto neste nível.')}
       </p>
     )
   }
+  // nas escolas, a ação do perfil mostra a diferença do esperado, para a conta poder ser conferida
+  const comSurpresa = lente === 'perfil' && linhas.some((l) => (candidato === 13 ? l.s13 : l.s22) != null)
   return (
-    <TabelaRolagem rotulo={`Lugares ordenados pelo ${LENTES[lente].medida}`}>
+    <TabelaRolagem rotulo={`Lugares ordenados ${LENTES[lente].pelo}`}>
       <table>
         <thead>
           <tr>
             <th>{rotuloLugar}</th>
             {comBairro && <th className="col-sec">Bairro</th>}
             {comDistancia && <th className="num">Distância</th>}
-            <th className="num">{lente === 'faltosos' ? `Saldo possível para ${cand.curto}` : 'Votos em aberto'}</th>
+            <th className="num">{maiuscula(rotuloValor(lente, cand.curto))}</th>
             {lente === 'faltosos' && <th className="num col-sec">Faltaram</th>}
             {lente === 'faltosos' && <th className="num col-sec">Vantagem de {cand.curto} no total</th>}
+            {comSurpresa && <th className="num col-sec">{cand.curto} em relação ao esperado</th>}
+            {comSurpresa && <th className="num col-sec">Votos válidos</th>}
             <th>Resultado no 1º turno</th>
           </tr>
         </thead>
@@ -280,6 +317,8 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
               </td>
               {lente === 'faltosos' && <td className="num col-sec">{inteiro(l.faltosos)}</td>}
               {lente === 'faltosos' && <td className="num col-sec">{pp(vantagem(l, candidato), 0)}</td>}
+              {comSurpresa && <td className="num col-sec">{pp((candidato === 13 ? l.s13 : l.s22) ?? NaN)}</td>}
+              {comSurpresa && <td className="num col-sec">{inteiro(l.validos)}</td>}
               <td>{resultado(l)}</td>
             </tr>
           ))}
@@ -344,8 +383,9 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
 
       <h2>No mapa</h2>
       <p className="secundario">
-        Cada círculo é uma escola (local de votação). O tamanho é o {LENTES[lente].medida} para {cand.nome}; a cor, quem ficou à
-        frente no 1º turno. As pessoas que votam numa escola costumam morar perto dela.
+        Cada círculo é uma escola (local de votação). O tamanho mostra {lente === 'faltosos' ? 'o' : 'os'}{' '}
+        {rotuloValor(lente, cand.nome)}; a cor, quem ficou à frente no 1º turno. As pessoas que votam numa escola costumam
+        morar perto dela.
       </p>
       <div id="mapa-virar">
         <MapaLocais
@@ -355,7 +395,7 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
           variavel="margem"
           candidato={candidato}
           tamanho={tamanho}
-          linhaExtra={(l) => `${LENTES[lente].medida} para ${cand.curto}: ${inteiro(Math.round(tamanho(l)))}`}
+          linhaExtra={(l) => `${rotuloValor(lente, cand.curto)}: ${inteiro(Math.round(tamanho(l)))}`}
           chave={`${candidato}-${lente}`}
           anel={anel}
         />
@@ -374,9 +414,9 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
         <>
           <h2>Perto de você</h2>
           <p className="secundario">
-            As {vizinhas.length} escolas a até {RAIO_PERTO_KM} km de {partida.nome} (contando ela), ordenadas pelo{' '}
-            {LENTES[lente].medida}
-            {lente === 'faltosos' ? ` para ${cand.nome}` : ''}. Toque no nome para ver a escola no mapa.
+            As {vizinhas.length} escolas a até {RAIO_PERTO_KM} km de {partida.nome} (contando ela), ordenadas{' '}
+            {LENTES[lente].pelo}
+            {LENTES[lente].porCandidato ? ` para ${cand.nome}` : ''}. Toque no nome para ver a escola no mapa.
           </p>
           <TabelaRanking
             rotuloLugar="Escola"
@@ -392,7 +432,11 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
             }))}
             candidato={candidato}
             lente={lente}
-            vazio={`${cand.nome} não ficou à frente em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km. Lembrar quem faltou não soma para ele neste pedaço da cidade; conversar com quem ficou de fora vale em qualquer lugar.`}
+            vazio={
+              lente === 'perfil'
+                ? `${cand.nome} não ficou abaixo do esperado em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km.`
+                : `${cand.nome} não ficou à frente em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km. Lembrar quem faltou não soma para ele neste pedaço da cidade; conversar com quem ficou de fora vale em qualquer lugar.`
+            }
           />
           {comPotencial.length > quantasPerto && (
             <button className="botao botao-secundario" style={{ marginTop: 12 }} onClick={() => setQuantasPerto((q) => q + 30)}>
@@ -515,6 +559,17 @@ function ComoCalculamos() {
           tendem; mostra quantos são e como o lugar votou.
         </li>
         <li>
+          <strong>Votos abaixo do esperado (experimental):</strong> para cada escola, o modelo do{' '}
+          <Link to="/analise?cap=c-explicacoes">capítulo 4 da análise</Link> calcula quanto o candidato teria, dado o efeito da
+          cidade e o perfil de quem vota ali (idade, sexo e escolaridade). Onde ele teve menos, a diferença vezes os votos
+          válidos é o número; onde teve mais, zero. A soma é feita escola por escola. Escolas sem o perfil do eleitorado
+          publicado ficam de fora. O modelo não conhece a renda de cada bairro (só a da cidade) nem a história política do
+          lugar: em São Paulo, por exemplo, as escolas mais abaixo do esperado para Lula ficam em bairros ricos, e as mais
+          abaixo para Flávio, no centro expandido. Parte do número é isso, e não gente esperando uma conversa. Depende do
+          modelo (<Link to="/metodo">Método</Link>) e compara lugares, não pessoas: uma escola abaixo do esperado não diz como
+          votou nem como votaria ninguém em particular (falácia ecológica). É pista, não certeza.
+        </li>
+        <li>
           <strong>Por que não “onde está apertado”:</strong> no 2º turno para presidente, cada voto conta igual no país inteiro.
           Um voto a mais na Bahia vale o mesmo que um em Santa Catarina. O que importa é quantas pessoas alcançáveis há perto,
           não se o lugar é disputado.
@@ -523,8 +578,12 @@ function ComoCalculamos() {
           <strong>Lugares, não pessoas:</strong> os números são somas por escola. Ninguém é identificado.
         </li>
         <li>
-          <strong>A mesma conta para os dois:</strong> trocar o candidato só troca quem é “à frente”. O site não pede voto para
-          ninguém.
+          <strong>Três contas separadas, sem índice:</strong> juntar as três num número só esconderia a conta. Separadas, cada
+          uma pode ser conferida.
+        </li>
+        <li>
+          <strong>A mesma conta para os dois:</strong> trocar o candidato só troca quem é “à frente” e qual esperado é usado. O
+          site não pede voto para ninguém.
         </li>
       </ul>
     </details>

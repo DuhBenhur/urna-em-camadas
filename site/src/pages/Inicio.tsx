@@ -6,6 +6,7 @@ import { ComoLer } from '../components/ComoLer'
 import { EscolhaCandidato } from '../components/EscolhaCandidato'
 import { LeiCurta } from '../components/LeiCurta'
 import { Passo } from '../components/Passo'
+import { SeloExperimental } from '../components/SeloExperimental'
 import { comCandidato, useCandidato } from '../lib/candidato'
 import { useConferencia, useExplicacao, useHistoria, useResumo, type UF } from '../lib/dados'
 import { inteiro, milhoes, pct } from '../lib/formato'
@@ -83,7 +84,7 @@ export function Inicio() {
         </p>
       </Passo>
 
-      <h2>Dois jeitos de fazer diferença</h2>
+      <h2>Três jeitos de fazer diferença</h2>
       <p className="secundario">Cada um com a sua conta, para conferir. Nenhum índice escondido.</p>
       {resumo ? (
         <div className="achados">
@@ -106,6 +107,29 @@ export function Inicio() {
               Esses votos não têm lado: a conversa decide.
             </p>
             <Link to={naVirar('abertos')}>Onde estão esses votos</Link>
+          </article>
+          <article className="cartao achado">
+            <h3>
+              Onde o perfil promete mais <SeloExperimental />
+            </h3>
+            {cand ? (
+              <div className="jeito-numero">{milhoes(soma((u) => (candidato === 13 ? u.gap13 : u.gap22) ?? 0))}</div>
+            ) : (
+              <div className="jeito-dois">
+                {([13, 22] as const).map((n) => (
+                  <div key={n}>
+                    <span className="chave" style={{ background: CANDIDATOS[n].cor }} aria-hidden="true" />
+                    {CANDIDATOS[n].curto} <strong>{milhoes(soma((u) => (n === 13 ? u.gap13 : u.gap22) ?? 0))}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p>
+              de votos abaixo do esperado{cand ? ` para ${cand.curto}` : ''}: escolas onde{' '}
+              {cand ? 'ele' : 'cada candidato'} teve menos votos do que escolas de perfil parecido na mesma cidade. Depende do
+              modelo: é pista, não certeza.
+            </p>
+            <Link to={naVirar('perfil')}>Onde o perfil promete mais</Link>
           </article>
         </div>
       ) : (

@@ -21,8 +21,12 @@ Colunas novas vindas dos modelos (10, 11): no índice de municípios, "sp" = o q
 "lisa" = bolsão espacial e "regiao" = região de voto; nas zonas, "d" = desvio do perfil da seção em relação ao
 município (logit × 10.000); nos locais, "s" = surpresa (resultado − esperado pelo município e pelo perfil).
 
-Antes de gravar, `conferir_virar` confere que faltosos, abertos e saldos de "Onde virar voto" fecham entre estados,
-municípios e escolas (e com as abstenções); se não fecharem, a exportação para sem tocar na pasta do site.
+"Onde virar voto": faltosos e abertos em estados, municípios e locais; saldo13/22 (lembrar quem faltou) e gap13/22
+(onde o perfil promete mais, experimental) somados escola por escola em estados e municípios. Nos locais, o navegador
+calcula saldo e gap a partir de votos, faltosos e da surpresa "s".
+
+Antes de gravar, `conferir_virar` confere que faltosos, abertos, saldos e gaps fecham entre estados, municípios e
+escolas (e com as abstenções); se não fecharem, a exportação para sem tocar na pasta do site.
 
 Uso: python pipeline/07_exportar_site.py
 """
@@ -126,6 +130,8 @@ AGG_VIRAR = {"_aptos": ("QT_APTOS", "sum"), "_comparecimento": ("QT_COMPARECIMEN
              "_v13": ("V_13", "sum"), "_v22": ("V_22", "sum")}
 COLUNAS_VIRAR = ["faltosos", "abertos"]
 COLUNAS_SALDO = ["saldo13", "saldo22"]
+# "onde o perfil promete mais" (experimental): votos abaixo do esperado pelo modelo, somados escola por escola
+COLUNAS_GAP = ["gap13", "gap22"]
 
 
 def saldos_por_escola(base: pd.DataFrame) -> pd.DataFrame:
@@ -146,6 +152,13 @@ def somar_saldos(base: pd.DataFrame, chave: str) -> pd.DataFrame:
     return saldos_por_escola(base).groupby(chave)[COLUNAS_SALDO].sum().round().astype(int)
 
 
+def somar_gaps(por_local: pd.DataFrame, chave: str) -> pd.DataFrame:
+    """Votos abaixo do esperado somados escola por escola (vazio se os modelos ainda não rodaram)."""
+    if "gap13" not in por_local.columns:
+        return pd.DataFrame(index=pd.Index([], name=chave))
+    return por_local.groupby(chave)[COLUNAS_GAP].sum().round().astype(int)
+
+
 def virar_voto(df: pd.DataFrame) -> pd.DataFrame:
     """faltosos = aptos − comparecimento; abertos = votos nos outros 10 candidatos + brancos + nulos."""
     df = df.copy()
@@ -154,12 +167,14 @@ def virar_voto(df: pd.DataFrame) -> pd.DataFrame:
     return df.drop(columns=[c for c in df.columns if c.startswith("_")])
 
 
-def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict) -> dict:
+def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict,
+           por_local: pd.DataFrame) -> dict:
     tot = base[["QT_APTOS", "QT_COMPARECIMENTO", "QT_ABSTENCOES", "QT_VALIDOS", "QT_BRANCOS", "QT_NULOS"]].sum()
     votos = base[[f"V_{n}" for n in ORDEM_CANDIDATOS]].sum()
     por_uf = virar_voto(base.groupby("SG_UF").agg(QT_APTOS=("QT_APTOS", "sum"), QT_VALIDOS=("QT_VALIDOS", "sum"),
                                                   V_13=("V_13", "sum"), V_22=("V_22", "sum"), **AGG_VIRAR)
-                        ).join(somar_saldos(base, "SG_UF"))
+                        ).join(somar_saldos(base, "SG_UF")).join(somar_gaps(por_local, "SG_UF"))
+    somados = COLUNAS_VIRAR + COLUNAS_SALDO + [c for c in COLUNAS_GAP if c in por_uf.columns]
     efeitos_uf = municipios.groupby("SG_UF")[["u_uf_13", "u_uf_22"]].first()
     return {
         "gerado_em": date.today().isoformat(),
@@ -176,7 +191,7 @@ def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, m
                     for num, m in modelos["candidatos"].items()},
         "ufs": [{"uf": uf, "nome": NOMES_UF[uf], "aptos": int(r.QT_APTOS), "validos": int(r.QT_VALIDOS),
                  "v13": int(r.V_13), "v22": int(r.V_22),
-                 **{c: int(getattr(r, c)) for c in COLUNAS_VIRAR + COLUNAS_SALDO},
+                 **{c: int(getattr(r, c)) for c in somados},
                  "u13": round(float(efeitos_uf.loc[uf, "u_uf_13"]), 4),
                  "u22": round(float(efeitos_uf.loc[uf, "u_uf_22"]), 4)}
                 for uf, r in por_uf.iterrows()],
@@ -235,17 +250,19 @@ def acrescentar_modelos(base: pd.DataFrame, municipios: pd.DataFrame, exp: dict 
     return base, m
 
 
-def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame) -> dict:
+def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame, por_local: pd.DataFrame) -> dict:
     agg = (base.groupby("CD_MUNICIPIO")
            .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"), v13=("V_13", "sum"),
                 v22=("V_22", "sum"), zonas=("NR_ZONA", lambda z: sorted(set(int(x) for x in z))),
                 **AGG_VIRAR)
            .reset_index())
-    m = virar_voto(municipios.merge(agg, on="CD_MUNICIPIO")).merge(somar_saldos(base, "CD_MUNICIPIO"), on="CD_MUNICIPIO")
+    m = (virar_voto(municipios.merge(agg, on="CD_MUNICIPIO"))
+         .merge(somar_saldos(base, "CD_MUNICIPIO"), on="CD_MUNICIPIO")
+         .merge(somar_gaps(por_local, "CD_MUNICIPIO"), on="CD_MUNICIPIO", how="left"))
     m["u13"] = m.u_mun_13.round(4)
     m["u22"] = m.u_mun_22.round(4)
     colunas = ["CD_MUNICIPIO", "CD_MUNICIPIO_IBGE", "NM_MUNICIPIO", "SG_UF", "secoes", "validos", "v13", "v22",
-               "u13", "u22", "zonas", *COLUNAS_VIRAR, *COLUNAS_SALDO] + [c for c in ["sp13", "sp22", "lisa13", "lisa22", "regiao"] if c in m.columns]
+               "u13", "u22", "zonas", *COLUNAS_VIRAR, *COLUNAS_SALDO] + [c for c in [*COLUNAS_GAP, "sp13", "sp22", "lisa13", "lisa22", "regiao"] if c in m.columns]
     return tabela(m[colunas].rename(columns={"CD_MUNICIPIO": "cd", "CD_MUNICIPIO_IBGE": "ibge",
                                               "NM_MUNICIPIO": "nome", "SG_UF": "uf"}))
 
@@ -271,6 +288,9 @@ def tabela_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataF
             efeito = por_local.CD_MUNICIPIO.map(u[f"u_uf_{n}"] + u[f"u_mun_{n}"])
             esperado = expit(g00 + efeito + desvio_perfil(por_local, comp, beta))
             por_local[f"s{n}"] = (por_local[f"v{n}"] / por_local.validos - esperado).round(4)
+            # votos abaixo do esperado, com a surpresa arredondada que vai para o arquivo: assim a soma de municípios e
+            # estados é a soma do que o navegador calcula escola por escola. Sem surpresa (sem perfil), fica de fora.
+            por_local[f"gap{n}"] = gap_na_escola(por_local, n)
     return por_local
 
 
@@ -298,6 +318,12 @@ def saldo_na_escola(escolas: pd.DataFrame, n: int) -> pd.Series:
     return (escolas.faltosos * vantagem).clip(lower=0).fillna(0)
 
 
+def gap_na_escola(escolas: pd.DataFrame, n: int) -> pd.Series:
+    """Onde o perfil promete mais, como o navegador calcula para cada escola (site/src/lib/virar.ts):
+    max(0, −surpresa) × válidos, em que surpresa = resultado − esperado pela cidade e pelo perfil do eleitorado."""
+    return (-escolas[f"s{n}"]).clip(lower=0).fillna(0) * escolas.validos
+
+
 def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
     """Trava da exportação: os números de "Onde virar voto" têm que contar a mesma história em todos os níveis,
     exatamente como vão para os arquivos (estados no resumo, municípios no índice, escolas nos arquivos de locais).
@@ -313,6 +339,9 @@ def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
     escolas = por_local.rename(columns={"SG_UF": "uf", "CD_MUNICIPIO": "cd"}).copy()
     for n in (13, 22):
         escolas[f"saldo{n}"] = saldo_na_escola(escolas, n)
+        if f"s{n}" in escolas.columns:
+            escolas[f"gap{n}"] = gap_na_escola(escolas, n)
+    somados = COLUNAS_SALDO + [c for c in COLUNAS_GAP if c in escolas.columns]
     n_mun = mun.groupby("uf").size()
 
     def comparar(rotulo: str, nivel: pd.Series, soma: pd.Series, tolerancia: pd.Series | float = 0) -> None:
@@ -331,7 +360,10 @@ def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
         comparar(f"{c}, município = soma das escolas", mun[c], escolas.groupby("cd")[c].sum())
         comparar(f"{c}, estado = soma dos municípios", ufs[c], mun.groupby("uf")[c].sum())
         comparar(f"{c}, estado = soma das escolas", ufs[c], escolas.groupby("uf")[c].sum())
-    for c in COLUNAS_SALDO:
+    for c in somados:
+        if c not in mun.columns or c not in ufs.columns:
+            falhas.append(f"{c} não foi para o índice de municípios ou para o resumo")
+            continue
         comparar(f"{c}, município = soma das escolas", mun[c], escolas.groupby("cd")[c].sum(), 1)
         comparar(f"{c}, estado = soma dos municípios", ufs[c], mun.groupby("uf")[c].sum(), n_mun.reindex(ufs.index))
         comparar(f"{c}, estado = soma das escolas", ufs[c], escolas.groupby("uf")[c].sum(), 1)
@@ -344,7 +376,7 @@ def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
         raise ErroConferencia("Onde virar voto não fecha entre os níveis; nada foi gravado:\n  " + "\n  ".join(falhas))
     print(f"[ok] Onde virar voto fecha em {len(ufs)} estados, {len(mun):,} municípios e {len(escolas):,} escolas: "
           f"faltosos {faltosos:,} (= abstenções), em aberto {int(ufs.abertos.sum()):,}, "
-          + ", ".join(f"saldo {n} {int(ufs[f'saldo{n}'].sum()):,}" for n in (13, 22)))
+          + ", ".join(f"{c} {int(ufs[c].sum()):,}" for c in somados if c in ufs.columns))
 
 
 def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
@@ -374,13 +406,14 @@ def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
 
 def main() -> None:
     base, locais, municipios, modelos = carregar()
-    res = resumo(base, locais, municipios, modelos)
     base = marcar_conferencia(base)
     conf = conferencia(base)
     exp = explicacao()
     base, municipios = acrescentar_modelos(base, municipios, exp)
-    indice = indice_municipios(base, municipios)
+    # as escolas vêm primeiro: estados e municípios somam os "abaixo do esperado" delas
     por_local = tabela_locais(base, locais, municipios, modelos, exp)
+    res = resumo(base, locais, municipios, modelos, por_local)
+    indice = indice_municipios(base, municipios, por_local)
     # trava: se os números de "Onde virar voto" não fecharem entre os níveis, a pasta do site nem é apagada
     conferir_virar(res, indice, por_local)
 

@@ -1,21 +1,31 @@
 import type { NumeroCandidato } from './modelo'
 
 /**
- * "Onde virar voto": duas contas simples sobre o 1º turno, iguais para os dois candidatos.
+ * "Onde virar voto": três contas simples sobre o 1º turno, iguais para os dois candidatos, cada uma conferível sozinha
+ * (sem índice composto).
  *
  * - Lembrar quem faltou: saldo possível = faltosos × (votos do candidato − votos do adversário) ÷ válidos, só onde o
  *   candidato ficou à frente. Supõe que quem faltou votaria como os vizinhos que votaram (suposição forte: quem falta
  *   costuma ser mais jovem, mais velho ou mais pobre que quem vota). É um teto, não uma previsão.
  * - Conversar com quem ficou de fora: votos nos outros 10 candidatos + brancos + nulos. Não se sabe para que lado tendem.
+ * - Onde o perfil promete mais (experimental): votos abaixo do esperado = max(0, −surpresa) × válidos, em que surpresa =
+ *   resultado − esperado pela cidade e pelo perfil do eleitorado da escola (modelo do capítulo 4). Depende do modelo:
+ *   é pista, não certeza.
  *
  * No 2º turno presidencial cada voto vale o mesmo no país inteiro, então o critério é quantas pessoas alcançáveis há
  * perto, não se o lugar é disputado.
  */
-export type Lente = 'faltosos' | 'abertos'
+export type Lente = 'faltosos' | 'abertos' | 'perfil'
+
+export const TODAS_LENTES: Lente[] = ['faltosos', 'abertos', 'perfil']
+
+/** Lê a ação do parâmetro `?a=` (padrão: lembrar quem faltou). */
+export const lerLente = (a: string | null): Lente => (a === 'abertos' || a === 'perfil' ? a : 'faltosos')
 
 /**
  * Qualquer lugar agregado: estado, município, bairro ou local de votação. Estados e municípios trazem `saldo13`/`saldo22`
- * já somados escola por escola (pipeline/07); num local de votação o saldo é calculado aqui.
+ * e `gap13`/`gap22` já somados escola por escola (pipeline/07); num local de votação eles são calculados aqui, a partir
+ * dos votos e da surpresa `s13`/`s22`.
  */
 export type Lugar = {
   validos: number
@@ -25,20 +35,40 @@ export type Lugar = {
   abertos: number
   saldo13?: number
   saldo22?: number
+  gap13?: number
+  gap22?: number
+  s13?: number | null
+  s22?: number | null
 }
 
-export const LENTES: Record<Lente, { titulo: string; curto: string; medida: string }> = {
+/** `pelo`: "ordenados pelo saldo possível"; `porCandidato`: a conta depende do candidato escolhido. */
+export const LENTES: Record<Lente, { titulo: string; curto: string; medida: string; pelo: string; porCandidato: boolean; experimental?: boolean }> = {
   faltosos: {
     titulo: 'Lembrar quem faltou',
     curto: 'quem faltou',
     medida: 'saldo possível',
+    pelo: 'pelo saldo possível',
+    porCandidato: true,
   },
   abertos: {
     titulo: 'Conversar com quem ficou de fora',
     curto: 'quem ficou de fora',
     medida: 'votos em aberto',
+    pelo: 'pelos votos em aberto',
+    porCandidato: false,
+  },
+  perfil: {
+    titulo: 'Onde o perfil promete mais',
+    curto: 'o perfil',
+    medida: 'votos abaixo do esperado',
+    pelo: 'pelos votos abaixo do esperado',
+    porCandidato: true,
+    experimental: true,
   },
 }
+
+/** Nome do número de cada lente, com o candidato quando a conta depende dele: "saldo possível para Lula", "votos em aberto". */
+export const rotuloValor = (lente: Lente, nome: string) => (LENTES[lente].porCandidato ? `${LENTES[lente].medida} para ${nome}` : LENTES[lente].medida)
 
 const adversario = (n: NumeroCandidato): NumeroCandidato => (n === 13 ? 22 : 13)
 
@@ -52,6 +82,13 @@ export function vantagem(l: Lugar, n: NumeroCandidato): number {
 /** O número que ordena os lugares em cada lente. */
 export function potencial(l: Lugar, n: NumeroCandidato, lente: Lente): number {
   if (lente === 'abertos') return l.abertos
+  if (lente === 'perfil') {
+    const somado = n === 13 ? l.gap13 : l.gap22
+    if (somado !== undefined && somado !== null) return somado
+    // escola sem surpresa (sem perfil do eleitorado publicado): fica fora desta conta
+    const s = n === 13 ? l.s13 : l.s22
+    return s === undefined || s === null ? 0 : Math.max(0, -s) * l.validos
+  }
   const somado = n === 13 ? l.saldo13 : l.saldo22
   if (somado !== undefined && somado !== null) return somado
   return Math.max(0, l.faltosos * vantagem(l, n))

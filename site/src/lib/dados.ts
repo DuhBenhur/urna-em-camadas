@@ -25,6 +25,9 @@ export type UF = {
   /** saldo possível ao lembrar quem faltou, somado escola por escola */
   saldo13: number
   saldo22: number
+  /** votos abaixo do esperado pelo modelo ("onde o perfil promete mais"), somados escola por escola */
+  gap13?: number
+  gap22?: number
   u13: number
   u22: number
 }
@@ -160,6 +163,9 @@ export type Municipio = {
   /** saldo possível ao lembrar quem faltou, somado escola por escola */
   saldo13: number
   saldo22: number
+  /** votos abaixo do esperado pelo modelo ("onde o perfil promete mais"), somados escola por escola */
+  gap13?: number
+  gap22?: number
   /** o que o perfil não explica (p.p.), bolsão espacial (LISA, 0–4) e região de voto (pipeline/10, 11) */
   sp13?: number | null
   sp22?: number | null
