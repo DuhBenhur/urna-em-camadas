@@ -18,8 +18,19 @@ import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 
 const ROTULOS_PISTA = { nada: 'Sem pista', estado: 'Sabendo o estado', municipio: 'Sabendo o município', escola: 'Sabendo a escola' }
 
-/** Um capítulo: rótulo, título, uma frase-resumo em linguagem simples e o conteúdo. */
-function Capitulo({ id, numero, rotulo, titulo, resumo, children }: { id: string; numero: number; rotulo: string; titulo: string; resumo: string; children: ReactNode }) {
+/**
+ * Um capítulo: rótulo, título, uma frase-resumo em linguagem simples, o que ela quer dizer para quem vai conversar no
+ * 2º turno, e o conteúdo.
+ */
+function Capitulo({ id, numero, rotulo, titulo, resumo, conversa, children }: {
+  id: string
+  numero: number
+  rotulo: string
+  titulo: string
+  resumo: string
+  conversa: ReactNode
+  children: ReactNode
+}) {
   return (
     <section className="capitulo" id={id} aria-labelledby={`${id}-titulo`}>
       <div className="kicker">
@@ -28,6 +39,9 @@ function Capitulo({ id, numero, rotulo, titulo, resumo, children }: { id: string
       <h2 id={`${id}-titulo`}>{titulo}</h2>
       <p className="resumo-capitulo">
         <strong>Em resumo:</strong> {resumo}
+      </p>
+      <p className="para-conversar">
+        <strong>Para quem vai conversar:</strong> {conversa}
       </p>
       {children}
     </section>
@@ -64,7 +78,8 @@ export function Analise() {
       <h1 style={{ marginTop: 32 }}>A análise completa</h1>
       <p className="secundario" style={{ fontSize: '1.1rem' }}>
         Sete capítulos curtos sobre o que as urnas de 2026 mostram e como chegamos a esses números. Tudo vale para os dois
-        candidatos do 2º turno: escolha por qual voto ler.
+        candidatos do 2º turno: escolha por qual voto ler. Cada capítulo diz também o que ele quer dizer para quem vai
+        conversar antes do dia 25.
       </p>
       {seletor}
       <ComoLer />
@@ -72,7 +87,8 @@ export function Analise() {
       {resumo && indice && historia && modelo ? (
         <>
           <Capitulo id="c-jogo" numero={1} rotulo="O jogo" titulo="Cada pista sobre o lugar aproxima o palpite"
-            resumo="sabendo só o estado e a cidade de uma urna, já dá para chegar perto do resultado dela.">
+            resumo="sabendo só o estado e a cidade de uma urna, já dá para chegar perto do resultado dela."
+            conversa="o voto tem endereço. Antes de conversar, vale saber como votou o seu bairro: a sua urna e as escolas perto dela dizem muito.">
             <p>
               Dá para adivinhar o resultado de uma urna sem abri-la? Em boa parte, sim: sabendo só o estado e o município, o
               erro do palpite cai cerca de {pct(quedaComMunicipio(historia), 0)}. Tente com o voto em {cand.nome} numa urna
@@ -113,7 +129,8 @@ export function Analise() {
           </Capitulo>
 
           <Capitulo id="c-estado" numero={2} rotulo="O estado" titulo="De todas as camadas, o estado é a que mais pesa"
-            resumo="de tudo o que faz uma urna votar diferente de outra, o estado onde ela fica é o que mais pesa.">
+            resumo="de tudo o que faz uma urna votar diferente de outra, o estado onde ela fica é o que mais pesa."
+            conversa="o estado pesa, mas no 2º turno cada voto vale igual em qualquer um deles. O que importa é quanta gente há perto de você, não se o seu estado é disputado.">
             <p>
               Comparando as urnas do país no voto em {cand.nome}, a maior parte da diferença entre elas ({pct(modelo.icc.UF, 0)})
               aparece de um estado para outro. Mudar de cidade dentro do mesmo estado responde por {pct(modelo.icc.município, 0)}, e
@@ -160,7 +177,8 @@ export function Analise() {
           </Capitulo>
 
           <Capitulo id="c-vizinhanca" numero={3} rotulo="A vizinhança" titulo="Mas a vizinhança pesa mais que a divisa"
-            resumo="cidades vizinhas votam parecido, mesmo com uma divisa estadual no meio. O voto muda aos poucos pelo mapa.">
+            resumo="cidades vizinhas votam parecido, mesmo com uma divisa estadual no meio. O voto muda aos poucos pelo mapa."
+            conversa="converse no bairro: vizinhos votam parecido.">
             <p>
               Dois municípios vizinhos em estados diferentes se parecem mais do que dois municípios quaisquer do mesmo
               estado.
@@ -243,7 +261,8 @@ export function Analise() {
           </Capitulo>
 
           <Capitulo id="c-explicacoes" numero={4} rotulo="Composição ou contexto" titulo="Quem mora ali ou onde fica?"
-            resumo="o que mais explica a diferença entre os estados é o perfil das cidades (renda, cor ou raça, religião) e a região do país, e não a idade ou a escolaridade de quem vota em cada urna.">
+            resumo="o que mais explica a diferença entre os estados é o perfil das cidades (renda, cor ou raça, religião) e a região do país, e não a idade ou a escolaridade de quem vota em cada urna."
+            conversa="o perfil de quem vota explica pouco dentro da cidade; o bairro e a história do lugar pesam mais. Por isso a ferramenta fala de escolas e bairros, não de tipos de eleitor.">
             {explicacao ? (
               <>
                 {seletor}
@@ -255,7 +274,14 @@ export function Analise() {
           </Capitulo>
 
           <Capitulo id="c-surpresas" numero={5} rotulo="As surpresas" titulo="Onde o voto foge do esperado"
-            resumo="mesmo descontando tudo isso, há bairros e cidades que votam diferente do esperado, e eles aparecem em grupos de vizinhos.">
+            resumo="mesmo descontando tudo isso, há bairros e cidades que votam diferente do esperado, e eles aparecem em grupos de vizinhos."
+            conversa={
+              <>
+                os bolsões mostram onde o voto foge do esperado; a terceira ação do{' '}
+                <Link to={`/virar?a=perfil&c=${candidato}`}>“Onde virar voto”</Link> parte deles. É pista, não certeza: parte do que
+                foge do esperado é o que o modelo não vê.
+              </>
+            }>
             <p>
               Até na mesma escola as urnas diferem. Na escola típica com {historia.regras.min_urnas_escola} urnas ou mais, a
               distância entre a urna com mais e a com menos votos em {cand.nome} é de{' '}
@@ -298,42 +324,49 @@ export function Analise() {
           </Capitulo>
 
           <Capitulo id="c-bastidores" numero={6} rotulo="Os bastidores" titulo="Como foi feito"
-            resumo="dados públicos, conferidos urna por urna com o resultado oficial antes de qualquer conta.">
+            resumo="dados públicos, conferidos urna por urna com o resultado oficial antes de qualquer conta."
+            conversa="os números de onde a conversa parte foram conferidos com o resultado oficial. Depois de votar, dá para conferir de novo, com o boletim da sua seção.">
             <p>Do arquivo do TSE ao gráfico, cada etapa foi conferida antes da seguinte.</p>
             <ComoFoiFeito resumo={resumo} candidato={candidato} explicacao={explicacao} />
           </Capitulo>
 
-          <Capitulo id="c-importa" numero={7} rotulo="Por que importa" titulo="Por que medir o voto em camadas"
-            resumo="saber onde estão as diferenças evita conclusões apressadas sobre quem vota em quem.">
+          <Capitulo id="c-importa" numero={7} rotulo="Por que importa" titulo="Do mapa à conversa"
+            resumo="saber onde estão as diferenças ajuda a agir por lugar, sem expor ninguém, e a conferir o resultado depois."
+            conversa="a mesma conta vale para os dois candidatos, e o site não pede voto para ninguém. Quem escolhe o lado é quem usa.">
             <div className="grade-3">
               <div className="cartao">
-                <h3>A escala certa</h3>
+                <h3>Agir por lugar</h3>
                 <p className="secundario" style={{ marginBottom: 0 }}>
-                  O debate costuma resumir o país a “Nordeste contra Sul” ou “capital contra interior”. Medir as camadas
-                  mostra em que escala as diferenças estão de fato, e que a vizinhança conta mais que a linha no mapa.
+                  O debate costuma resumir o país a “Nordeste contra Sul” ou “capital contra interior”. As camadas mostram que
+                  o voto muda de bairro para bairro, e é por lugar que dá para agir: em que escolas há mais gente que faltou ou
+                  que votou em outro candidato, branco ou nulo.
                 </p>
               </div>
               <div className="cartao">
-                <h3>Lugar não é pessoa</h3>
+                <h3>Sem expor ninguém</h3>
                 <p className="secundario" style={{ marginBottom: 0 }}>
-                  Os números descrevem urnas, não eleitores. Uma urna que deu 70% a um candidato não diz como votou cada
-                  pessoa da seção. Separar as camadas evita conclusões apressadas sobre quem vota em quem.
+                  Os números descrevem urnas e escolas, não eleitores. Uma urna que deu 70% a um candidato não diz como votou
+                  cada pessoa da seção. A conversa é com quem você conhece, não com uma lista: nada aqui aponta para uma pessoa.
                 </p>
               </div>
               <div className="cartao">
-                <h3>Dá para conferir</h3>
+                <h3>Conferir a urna</h3>
                 <p className="secundario" style={{ marginBottom: 0 }}>
-                  Dados públicos, código aberto e validação contra o TSE, urna por urna. Depois de 25 de outubro, a mesma
-                  conferência vale para o 2º turno, e os dois turnos serão comparados urna por urna.
+                  Dados públicos, código aberto e validação contra o TSE, urna por urna. Depois de votar, fotografe o boletim
+                  da sua seção; depois de 25 de outubro, a mesma conferência vale para o 2º turno, e os dois turnos serão
+                  comparados urna por urna.
                 </p>
               </div>
             </div>
             <div className="acoes" style={{ marginTop: 24 }}>
-              <Link className="botao" to="/">
+              <Link className="botao" to={`/virar?c=${candidato}`}>
+                Onde virar voto
+              </Link>
+              <Link className="botao botao-secundario" to="/">
                 Procurar minha urna
               </Link>
-              <Link className="botao botao-secundario" to="/mapa">
-                Ver o mapa
+              <Link className="botao botao-secundario" to="/conferencia">
+                Como conferir
               </Link>
               <Link className="botao botao-secundario" to="/metodo">
                 Ler o método

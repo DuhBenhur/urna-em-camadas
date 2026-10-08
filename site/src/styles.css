@@ -300,6 +300,10 @@ td.num { white-space: nowrap; }
 
 /* Linguagem simples */
 .resumo-capitulo { font-size: 1.125rem; border-left: 3px solid var(--tinta); padding: 2px 0 2px 14px; margin-bottom: 20px; max-width: 64ch; }
+/* "Para quem vai conversar": logo depois do resumo, o que o capítulo quer dizer para a ação */
+.resumo-capitulo:has(+ .para-conversar) { margin-bottom: 10px; }
+.para-conversar { font-size: 1.0625rem; border-left: 3px solid var(--eixo); padding: 2px 0 2px 14px; margin-bottom: 20px; max-width: 64ch; color: var(--tinta-2); }
+.para-conversar strong { color: var(--tinta); }
 .resumo-urna { font-size: 1.15rem; max-width: 64ch; margin-top: 20px; padding: 14px 18px; border-radius: var(--raio); background: var(--superficie); border: 1px solid var(--borda); }
 .como-ler { max-width: 68ch; color: var(--tinta-2); border-left: 3px solid var(--eixo); padding: 2px 0 2px 14px; margin-top: 24px; }
 .ajuda-busca { margin-top: 12px; color: var(--tinta-2); }
