@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { comCandidato, useCandidato } from '../lib/candidato'
 import { normalizar, useMunicipios, useResumo } from '../lib/dados'
 
 /**
@@ -25,6 +26,7 @@ export function Busca() {
 
 function BuscaTitulo() {
   const { dados: resumo } = useResumo()
+  const [candidato] = useCandidato()
   const navegar = useNavigate()
   const [uf, setUf] = useState('')
   const [zona, setZona] = useState('')
@@ -35,7 +37,7 @@ function BuscaTitulo() {
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        if (pronto) navegar(`/urna/${uf}/${Number(zona)}/${Number(secao)}`)
+        if (pronto) navegar(`/urna/${uf}/${Number(zona)}/${Number(secao)}${comCandidato(candidato)}`)
       }}
     >
       <div className="campos">
@@ -71,6 +73,7 @@ function BuscaTitulo() {
 
 function BuscaMunicipio() {
   const { dados: indice } = useMunicipios()
+  const [candidato] = useCandidato()
   const [texto, setTexto] = useState('')
   const sugestoes = useMemo(() => {
     const q = normalizar(texto)
@@ -105,7 +108,7 @@ function BuscaMunicipio() {
         <ul className="sugestoes">
           {sugestoes.map((m) => (
             <li key={m.cd}>
-              <Link to={`/municipio/${m.cd}`}>
+              <Link to={`/municipio/${m.cd}${comCandidato(candidato)}`}>
                 <span>
                   {m.nome} <span className="secundario">({m.uf})</span>
                 </span>

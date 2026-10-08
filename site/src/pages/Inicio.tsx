@@ -95,7 +95,7 @@ export function Inicio() {
               Sabendo só o estado e a cidade de uma urna, dá para chegar perto do resultado dela: quem tenta adivinhar erra
               cerca de {pct(achados.queda, 0)} menos.
             </p>
-            <Link to="/analise?c=c-jogo">Tente adivinhar uma urna</Link>
+            <Link to="/analise?cap=c-jogo">Tente adivinhar uma urna</Link>
           </article>
           <article className="cartao achado">
             <h3>Vizinhos votam parecido, mesmo com divisa no meio</h3>
@@ -103,7 +103,7 @@ export function Inicio() {
               Duas cidades vizinhas de estados diferentes votam mais parecido do que duas cidades quaisquer do mesmo estado:
               diferem cerca de {Math.round(achados.vizinhosDivisa)} pontos, contra {Math.round(achados.mesmoEstado)}.
             </p>
-            <Link to="/analise?c=c-vizinhanca">Veja a vizinhança</Link>
+            <Link to="/analise?cap=c-vizinhanca">Veja a vizinhança</Link>
           </article>
           <article className="cartao achado">
             <h3>A cidade pesa mais que a urna</h3>
@@ -112,7 +112,7 @@ export function Inicio() {
               estados, e a região do país, outros {pct(achados.regiao, 0)}. A idade e a escolaridade de quem vota em cada urna
               explicam só {pct(achados.perfilUrnas, 0)}.
             </p>
-            <Link to="/analise?c=c-explicacoes">Entenda o que explica o voto</Link>
+            <Link to="/analise?cap=c-explicacoes">Entenda o que explica o voto</Link>
           </article>
         </div>
       ) : (

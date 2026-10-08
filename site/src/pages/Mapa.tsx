@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { LegendaEscala, MapaBrasil, type VariavelMapa } from '../components/Mapas'
 import { SeletorCandidato } from '../components/SeletorCandidato'
+import { useCandidato } from '../lib/candidato'
 import { useMunicipios, useResumo } from '../lib/dados'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 
@@ -18,8 +19,17 @@ export function Mapa() {
   const [params, setParams] = useSearchParams()
   const pedida = params.get('v') as VariavelMapa | null
   const variavel: VariavelMapa = VISTAS.some((v) => v.chave === pedida) ? pedida! : 'margem'
-  const candidato: NumeroCandidato = params.get('c') === '22' ? 22 : 13
-  const mudar = (v: VariavelMapa, c: NumeroCandidato = candidato) => setParams({ v, c: String(c) }, { replace: true })
+  const [escolhido, definirCandidato] = useCandidato()
+  const candidato: NumeroCandidato = escolhido ?? 13
+  const mudar = (v: VariavelMapa) =>
+    setParams(
+      (atual) => {
+        const novos = new URLSearchParams(atual)
+        novos.set('v', v)
+        return novos
+      },
+      { replace: true },
+    )
   const navegar = useNavigate()
   const nome = CANDIDATOS[candidato].nome
   const porCandidato = variavel === 'efeito' || variavel === 'semperfil' || variavel === 'bolsoes'
@@ -44,7 +54,7 @@ export function Mapa() {
             </button>
           ))}
         </div>
-        {porCandidato && <SeletorCandidato valor={candidato} aoMudar={(c) => mudar(variavel, c)} />}
+        {porCandidato && <SeletorCandidato valor={candidato} aoMudar={definirCandidato} />}
       </div>
       {resumo && indice ? (
         <MapaBrasil resumo={resumo} indice={indice} variavel={variavel} candidato={candidato} aoClicar={(cd) => navegar(`/municipio/${cd}`)} />

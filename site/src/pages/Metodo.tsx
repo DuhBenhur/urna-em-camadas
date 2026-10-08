@@ -52,7 +52,7 @@ export function Metodo() {
       <h1 style={{ marginTop: 32 }}>Método</h1>
       <p className="secundario">
         Como os dados foram obtidos, conferidos e modelados, e por que cada escolha foi feita. A versão curta está no capítulo
-        “Como foi feito” da <Link to="/analise?c=c-bastidores">análise</Link>. O código de cada etapa está no{' '}
+        “Como foi feito” da <Link to="/analise?cap=c-bastidores">análise</Link>. O código de cada etapa está no{' '}
         <a href={REPOSITORIO}>repositório</a>.
       </p>
 

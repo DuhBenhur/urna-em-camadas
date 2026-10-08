@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { TabelaRolagem } from '../components/TabelaRolagem'
+import { useCandidato } from '../lib/candidato'
 import { normalizar, useLocais, useMunicipios, useResumo, type Local } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
@@ -16,8 +17,7 @@ const resultado = (l: Lugar) => `Lula ${pct(l.v13 / l.validos, 0)} · Flávio ${
 
 export function Virar() {
   const [params, setParams] = useSearchParams()
-  const c = params.get('c')
-  const candidato: NumeroCandidato | null = c === '13' ? 13 : c === '22' ? 22 : null
+  const [candidato, definirCandidato] = useCandidato()
   const lente: Lente = params.get('a') === 'abertos' ? 'abertos' : 'faltosos'
   const uf = params.get('uf') ?? ''
   const cd = Number(params.get('m')) || null
@@ -30,6 +30,8 @@ export function Virar() {
   /** Muda parâmetros da URL; descer de nível (estado, município) entra no histórico, para o "voltar" subir. */
   const mudar = (novos: Record<string, string | null>, historico = false) => {
     const p = new URLSearchParams(params)
+    // a escolha pode ter vindo de outra página (cópia da aba): entra na URL para o link compartilhado levar tudo
+    if (candidato && !p.has('c')) p.set('c', String(candidato))
     for (const [k, v] of Object.entries(novos)) {
       if (v === null) p.delete(k)
       else p.set(k, v)
@@ -51,7 +53,7 @@ export function Virar() {
       <Passo numero={1} titulo="Para quem?">
         <div className="escolha-candidato" role="group" aria-label="Candidato">
           {([13, 22] as const).map((n) => (
-            <button key={n} aria-pressed={candidato === n} onClick={() => mudar({ c: String(n) })}>
+            <button key={n} aria-pressed={candidato === n} onClick={() => definirCandidato(n)}>
               <span className="chave" style={{ background: CANDIDATOS[n].cor }} aria-hidden="true" />
               {CANDIDATOS[n].nome} ({CANDIDATOS[n].partido})
             </button>

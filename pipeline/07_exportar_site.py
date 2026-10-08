@@ -21,6 +21,9 @@ Colunas novas vindas dos modelos (10, 11): no índice de municípios, "sp" = o q
 "lisa" = bolsão espacial e "regiao" = região de voto; nas zonas, "d" = desvio do perfil da seção em relação ao
 município (logit × 10.000); nos locais, "s" = surpresa (resultado − esperado pelo município e pelo perfil).
 
+Antes de gravar, `conferir_virar` confere que faltosos, abertos e saldos de "Onde virar voto" fecham entre estados,
+municípios e escolas (e com as abstenções); se não fecharem, a exportação para sem tocar na pasta do site.
+
 Uso: python pipeline/07_exportar_site.py
 """
 import json
@@ -68,6 +71,7 @@ def carregar() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
         FROM '{p('locais_votacao_2026_brasil.parquet')}'
         WHERE DS_TIPO_SECAO_AGREGADA = 'Principal'
         GROUP BY ALL
+        ORDER BY ALL  -- sem ordem, o GROUP BY paralelo do duckdb muda a ordem dos locais nos arquivos a cada execução
     """).df()
     municipios = (pd.read_parquet(PROCESSED_DIR / "contexto_municipal.parquet")
                   .merge(pd.read_parquet(PROCESSED_DIR / "blups_hlm3_nulo.parquet").drop(columns="SG_UF"),
@@ -246,17 +250,18 @@ def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame) -> dict:
                                               "NM_MUNICIPIO": "nome", "SG_UF": "uf"}))
 
 
-def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict,
-                    exp: dict | None) -> int:
+def tabela_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict,
+                  exp: dict | None) -> pd.DataFrame:
+    """Uma linha por local de votação (escola), com o que vai para locais/{cd}.json."""
     perfil = list(PERFIL_L1.values())
-    por_local = (base.groupby(["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"])
+    # SG_UF não divide nada (cada município é de um estado só): fica para a conferência por estado
+    por_local = (base.groupby(["SG_UF", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"])
                  .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"),
                       v13=("V_13", "sum"), v22=("V_22", "sum"), **AGG_VIRAR,
                       ELEIT_PERFIL=("ELEIT_PERFIL", "sum"), **{c: (c, "sum") for c in perfil})
                  .reset_index()
                  .pipe(virar_voto)
                  .merge(locais.drop(columns="SG_UF"), on=["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"], how="left"))
-    extras = []
     if exp is not None:
         comp = composicao_municipal(base)
         u = municipios.set_index("CD_MUNICIPIO")
@@ -266,7 +271,11 @@ def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.Dat
             efeito = por_local.CD_MUNICIPIO.map(u[f"u_uf_{n}"] + u[f"u_mun_{n}"])
             esperado = expit(g00 + efeito + desvio_perfil(por_local, comp, beta))
             por_local[f"s{n}"] = (por_local[f"v{n}"] / por_local.validos - esperado).round(4)
-        extras = ["s13", "s22"]
+    return por_local
+
+
+def gravar_locais(por_local: pd.DataFrame) -> int:
+    extras = [c for c in ["s13", "s22"] if c in por_local.columns]
     colunas = ["NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL", "NM_BAIRRO", "LAT", "LON", "secoes", "validos", "v13", "v22",
                *COLUNAS_VIRAR, *extras]
     for cd, grupo in por_local.groupby("CD_MUNICIPIO"):
@@ -275,6 +284,67 @@ def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.Dat
                                                      "NM_LOCAL": "nome", "NM_BAIRRO": "bairro",
                                                      "LAT": "lat", "LON": "lon"})))
     return por_local.CD_MUNICIPIO.nunique()
+
+
+class ErroConferencia(Exception):
+    """Os números de "Onde virar voto" não fecham entre os níveis: melhor não publicar."""
+
+
+def saldo_na_escola(escolas: pd.DataFrame, n: int) -> pd.Series:
+    """O saldo que o navegador calcula para cada escola a partir do arquivo de locais (site/src/lib/virar.ts):
+    faltosos × (votos do candidato − do adversário) ÷ válidos, só onde ele ficou à frente."""
+    o = 22 if n == 13 else 13
+    vantagem = (escolas[f"v{n}"] - escolas[f"v{o}"]) / escolas.validos.where(escolas.validos > 0)
+    return (escolas.faltosos * vantagem).clip(lower=0).fillna(0)
+
+
+def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
+    """Trava da exportação: os números de "Onde virar voto" têm que contar a mesma história em todos os níveis,
+    exatamente como vão para os arquivos (estados no resumo, municípios no índice, escolas nos arquivos de locais).
+
+    - faltosos e abertos: estado = soma dos seus municípios = soma das suas escolas; município = soma das escolas;
+    - saldo: o mesmo, com a tolerância do arredondamento (estados e municípios gravam o saldo inteiro, somado escola
+      por escola): 1 voto por município;
+    - Brasil: faltosos = abstenções; em cada estado, faltosos + abertos + votos dos dois finalistas = aptos.
+    Qualquer falha interrompe a exportação antes de gravar o primeiro arquivo."""
+    falhas: list[str] = []
+    ufs = pd.DataFrame(res["ufs"]).set_index("uf")
+    mun = pd.DataFrame(indice["linhas"], columns=indice["colunas"]).set_index("cd")
+    escolas = por_local.rename(columns={"SG_UF": "uf", "CD_MUNICIPIO": "cd"}).copy()
+    for n in (13, 22):
+        escolas[f"saldo{n}"] = saldo_na_escola(escolas, n)
+    n_mun = mun.groupby("uf").size()
+
+    def comparar(rotulo: str, nivel: pd.Series, soma: pd.Series, tolerancia: pd.Series | float = 0) -> None:
+        soma = soma.reindex(nivel.index)
+        dif = (nivel - soma).abs()
+        ruins = dif[~(dif <= tolerancia)]  # NaN (lugar sem par no outro nível) também é falha
+        if len(ruins):
+            exemplos = ", ".join(f"{k}: {nivel[k]:,.0f} x {soma[k]:,.0f}" for k in ruins.index[:5])
+            falhas.append(f"{rotulo}: {len(ruins)} de {len(nivel)} não batem ({exemplos})")
+
+    if set(mun.index) != set(escolas.cd):
+        falhas.append(f"municípios sem escola ou escolas sem município: {len(set(mun.index) ^ set(escolas.cd))}")
+    if set(ufs.index) != set(mun.uf):
+        falhas.append(f"estados sem município ou municípios sem estado: {sorted(set(ufs.index) ^ set(mun.uf))}")
+    for c in COLUNAS_VIRAR:
+        comparar(f"{c}, município = soma das escolas", mun[c], escolas.groupby("cd")[c].sum())
+        comparar(f"{c}, estado = soma dos municípios", ufs[c], mun.groupby("uf")[c].sum())
+        comparar(f"{c}, estado = soma das escolas", ufs[c], escolas.groupby("uf")[c].sum())
+    for c in COLUNAS_SALDO:
+        comparar(f"{c}, município = soma das escolas", mun[c], escolas.groupby("cd")[c].sum(), 1)
+        comparar(f"{c}, estado = soma dos municípios", ufs[c], mun.groupby("uf")[c].sum(), n_mun.reindex(ufs.index))
+        comparar(f"{c}, estado = soma das escolas", ufs[c], escolas.groupby("uf")[c].sum(), 1)
+    comparar("aptos = faltosos + abertos + Lula + Flávio, por estado", ufs.aptos, ufs.faltosos + ufs.abertos + ufs.v13 + ufs.v22)
+    faltosos, abstencoes = int(ufs.faltosos.sum()), res["totais"]["abstencoes"]
+    if faltosos != abstencoes:
+        falhas.append(f"faltosos do Brasil ({faltosos:,}) diferentes das abstenções ({abstencoes:,})")
+
+    if falhas:
+        raise ErroConferencia("Onde virar voto não fecha entre os níveis; nada foi gravado:\n  " + "\n  ".join(falhas))
+    print(f"[ok] Onde virar voto fecha em {len(ufs)} estados, {len(mun):,} municípios e {len(escolas):,} escolas: "
+          f"faltosos {faltosos:,} (= abstenções), em aberto {int(ufs.abertos.sum()):,}, "
+          + ", ".join(f"saldo {n} {int(ufs[f'saldo{n}'].sum()):,}" for n in (13, 22)))
 
 
 def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
@@ -303,20 +373,27 @@ def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
 
 
 def main() -> None:
+    base, locais, municipios, modelos = carregar()
+    res = resumo(base, locais, municipios, modelos)
+    base = marcar_conferencia(base)
+    conf = conferencia(base)
+    exp = explicacao()
+    base, municipios = acrescentar_modelos(base, municipios, exp)
+    indice = indice_municipios(base, municipios)
+    por_local = tabela_locais(base, locais, municipios, modelos, exp)
+    # trava: se os números de "Onde virar voto" não fecharem entre os níveis, a pasta do site nem é apagada
+    conferir_virar(res, indice, por_local)
+
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
-    base, locais, municipios, modelos = carregar()
-    gravar(SAIDA / "resumo.json", resumo(base, locais, municipios, modelos))
+    gravar(SAIDA / "resumo.json", res)
     # calculado localmente pelo 08 (precisa de geopandas); aqui só é compactado e copiado
     gravar(SAIDA / "historia.json", json.loads((RESULTADOS / "08_historia.json").read_text(encoding="utf-8")))
-    base = marcar_conferencia(base)
-    gravar(SAIDA / "conferencia.json", conferencia(base))
-    exp = explicacao()
+    gravar(SAIDA / "conferencia.json", conf)
     if exp is not None:
         gravar(SAIDA / "explicacao.json", exp)
-    base, municipios = acrescentar_modelos(base, municipios, exp)
-    gravar(SAIDA / "municipios.json", indice_municipios(base, municipios))
-    n_mun = exportar_locais(base, locais, municipios, modelos, exp)
+    gravar(SAIDA / "municipios.json", indice)
+    n_mun = gravar_locais(por_local)
     n_zonas = exportar_zonas(base, locais)
     (SAIDA / "geo").mkdir(parents=True, exist_ok=True)
     shutil.copy(GEO_DIR / "municipios_br_minima.topo.json", SAIDA / "geo" / "municipios.topo.json")

@@ -1,10 +1,22 @@
+import { useCandidato } from '../lib/candidato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 
-export function SeletorCandidato({ valor, aoMudar }: { valor: NumeroCandidato; aoMudar: (n: NumeroCandidato) => void }) {
+/**
+ * Lula e Flávio lado a lado, com o mesmo peso. Sem props, segue o candidato que viaja pelo site (`useCandidato`; sem
+ * escolha, mostra Lula, o primeiro na ordem do site); com `valor` e `aoMudar`, segue um estado de fora.
+ */
+export function SeletorCandidato({ valor, aoMudar, rotulo = 'Candidato analisado' }: {
+  valor?: NumeroCandidato
+  aoMudar?: (n: NumeroCandidato) => void
+  rotulo?: string
+}) {
+  const [escolhido, definir] = useCandidato()
+  const atual = valor ?? escolhido ?? 13
+  const mudar = aoMudar ?? definir
   return (
-    <div className="abas" role="group" aria-label="Candidato analisado">
+    <div className="abas" role="group" aria-label={rotulo}>
       {([13, 22] as const).map((n) => (
-        <button key={n} aria-pressed={valor === n} onClick={() => aoMudar(n)}>
+        <button key={n} aria-pressed={atual === n} onClick={() => mudar(n)}>
           <span className="chave" style={{ background: CANDIDATOS[n].cor }} aria-hidden="true" />
           {CANDIDATOS[n].nome} ({CANDIDATOS[n].partido})
         </button>

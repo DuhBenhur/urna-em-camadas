@@ -5,6 +5,7 @@ import { ComoLer } from '../components/ComoLer'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { GraficoCamadas } from '../components/GraficoCamadas'
 import { SeletorCandidato } from '../components/SeletorCandidato'
+import { useCandidato } from '../lib/candidato'
 import { registros, useExplicacao, useHistoria, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { cada100, pct, pp } from '../lib/formato'
 import { CANDIDATOS, camadas, percentil, type NumeroCandidato } from '../lib/modelo'
@@ -29,7 +30,8 @@ export function Urna() {
   const { dados: historia } = useHistoria()
   const { dados: explicacao } = useExplicacao()
   const { dados: arquivo, erro } = useZona(uf.toUpperCase(), nZona)
-  const [candidato, setCandidato] = useState<NumeroCandidato>(13)
+  const [escolhido, definirCandidato] = useCandidato()
+  const candidato: NumeroCandidato = escolhido ?? 13
   const [copiado, setCopiado] = useState(false)
 
   const secoes = useMemo(() => (arquivo ? registros<Secao>(arquivo) : []), [arquivo])
@@ -128,7 +130,8 @@ export function Urna() {
     return new File([blob], `urna-${arquivo.uf}-${nZona}-${nSecao}.png`, { type: 'image/png' })
   }
   const compartilhar = async () => {
-    const url = window.location.href
+    // o link leva o candidato da imagem, mesmo quando a escolha veio de outra página e não está na URL
+    const url = `${window.location.origin}${window.location.pathname}#/urna/${arquivo.uf}/${nZona}/${nSecao}?c=${candidato}`
     const texto = `Minha urna em camadas: zona ${nZona}, seção ${nSecao} (${municipio.nome}-${arquivo.uf})`
     try {
       const arquivoImagem = await imagem().catch(() => null)
@@ -194,7 +197,7 @@ export function Urna() {
           <h2 id="t-camadas" style={{ marginTop: 0 }}>
             A urna em camadas
           </h2>
-          <SeletorCandidato valor={candidato} aoMudar={setCandidato} />
+          <SeletorCandidato valor={candidato} aoMudar={definirCandidato} />
           <GraficoCamadas camadas={cs} cor={cand.cor} candidato={cand.nome} />
           <p style={{ marginTop: 16 }}>
             Uma urna qualquer do Brasil daria {pct(cs[0].valor)} a {cand.curto}. Só por estar {comPreposicao('em', ufDados.uf, ufDados.nome)}, o modelo espera{' '}

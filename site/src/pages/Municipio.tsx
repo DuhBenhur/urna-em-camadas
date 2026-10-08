@@ -4,6 +4,7 @@ import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { normalizar, registros, useLocais, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
 import { SeletorCandidato } from '../components/SeletorCandidato'
+import { useCandidato } from '../lib/candidato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import { TabelaRolagem } from '../components/TabelaRolagem'
@@ -18,7 +19,8 @@ export function Municipio() {
   const [selecionado, setSelecionado] = useState<string | null>(params.get('local'))
   const [limite, setLimite] = useState(30)
   const [vista, setVista] = useState<'margem' | 'surpresa'>('margem')
-  const [candidato, setCandidato] = useState<NumeroCandidato>(13)
+  const [escolhido, definirCandidato] = useCandidato()
+  const candidato: NumeroCandidato = escolhido ?? 13
 
   const municipio = indice?.porCodigo.get(cd)
   const visiveis = useMemo(() => {
@@ -93,7 +95,7 @@ export function Municipio() {
             Surpresa
           </button>
         </div>
-        {vista === 'surpresa' && <SeletorCandidato valor={candidato} aoMudar={setCandidato} />}
+        {vista === 'surpresa' && <SeletorCandidato valor={candidato} aoMudar={definirCandidato} />}
       </div>
       <div id="mapa-locais">
         {locais ? (

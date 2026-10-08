@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Adivinhe } from '../components/Adivinhe'
 import { BarrasHorizontais } from '../components/BarrasHorizontais'
@@ -10,6 +10,7 @@ import { ComoSabemos } from '../components/ComoSabemos'
 import { ContrariamEstado } from '../components/ContrariamEstado'
 import { EfeitoEstados } from '../components/EfeitoEstados'
 import { SeletorCandidato } from '../components/SeletorCandidato'
+import { useCandidato } from '../lib/candidato'
 import { useExplicacao, useHistoria, useMunicipios, useResumo } from '../lib/dados'
 import { inteiro, pct, pontos } from '../lib/formato'
 import { quedaComMunicipio } from '../lib/historia'
@@ -38,7 +39,8 @@ export function Analise() {
   const { dados: indice } = useMunicipios()
   const { dados: historia } = useHistoria()
   const { dados: explicacao } = useExplicacao()
-  const [candidato, setCandidato] = useState<NumeroCandidato>(13)
+  const [escolhido, definirCandidato] = useCandidato()
+  const candidato: NumeroCandidato = escolhido ?? 13
   const [params] = useSearchParams()
   const n = String(candidato) as '13' | '22'
   const cand = CANDIDATOS[candidato]
@@ -46,11 +48,13 @@ export function Analise() {
   const espacial = explicacao?.espacial.candidatos[n]
   const regioes = explicacao?.espacial.regioes
   const sp = explicacao?.espacial.sao_paulo
-  const seletor = <SeletorCandidato valor={candidato} aoMudar={setCandidato} />
+  const seletor = <SeletorCandidato valor={candidato} aoMudar={definirCandidato} />
   const pronto = Boolean(resumo && indice && historia && modelo)
 
-  // "?c=c-estado": abre direto no capítulo pedido (links da página inicial)
-  const capitulo = params.get('c')
+  // "?cap=c-estado": abre direto no capítulo pedido (links da página inicial). Links antigos usavam "?c=c-estado",
+  // antes de o ?c= passar a guardar o candidato escolhido; continuam valendo.
+  const antigo = params.get('c')
+  const capitulo = params.get('cap') ?? (antigo?.startsWith('c-') ? antigo : null)
   useEffect(() => {
     if (pronto && capitulo) document.getElementById(capitulo)?.scrollIntoView({ block: 'start' })
   }, [pronto, capitulo])

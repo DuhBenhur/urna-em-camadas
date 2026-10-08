@@ -32,7 +32,10 @@ export function Sobre() {
           Não pede voto. A página “Onde virar voto” faz a mesma conta para os dois candidatos do 2º turno; quem escolhe o lado
           é quem usa. Ela aponta lugares (escolas e bairros), nunca pessoas, e traz as regras da lei eleitoral para conversar.
         </li>
-        <li>Não faz enquetes nem coleta dados de quem visita. A busca pela sua zona e seção acontece só no seu navegador.</li>
+        <li>
+          Não faz enquetes nem coleta dados de quem visita. A busca pela sua zona e seção acontece só no seu navegador, e o
+          candidato que você escolhe fica guardado só nesta aba, até ela ser fechada.
+        </li>
         <li>Não publica conteúdo novo no dia da eleição (25 de outubro de 2026).</li>
       </ul>
 
