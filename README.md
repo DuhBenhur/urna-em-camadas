@@ -1,10 +1,25 @@
 # Urna em Camadas
 
-**Quanto do voto da sua urna é do seu estado, do seu município e da sua seção?**
+**Onde virar voto no 2º turno, bairro a bairro.**
 
-Análise multinível e espacial do 1º turno presidencial de 2026 nas 497.897 urnas do Brasil, com dados públicos do TSE, IBGE e MDS. Cada seção eleitoral é decomposta em camadas: a média do país, o efeito do estado, o efeito do município, o perfil dos eleitores da seção e o que nenhum dado explica.
+Com o resultado oficial do 1º turno presidencial de 2026, urna por urna, o site mostra em que bairros e escolas há mais gente para conversar, para o candidato que você escolher: quem faltou, quem votou em outro candidato, branco ou nulo e, em caráter experimental, onde o candidato ficou abaixo do que o perfil do lugar fazia esperar. A mesma conta para os dois candidatos; o site não pede voto para ninguém. Dá para começar pela sua urna (zona e seção) ou por um lugar.
 
-> 🚧 Em construção. Site: <https://duhbenhur.github.io/urna-em-camadas/>
+Por trás, uma análise multinível e espacial das 497.897 urnas do Brasil, com dados públicos do TSE, IBGE e MDS: cada urna foi conferida com o resultado oficial e decomposta em camadas (a média do país, o efeito do estado, o efeito do município, o perfil dos eleitores da seção e o que nenhum dado explica). É ela que justifica agir por lugar: urnas vizinhas votam parecido, e dentro da cidade o que pesa é a escola e o bairro, não a urna.
+
+> Site: <https://duhbenhur.github.io/urna-em-camadas/>
+
+## Onde virar voto: as contas
+
+Três contas separadas, sem índice composto, calculadas escola por escola (local de votação) e somadas para cima ([método](https://duhbenhur.github.io/urna-em-camadas/#/metodo)):
+
+| Conta | Lula | Flávio Bolsonaro |
+|---|---|---|
+| Faltaram no 1º turno (= abstenções oficiais; não tem lado) | 32.894.899 | 32.894.899 |
+| Saldo possível ao lembrar quem faltou (teto, não previsão) | 3.888.389 | 4.656.407 |
+| Votos em aberto: outros candidatos, brancos e nulos (não têm lado) | 15.251.315 | 15.251.315 |
+| Votos abaixo do esperado pelo perfil (experimental) | 2.421.342 | 2.080.423 |
+
+A exportação do site ([`pipeline/07_exportar_site.py`](pipeline/07_exportar_site.py)) só publica se essas contas fecharem entre estados, municípios e escolas. Sem previsão do 2º turno.
 
 ## O que já se sabe
 

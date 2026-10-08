@@ -4,35 +4,47 @@
 <meta charset="utf-8">
 <title>Urna em Camadas: imagem de compartilhamento</title>
 <style>
-  /* Imagem de compartilhamento (1200×630). Gerada por site/scripts/og.py → site/public/og.png */
+  /* Imagem de compartilhamento (1200×630). Gerada por site/scripts/og.py → site/public/og.png
+     Os dois candidatos com o mesmo peso; o desenho é neutro (sem cor de partido): escolas perto de uma escola de partida,
+     com o anel de 2 km do "perto de você". */
   html, body { margin: 0; }
   body { width: 1200px; height: 630px; background: #f9f9f7; color: #0b0b0b; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
-  .quadro { box-sizing: border-box; width: 1200px; height: 630px; padding: 72px 80px; display: grid; grid-template-columns: 1fr 340px; gap: 48px; align-items: center; }
-  .marca { font-size: 26px; font-weight: 700; color: #52514e; letter-spacing: -0.01em; margin-bottom: 28px; }
-  h1 { font-size: 70px; line-height: 1.04; margin: 0 0 28px; letter-spacing: -0.02em; font-weight: 750; }
-  p { font-size: 30px; line-height: 1.35; margin: 0; color: #52514e; max-width: 640px; }
-  .rodape { margin-top: 40px; font-size: 22px; color: #6f6d68; }
-  .camadas { display: grid; gap: 14px; }
-  .camadas div { height: 46px; border-radius: 8px; }
+  .quadro { box-sizing: border-box; width: 1200px; height: 630px; padding: 64px 72px; display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: center; }
+  .marca { font-size: 26px; font-weight: 700; color: #52514e; letter-spacing: -0.01em; margin-bottom: 22px; }
+  h1 { font-size: 64px; line-height: 1.05; margin: 0 0 22px; letter-spacing: -0.02em; font-weight: 750; }
+  p { font-size: 28px; line-height: 1.35; margin: 0; color: #52514e; max-width: 660px; }
+  .candidatos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 30px; max-width: 620px; }
+  .candidatos div { border: 2px solid #c3c2b7; border-radius: 12px; padding: 12px 0; font-size: 26px; font-weight: 700; text-align: center; }
+  .candidatos span { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 10px; vertical-align: 1px; }
+  .rodape { margin-top: 24px; font-size: 21px; color: #6f6d68; }
 </style>
 </head>
 <body>
   <div class="quadro">
     <div>
       <div class="marca">Urna em Camadas</div>
-      <h1>A sua urna, conferida e explicada</h1>
-      <p>O 1º turno de 2026 em 497.897 urnas: o que vem do estado, do município e da própria seção.</p>
-      <div class="rodape">duhbenhur.github.io/urna-em-camadas</div>
-    </div>
-    <!-- as camadas do ícone do site: seção, município, estado, Brasil -->
-    <div class="camadas" aria-hidden="true">
-      <div style="width: 46%; margin: 0 auto; background: #6f6d68"></div>
-      <div style="width: 66%; margin: 0 auto; background: #2a78d6"></div>
-      <div style="width: 84%; margin: 0 auto; background: #e34948"></div>
-      <div style="width: 100%; height: 120px; background: #0b0b0b; position: relative">
-        <div style="position: absolute; left: 25%; right: 25%; top: 44px; height: 14px; border-radius: 7px; background: #f9f9f7"></div>
+      <h1>Onde a sua conversa pode virar voto</h1>
+      <p>Com o 1º&nbsp;turno urna por urna, os bairros e as escolas onde há mais gente para conversar no 2º&nbsp;turno.</p>
+      <div class="candidatos">
+        <div><span style="background: #e34948"></span>Lula (PT)</div>
+        <div><span style="background: #2a78d6"></span>Flávio Bolsonaro (PL)</div>
       </div>
+      <div class="rodape">A mesma conta para os dois · o site não pede voto · duhbenhur.github.io/urna-em-camadas</div>
     </div>
+    <svg width="360" height="360" viewBox="0 0 360 360" aria-hidden="true">
+      <!-- escolas: círculos cinza de tamanhos diferentes; a de partida, escura, no centro -->
+      <g fill="#9c9a93" fill-opacity="0.85">
+        <circle cx="120" cy="110" r="14" /><circle cx="236" cy="96" r="9" /><circle cx="262" cy="170" r="20" />
+        <circle cx="98" cy="196" r="10" /><circle cx="150" cy="250" r="17" /><circle cx="232" cy="252" r="12" />
+        <circle cx="196" cy="128" r="7" /><circle cx="140" cy="160" r="6" /><circle cx="208" cy="204" r="8" />
+        <circle cx="282" cy="236" r="6" /><circle cx="78" cy="140" r="7" /><circle cx="180" cy="290" r="9" />
+      </g>
+      <g fill="#c3c2b7">
+        <circle cx="30" cy="40" r="8" /><circle cx="336" cy="60" r="10" /><circle cx="330" cy="318" r="7" /><circle cx="40" cy="320" r="9" />
+      </g>
+      <circle cx="180" cy="180" r="150" fill="none" stroke="#0b0b0b" stroke-width="3" stroke-dasharray="10 9" />
+      <circle cx="180" cy="180" r="15" fill="#0b0b0b" stroke="#f9f9f7" stroke-width="4" />
+    </svg>
   </div>
 </body>
 </html>

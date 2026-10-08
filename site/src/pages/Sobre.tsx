@@ -6,7 +6,13 @@ export function Sobre() {
       <h1 style={{ marginTop: 32 }}>Sobre</h1>
 
       <p>
-        <strong>Urna em Camadas</strong> é um projeto de ciência de dados feito por <strong>Eduardo Ben Hur</strong> com{' '}
+        <strong>Urna em Camadas</strong> mostra onde virar voto no 2º turno, bairro a bairro: com o resultado oficial do 1º turno,
+        urna por urna, em que bairros e escolas há mais gente para conversar, com a mesma conta para os dois candidatos. Por
+        trás, uma análise das 497.897 urnas do país, conferidas com o resultado oficial e separadas em camadas (estado,
+        município, escola e urna).
+      </p>
+      <p>
+        É um projeto de ciência de dados feito por <strong>Eduardo Ben Hur</strong> com{' '}
         <a href="https://claude.com/claude-code">Claude Code</a>, o assistente de programação da Anthropic. O código-fonte, os
         dados processados, as validações e o histórico de cada mudança estão <a href={REPOSITORIO}>no GitHub</a>.
       </p>

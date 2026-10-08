@@ -1,9 +1,10 @@
 # Urna em Camadas
 
-> Análise multinível e espacial do 1º turno presidencial de 2026 no Brasil, por seção eleitoral (urna). Cada urna é conferida com o resultado oficial do TSE e decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município, o perfil do eleitorado da seção e o que nenhum dado explica. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE e MDS. Não é pesquisa eleitoral. Os resultados descrevem lugares, não pessoas.
+> Onde virar voto no 2º turno, bairro a bairro. Com o resultado oficial do 1º turno presidencial de 2026, urna por urna, o site mostra em que bairros e escolas há mais gente para conversar, para o candidato que a pessoa escolher: a mesma conta para Lula e para Flávio Bolsonaro, sem pedir voto. Por trás, uma análise multinível e espacial por seção eleitoral (urna): cada urna é conferida com o resultado oficial do TSE e decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município, o perfil do eleitorado da seção e o que nenhum dado explica. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE e MDS. Não é pesquisa eleitoral. Os resultados descrevem lugares, não pessoas.
 
 ## Principais resultados
 
+- Onde virar voto (1º turno, somas escola por escola): 32.894.899 eleitores faltaram (igual às abstenções oficiais); 15.251.315 votaram em outros candidatos, brancos ou nulos; saldo possível ao lembrar quem faltou, Lula 3.888.389 e Flávio Bolsonaro 4.656.407 (um teto, não uma previsão); votos abaixo do esperado pelo perfil (experimental, depende do modelo), Lula 2.421.342 e Flávio 2.080.423.
 - Conferência: as 497.897 urnas do Brasil são idênticas ao resultado oficial por seção do TSE em aptos, comparecimento, abstenções, brancos, nulos (da urna + técnicos) e votos de cada um dos 12 candidatos.
 - Modelo nulo de três níveis (logit da proporção de votos válidos): Lula, 62,7% da variação entre urnas está entre estados, 21,7% entre municípios do mesmo estado e 15,6% entre seções do mesmo município. Flávio Bolsonaro: 60,5% / 22,9% / 16,6%.
 - Com quatro níveis, quase tudo o que parecia da seção é do local de votação (cerca de 20% da variação); só cerca de 3% é da urna em si.
