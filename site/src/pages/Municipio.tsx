@@ -1,13 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { normalizar, registros, useLocais, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { useCandidato } from '../lib/candidato'
+import { SeloExperimental } from '../components/SeloExperimental'
+import { comCandidato, useCandidato } from '../lib/candidato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import { TabelaRolagem } from '../components/TabelaRolagem'
+import { LENTES, TODAS_LENTES, lerLente, potencial, rotuloValor, type Lente } from '../lib/virar'
+import type { Local } from '../lib/dados'
+
+type Vista = 'margem' | 'surpresa' | 'virar'
 
 export function Municipio() {
   const cd = Number(useParams().cd)
@@ -15,12 +20,30 @@ export function Municipio() {
   const { dados: indice } = useMunicipios()
   const { dados: locais } = useLocais(cd || null)
   const [filtro, setFiltro] = useState('')
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const [selecionado, setSelecionado] = useState<string | null>(params.get('local'))
   const [limite, setLimite] = useState(30)
-  const [vista, setVista] = useState<'margem' | 'surpresa'>('margem')
+  // quem chega com uma ação (?a=) do "Onde virar voto" já abre nessa vista
+  const [vista, setVista] = useState<Vista>(params.get('a') ? 'virar' : 'margem')
   const [escolhido, definirCandidato] = useCandidato()
   const candidato: NumeroCandidato = escolhido ?? 13
+  // sem candidato escolhido, a vista "Virar voto" abre nos votos em aberto, que não têm lado
+  const pedidaLente = params.get('a')
+  const lente: Lente = pedidaLente ? lerLente(pedidaLente) : escolhido ? 'faltosos' : 'abertos'
+  // um link com ?a= para este mesmo município (a página não remonta) também abre a vista "Virar voto"
+  useEffect(() => {
+    if (pedidaLente) setVista('virar')
+  }, [pedidaLente])
+  const mudarLente = (l: Lente) =>
+    setParams(
+      (atual) => {
+        const novos = new URLSearchParams(atual)
+        novos.set('a', l)
+        return novos
+      },
+      { replace: true },
+    )
+  const tamanho = (l: Local) => potencial(l, candidato, lente)
 
   const municipio = indice?.porCodigo.get(cd)
   const visiveis = useMemo(() => {
@@ -84,7 +107,9 @@ export function Municipio() {
       <p className="secundario">
         {vista === 'margem'
           ? 'Cada círculo é um local de votação: o tamanho é o número de votos válidos e a cor, quem ficou à frente.'
-          : `Cada círculo é um local de votação: a cor é quanto ele votou em ${CANDIDATOS[candidato].nome} acima ou abaixo do esperado para ${municipio.nome} e para o perfil do seu eleitorado (idade, sexo, escolaridade).`}
+          : vista === 'surpresa'
+            ? `Cada círculo é um local de votação: a cor é quanto ele votou em ${CANDIDATOS[candidato].nome} acima ou abaixo do esperado para ${municipio.nome} e para o perfil do seu eleitorado (idade, sexo, escolaridade).`
+            : `Cada círculo é um local de votação: o tamanho mostra ${lente === 'faltosos' ? 'o' : 'os'} ${rotuloValor(lente, CANDIDATOS[candidato].nome)} e a cor, quem ficou à frente no 1º turno. A mesma conta para os dois candidatos; o site não pede voto para ninguém.`}
       </p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         <div className="abas" role="group" aria-label="O que o mapa mostra">
@@ -94,17 +119,53 @@ export function Municipio() {
           <button aria-pressed={vista === 'surpresa'} onClick={() => setVista('surpresa')}>
             Surpresa
           </button>
+          <button aria-pressed={vista === 'virar'} onClick={() => setVista('virar')}>
+            Virar voto
+          </button>
         </div>
-        {vista === 'surpresa' && <SeletorCandidato valor={candidato} aoMudar={definirCandidato} />}
+        {vista === 'virar' && (
+          <div className="abas" role="group" aria-label="Que tipo de conversa">
+            {TODAS_LENTES.map((l) => (
+              <button key={l} aria-pressed={lente === l} onClick={() => mudarLente(l)}>
+                {LENTES[l].titulo}
+                {LENTES[l].experimental && ' (experimental)'}
+              </button>
+            ))}
+          </div>
+        )}
+        {(vista === 'surpresa' || (vista === 'virar' && LENTES[lente].porCandidato)) && (
+          <SeletorCandidato valor={candidato} aoMudar={definirCandidato} />
+        )}
       </div>
       <div id="mapa-locais">
         {locais ? (
-          <MapaLocais locais={locais} selecionado={selecionado} aoSelecionar={setSelecionado} variavel={vista} candidato={candidato} />
+          <MapaLocais
+            locais={locais}
+            selecionado={selecionado}
+            aoSelecionar={setSelecionado}
+            variavel={vista === 'surpresa' ? 'surpresa' : 'margem'}
+            candidato={candidato}
+            tamanho={vista === 'virar' ? tamanho : undefined}
+            linhaExtra={vista === 'virar' ? (l) => `${rotuloValor(lente, CANDIDATOS[candidato].curto)}: ${inteiro(Math.round(tamanho(l)))}` : undefined}
+            chave={vista === 'virar' ? `${candidato}-${lente}` : vista}
+          />
         ) : (
           <p className="carregando">Carregando locais…</p>
         )}
       </div>
-      <LegendaEscala variavel={vista} candidato={candidato} />
+      <LegendaEscala variavel={vista === 'surpresa' ? 'surpresa' : 'margem'} candidato={candidato} />
+      {vista === 'virar' && (
+        <p style={{ marginTop: 12 }}>
+          {lente === 'perfil' && (
+            <>
+              <SeloExperimental /> Depende do modelo, que não vê a renda do bairro nem a história do lugar: pista, não certeza.{' '}
+            </>
+          )}
+          <Link to={`/virar?a=${lente}&uf=${municipio.uf}&m=${municipio.cd}${comCandidato(escolhido, '&')}`}>
+            Ver o ranking de bairros e escolas no “Onde virar voto”
+          </Link>
+        </p>
+      )}
 
       {local && <SecoesDoLocal uf={municipio.uf} zona={local.zona} local={local.local} nome={local.nome} cd={cd} />}
 
