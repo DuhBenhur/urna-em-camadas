@@ -1,6 +1,8 @@
 # Handoff: estado do projeto
 
-Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `CLAUDE.md`). Ao terminar uma sessão de trabalho, atualizar este arquivo.
+Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `CLAUDE.md`). Ao terminar uma sessão de trabalho, atualizar este arquivo.
+
+> **Próxima sessão: comece por [`docs/plano_virar_voto.md`](docs/plano_virar_voto.md).** Em 08/10 o usuário decidiu que "Onde virar voto" passa a ser a história central do projeto, amarrada ao que já existe. O plano traz as decisões, as mudanças por prioridade (P0 até 10/10, P1 até 13/10, P2 até 18/10), os arquivos e linhas a mexer, os critérios de pronto e a verificação. Prazo duro: 2º turno em 25/10; último deploy em 24/10. O usuário autorizou implementar e publicar ("fazer tudo"); seguir o plano sem parar a cada passo, verificando cada etapa.
 
 ## Onde paramos
 
@@ -64,17 +66,18 @@ Atualizado em 07/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Só Python. `gpboost` é o motor (o `statsmodels` leva ~5 min por modelo e quebra com `use_sparse`).
 - Os dois candidatos do 2º turno são modelados, e o site deixa escolher: decompor só um lado pareceria partidário.
 - Cores: Lula vermelho, Flávio azul (convenção dos mapas eleitorais = polos do par divergente validado). Braço vermelho calculado com a mesma luminosidade OKLCH da rampa azul (`site/src/lib/cores.ts`). Paleta validada com o `validate_palette.js` da skill de dataviz.
-- Previsão do 2º turno: pré-registro com embargo; publicar só depois de 25/10.
+- Previsão do 2º turno: não será feita; a promessa sai do site (plano P0.1).
+- **Centro do projeto (08/10):** "Onde virar voto". O resto do site serve a essa história (`docs/plano_virar_voto.md`).
 - Ordem combinada com o usuário (07/10): história do site primeiro e publicação logo, previsão em seguida (prazo ~20/10).
 - Escala divergente no modo escuro: extremos `#ff716b` / `#5fa7ff` (L 0,72, croma máximo) no lugar do degrau 200 (croma 0,08, lia como pastel/"fraco"). Cada braço validado com `validate_palette.js --ordinal --mode dark`.
-- **Em aberto (07/10):** o usuário questionou a história ("qual a ação possível? o que faz cada lugar votar como vota? qual o ganho para a sociedade?"). A história atual responde "quanto" e "onde", não "por quê". Direções propostas: (A) espinha "por que cada lugar vota como vota", puxada pelo step-up M2–M4; (B) "confira você mesmo": soma das urnas x totalização oficial nas 27 UFs. Aguardando a escolha antes de mexer de novo na inicial.
+- **Respondido em 08/10 pela centralidade do "Onde virar voto"** (a ação possível que o usuário pedia). Registro anterior: o usuário questionou a história ("qual a ação possível? o que faz cada lugar votar como vota? qual o ganho para a sociedade?"). A história atual responde "quanto" e "onde", não "por quê". Direções propostas: (A) espinha "por que cada lugar vota como vota", puxada pelo step-up M2–M4; (B) "confira você mesmo": soma das urnas x totalização oficial nas 27 UFs. Aguardando a escolha antes de mexer de novo na inicial.
 - Linguagem do site: jargão (ICC, logit, BLUP) só no Método e nos "Como sabemos"; números em p.p.; falar de urnas e lugares, nunca de eleitores; os dois candidatos sempre lado a lado; artigo dos estados via `site/src/lib/ufs.ts` ("no Paraná", "na Bahia").
 
 ## Pendências, em ordem de prioridade
 
-1. **2º turno** (decisão do usuário em 07/10: "deixar a parte do segundo turno para o segundo turno").
-   - Previsão pré-registrada: se for feita, registrar antes de 25/10 no OSF com embargo; o site promete isso em 4 lugares (capítulo 7, "Como foi feito", decisões e Método). Receita: boletins de urna de 2022 (1º e 2º turnos, `resultados-2022-boletim-de-urna`), compatibilizar seções 2022 → 2026 por local de votação e coordenadas, modelar a transição 1T → 2T de 2022 por seção e aplicar ao 1T de 2026.
+1. **"Onde virar voto" no centro do site:** seguir `docs/plano_virar_voto.md` (P0 → P1 → P2). Inclui retirar a promessa de previsão do 2º turno (4 lugares: `ComoFoiFeito.tsx:63-65`, `decisoes.ts:52`, `Analise.tsx:322`, `Metodo.tsx:267`).
    - Depois de 25/10: baixar o 2º turno, repetir a conferência e a decomposição, comparar os turnos. Nenhum conteúdo novo no dia 25/10.
+   - Previsão do 2º turno: **não será feita** (decisão de 07/10; plano de 08/10). Se o usuário mudar de ideia, a receita era: boletins de 2022 (1º e 2º turnos), compatibilizar seções 2022 → 2026 por local e coordenadas, transição 1T → 2T por seção, registro no OSF com embargo antes de 25/10.
 2. **Próximos passos de alcance** (análise de 07/10): vídeo de 60–90 s com legenda (roteiro com o Claude, produção do usuário); CSV, DOI no Zenodo e resumo em inglês; gráficos para embutir; teste com 5–8 pessoas de idades e escolaridades diferentes ("ache sua urna", "explique o 63%").
 3. **Site.** Feito em 07/10: imagem de compartilhamento (`site/scripts/og.py` → `site/public/og.png`), página de Dados (`#/dados`), cartão da urna para compartilhar (`site/src/lib/cartao.ts`, canvas 1200×630; no celular vai junto no compartilhamento, no computador é baixado), tarifaço (`12`). Falta: teste em celular real.
 4. Para enviar: `git push` (o Git Credential Manager autentica; o `gh` não está instalado).
