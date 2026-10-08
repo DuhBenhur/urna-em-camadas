@@ -19,7 +19,7 @@
 - /#/conferencia: como conferir a sua urna com o boletim impresso e a soma das urnas contra o resultado oficial, por estado.
 - /#/urna/{UF}/{zona}/{seção}: boletim de urna, selo de conferência, camadas de uma urna específica e "Daqui até o dia 25": quem faltou e quem votou em outro candidato, branco ou nulo na escola da urna e nas escolas a até 2 km.
 - /#/municipio/{código TSE}: locais de votação e urnas de um município; mapa do resultado e da surpresa de cada local.
-- /#/mapa?v={margem|efeito|semperfil|bolsoes|regioes}: mapa dos municípios.
+- /#/mapa?v={virar|margem|efeito|semperfil|bolsoes|regioes}: mapa dos municípios. Com v=virar&a={faltosos|abertos|perfil}&c={13|22}, cada conta do "Onde virar voto" por 100 eleitores aptos, em 5 classes iguais para os dois candidatos (votos em aberto, que não têm lado, em cinza).
 - /#/metodo: dados, conferência, modelos, espaço, decisões e como reproduzir.
 - /#/dados: arquivos processados (Parquet) e resultados (JSON) para baixar, com dicionário e licença.
 - Em qualquer página, ?c={13|22} escolhe o candidato (Lula ou Flávio Bolsonaro); a escolha segue para as próximas páginas da mesma aba.

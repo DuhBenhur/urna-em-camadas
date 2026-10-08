@@ -7,14 +7,31 @@ import { feature } from 'topojson-client'
 import type { FeatureCollection, Geometry } from 'geojson'
 import type { Topology } from 'topojson-specification'
 import { carregar, type IndiceMunicipios, type Local, type Resumo } from '../lib/dados'
-import { classe, escalaAtual, temaEscuro } from '../lib/cores'
-import { pct, pp } from '../lib/formato'
+import { classe, classeSequencial, escalaAtual, sequencialAtual, temaEscuro, type Rampa } from '../lib/cores'
+import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
+import { potencial, rotuloValor, type Lente } from '../lib/virar'
 
 // O MapLibre 6 procura o worker ao lado do próprio módulo; no build do Vite ele precisa vir como asset.
 maplibregl.setWorkerUrl(urlWorker)
 
-export type VariavelMapa = 'margem' | 'efeito' | 'semperfil' | 'bolsoes' | 'regioes'
+export type VariavelMapa = 'margem' | 'efeito' | 'semperfil' | 'bolsoes' | 'regioes' | 'virar'
+
+/**
+ * "Onde virar voto": limites inferiores das classes 2 a 5 de cada conta, por 100 eleitores aptos. Fixos e iguais para os
+ * dois candidatos, para os dois mapas poderem ser comparados; números redondos, tirados da distribuição dos municípios
+ * (em 08/10/2026: um terço dos municípios tem saldo zero; a mediana dos votos em aberto é 7,9; a do perfil, cerca de 1).
+ */
+export const CORTES_VIRAR: Record<Lente, [number, number, number, number]> = {
+  faltosos: [1, 3, 6, 10],
+  abertos: [6, 8, 10, 12],
+  perfil: [0.5, 1, 2, 3],
+}
+
+/** Votos em aberto não têm lado: rampa cinza. As outras contas são de um candidato: a cor dele. */
+export const rampaVirar = (lente: Lente, candidato: NumeroCandidato): Rampa => (lente === 'abertos' ? 'neutra' : candidato === 13 ? 'lula' : 'flavio')
+
+const umaCasa = (x: number) => x.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
 
 export const LIMITES: Record<'margem' | 'efeito', [number, number, number]> = {
   margem: [0.05, 0.2, 0.4],
@@ -53,6 +70,13 @@ function margensRegioes(indice: IndiceMunicipios): Map<number, Regiao> {
 function corPorClasse(): ExpressionSpecification {
   const e = escalaAtual()
   return ['match', ['get', 'c'], 0, e[0], 1, e[1], 2, e[2], 3, e[3], 4, e[4], 5, e[5], 6, e[6], '#8a8a8a']
+}
+
+/** Cor dos municípios: a escala divergente das vistas de resultado e modelo, ou a sequencial do "Onde virar voto". */
+function corDoMapa(variavel: VariavelMapa, candidato: NumeroCandidato, lente: Lente): ExpressionSpecification {
+  if (variavel !== 'virar') return corPorClasse()
+  const r = sequencialAtual(rampaVirar(lente, candidato))
+  return ['match', ['get', 'c'], 0, r[0], 1, r[1], 2, r[2], 3, r[3], 4, r[4], '#8a8a8a']
 }
 
 function cssVar(nome: string): string {
@@ -98,17 +122,19 @@ type PropsBrasil = {
   variavel: VariavelMapa
   candidato: NumeroCandidato
   aoClicar: (cd: number) => void
+  /** ação do "Onde virar voto" (vista "virar") */
+  lente?: Lente
 }
 
 /** Coroplético dos municípios. A geometria é a malha mínima do IBGE (TopoJSON). */
-export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: PropsBrasil) {
+export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lente = 'faltosos' }: PropsBrasil) {
   const container = useRef<HTMLDivElement>(null)
   const mapa = useRef<maplibregl.Map | null>(null)
   const [geo, setGeo] = useState<{ mun: FeatureCollection; ufs: FeatureCollection; regioes: FeatureCollection | null } | null>(null)
   const [dica, setDica] = useState<Dica>(null)
   const versaoTema = useTema()
-  const props = useRef({ variavel, candidato, aoClicar })
-  props.current = { variavel, candidato, aoClicar }
+  const props = useRef({ variavel, candidato, aoClicar, lente })
+  props.current = { variavel, candidato, aoClicar, lente }
 
   useEffect(() => {
     Promise.all([
@@ -151,6 +177,13 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
         const l = candidato === 13 ? m.lisa13 : m.lisa22
         p.v = l ?? NaN
         p.c = l === null || l === undefined ? -1 : CLASSE_LISA[l][candidato === 13 ? 0 : 1]
+      } else if (variavel === 'virar') {
+        // taxa por 100 eleitores aptos, para cidade grande não dominar o mapa; o total vai na dica
+        const total = potencial(m, candidato, lente)
+        const v = m.aptos > 0 ? (total / m.aptos) * 100 : NaN
+        p.v = v
+        p.total = total
+        p.c = Number.isFinite(v) ? classeSequencial(v, CORTES_VIRAR[lente]) : -1
       } else {
         const r = m.regiao === null || m.regiao === undefined ? undefined : regioes?.get(m.regiao)
         p.v = r?.margem ?? NaN
@@ -160,9 +193,10 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
     const fonte = mapa.current?.getSource('municipios') as GeoJSONSource | undefined
     fonte?.setData(geo.mun)
     const m = mapa.current
+    if (m?.getLayer('mun-preench')) m.setPaintProperty('mun-preench', 'fill-color', corDoMapa(variavel, candidato, lente))
     if (m?.getLayer('regioes-contorno')) m.setLayoutProperty('regioes-contorno', 'visibility', variavel === 'regioes' ? 'visible' : 'none')
     if (m?.getLayer('uf-contorno')) m.setPaintProperty('uf-contorno', 'line-width', variavel === 'regioes' ? 0.5 : 0.8)
-  }, [geo, indice, resumo, variavel, candidato])
+  }, [geo, indice, resumo, variavel, candidato, lente])
 
   useEffect(() => {
     if (!geo || !container.current) return
@@ -180,7 +214,8 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
     m.on('load', () => {
       m.addSource('municipios', { type: 'geojson', data: geo.mun, promoteId: 'codarea' })
       m.addSource('ufs', { type: 'geojson', data: geo.ufs })
-      m.addLayer({ id: 'mun-preench', type: 'fill', source: 'municipios', paint: { 'fill-color': corPorClasse() } })
+      const { variavel: va, candidato: ca, lente: le } = props.current
+      m.addLayer({ id: 'mun-preench', type: 'fill', source: 'municipios', paint: { 'fill-color': corDoMapa(va, ca, le) } })
       m.addLayer({
         id: 'mun-contorno',
         type: 'line',
@@ -225,7 +260,7 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
       m.getCanvas().style.cursor = 'pointer'
       const mun = indice.porIbge.get(Number(f.id))
       if (!mun) return
-      const { variavel: va, candidato: ca } = props.current
+      const { variavel: va, candidato: ca, lente: le } = props.current
       const margem = (mun.v13 - mun.v22) / mun.validos
       const v = f.properties?.v ?? NaN
       const frente = (x: number) => `${x >= 0 ? 'Lula' : 'Flávio'} à frente por ${pp(Math.abs(x)).slice(1)}`
@@ -233,20 +268,26 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
         va === 'margem' ? frente(margem)
           : va === 'regioes' ? (Number.isFinite(v) ? `região: ${frente(v)}` : 'sem região')
             : va === 'bolsoes' ? (Number.isFinite(v) ? ROTULOS_LISA[v] : 'sem dado')
-              : pp(v)
+              : va === 'virar' ? (Number.isFinite(v) ? `${umaCasa(v)} de cada 100 eleitores` : 'sem dado')
+                : pp(v)
       const linha1 = {
         margem: 'diferença entre os dois mais votados',
         efeito: `efeito do município no voto em ${CANDIDATOS[ca].curto}`,
         semperfil: `o que o perfil e a região não explicam no voto em ${CANDIDATOS[ca].curto}`,
         bolsoes: `voto em ${CANDIDATOS[ca].curto} além do perfil e da região, comparado aos vizinhos`,
         regioes: `região de voto nº ${(mun.regiao ?? -1) + 1}`,
+        virar: `${rotuloValor(le, CANDIDATOS[ca].curto)}: ${inteiro(Math.round(Number(f.properties?.total ?? 0)))}`,
       }[va]
       setDica({
         x: e.point.x,
         y: e.point.y,
         titulo: `${mun.nome} (${mun.uf})`,
         valor,
-        linhas: [linha1, `Lula ${pct(mun.v13 / mun.validos)} · Flávio ${pct(mun.v22 / mun.validos)}`],
+        linhas: [
+          linha1,
+          ...(va === 'virar' ? [`${inteiro(mun.aptos)} eleitores aptos`] : []),
+          `Lula ${pct(mun.v13 / mun.validos)} · Flávio ${pct(mun.v22 / mun.validos)}`,
+        ],
       })
     })
     m.on('mouseleave', 'mun-preench', () => {
@@ -271,7 +312,8 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
     if (!m) return
     const aplicar = () => {
       m.setPaintProperty('fundo', 'background-color', cssVar('--superficie'))
-      m.setPaintProperty('mun-preench', 'fill-color', corPorClasse())
+      const { variavel: va, candidato: ca, lente: le } = props.current
+      m.setPaintProperty('mun-preench', 'fill-color', corDoMapa(va, ca, le))
       m.setPaintProperty('uf-contorno', 'line-color', cssVar('--tinta-3'))
       if (m.getLayer('regioes-contorno')) m.setPaintProperty('regioes-contorno', 'line-color', cssVar('--tinta'))
     }
@@ -284,6 +326,29 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar }: Pr
       <div ref={container} className="mapa" role="region" aria-roledescription="mapa" aria-label="Mapa dos municípios do Brasil; a mesma informação está na busca por município" />
       <CaixaDica dica={dica} />
       {!geo && <p className="carregando">Carregando o mapa…</p>}
+    </div>
+  )
+}
+
+/** Legenda das 5 classes do "Onde virar voto", do pouco para o muito, com a unidade. */
+export function LegendaSequencial({ lente, candidato }: { lente: Lente; candidato: NumeroCandidato }) {
+  useTema()
+  const cores = sequencialAtual(rampaVirar(lente, candidato))
+  const [a, b, c, d] = CORTES_VIRAR[lente].map(umaCasa)
+  const rotulos = [`menos de ${a}`, `${a} a ${b}`, `${b} a ${c}`, `${c} a ${d}`, `${d} ou mais`]
+  return (
+    <div>
+      <div className="legenda-escala legenda-sequencial">
+        {cores.map((cor, i) => (
+          <div key={i}>
+            <span style={{ background: cor }} aria-hidden="true" />
+            {rotulos[i]}
+          </div>
+        ))}
+      </div>
+      <p className="legenda" style={{ maxWidth: 520, marginTop: 4 }}>
+        {rotuloValor(lente, CANDIDATOS[candidato].curto)}, de cada 100 eleitores aptos do município
+      </p>
     </div>
   )
 }

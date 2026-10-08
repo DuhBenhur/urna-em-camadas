@@ -151,6 +151,8 @@ export type Municipio = {
   nome: string
   uf: string
   secoes: number
+  /** eleitores aptos (o mapa do "Onde virar voto" mostra cada conta por 100 aptos) */
+  aptos: number
   validos: number
   v13: number
   v22: number

@@ -18,7 +18,7 @@ BASE = "http://localhost:4173/"
 SAIDA = Path(__file__).parent / "telas"
 PADRAO = ["#/", "#/analise", "#/conferencia", "#/urna/SP/1/240", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes", "#/municipio/71072",
           "#/metodo", "#/dados", "#/virar?c=13", "#/virar?c=22&a=abertos&uf=SP&m=71072", "#/urna/SP/403/411?c=13",
-          "#/virar?c=13&uf=SP&m=71072&perto=403-1554"]
+          "#/virar?c=13&uf=SP&m=71072&perto=403-1554", "#/mapa?v=virar&a=faltosos&c=13"]
 MODOS = [("desktop", 1280, "light"), ("celular", 390, "dark")]
 ESPERA_MAPAS = 8  # os mapas carregam malha e tiles depois do networkidle
 
@@ -58,6 +58,15 @@ def main() -> None:
                 arquivo = SAIDA / f"{nome}_{limpo or 'inicio'}.png"
                 if args.seletor:
                     pagina.locator(args.seletor).first.screenshot(path=str(arquivo))
+                elif eh_mapa:
+                    # a captura de página inteira redimensiona a janela no meio da foto, e o canvas do mapa (WebGL) sai
+                    # desenhado pela metade; com mapa, a janela cresce até a altura da página, o mapa redesenha, e a
+                    # foto é só da janela
+                    altura = pagina.evaluate("document.documentElement.scrollHeight")
+                    pagina.set_viewport_size({"width": largura, "height": altura})
+                    time.sleep(2.5)
+                    pagina.screenshot(path=str(arquivo))
+                    pagina.set_viewport_size({"width": largura, "height": 900})
                 else:
                     pagina.screenshot(path=str(arquivo), full_page=True)
                 print(f"{arquivo.name}: {len(erros)} erro(s)", *erros[:5], sep="\n  ")

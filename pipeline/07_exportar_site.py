@@ -252,7 +252,7 @@ def acrescentar_modelos(base: pd.DataFrame, municipios: pd.DataFrame, exp: dict 
 
 def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame, por_local: pd.DataFrame) -> dict:
     agg = (base.groupby("CD_MUNICIPIO")
-           .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"), v13=("V_13", "sum"),
+           .agg(secoes=("NR_SECAO", "size"), aptos=("QT_APTOS", "sum"), validos=("QT_VALIDOS", "sum"), v13=("V_13", "sum"),
                 v22=("V_22", "sum"), zonas=("NR_ZONA", lambda z: sorted(set(int(x) for x in z))),
                 **AGG_VIRAR)
            .reset_index())
@@ -261,7 +261,8 @@ def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame, por_local: p
          .merge(somar_gaps(por_local, "CD_MUNICIPIO"), on="CD_MUNICIPIO", how="left"))
     m["u13"] = m.u_mun_13.round(4)
     m["u22"] = m.u_mun_22.round(4)
-    colunas = ["CD_MUNICIPIO", "CD_MUNICIPIO_IBGE", "NM_MUNICIPIO", "SG_UF", "secoes", "validos", "v13", "v22",
+    # aptos: o mapa do "Onde virar voto" mostra cada conta por 100 eleitores aptos (cidade grande não domina)
+    colunas = ["CD_MUNICIPIO", "CD_MUNICIPIO_IBGE", "NM_MUNICIPIO", "SG_UF", "secoes", "aptos", "validos", "v13", "v22",
                "u13", "u22", "zonas", *COLUNAS_VIRAR, *COLUNAS_SALDO] + [c for c in [*COLUNAS_GAP, "sp13", "sp22", "lisa13", "lisa22", "regiao"] if c in m.columns]
     return tabela(m[colunas].rename(columns={"CD_MUNICIPIO": "cd", "CD_MUNICIPIO_IBGE": "ibge",
                                               "NM_MUNICIPIO": "nome", "SG_UF": "uf"}))
@@ -331,7 +332,8 @@ def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
     - faltosos e abertos: estado = soma dos seus municípios = soma das suas escolas; município = soma das escolas;
     - saldo: o mesmo, com a tolerância do arredondamento (estados e municípios gravam o saldo inteiro, somado escola
       por escola): 1 voto por município;
-    - Brasil: faltosos = abstenções; em cada estado, faltosos + abertos + votos dos dois finalistas = aptos.
+    - Brasil: faltosos = abstenções; em cada estado e em cada município, faltosos + abertos + votos dos dois finalistas
+      = aptos, e os aptos dos municípios somam os do estado.
     Qualquer falha interrompe a exportação antes de gravar o primeiro arquivo."""
     falhas: list[str] = []
     ufs = pd.DataFrame(res["ufs"]).set_index("uf")
@@ -368,6 +370,8 @@ def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
         comparar(f"{c}, estado = soma dos municípios", ufs[c], mun.groupby("uf")[c].sum(), n_mun.reindex(ufs.index))
         comparar(f"{c}, estado = soma das escolas", ufs[c], escolas.groupby("uf")[c].sum(), 1)
     comparar("aptos = faltosos + abertos + Lula + Flávio, por estado", ufs.aptos, ufs.faltosos + ufs.abertos + ufs.v13 + ufs.v22)
+    comparar("aptos = faltosos + abertos + Lula + Flávio, por município", mun.aptos, mun.faltosos + mun.abertos + mun.v13 + mun.v22)
+    comparar("aptos, estado = soma dos municípios", ufs.aptos, mun.groupby("uf").aptos.sum())
     faltosos, abstencoes = int(ufs.faltosos.sum()), res["totais"]["abstencoes"]
     if faltosos != abstencoes:
         falhas.append(f"faltosos do Brasil ({faltosos:,}) diferentes das abstenções ({abstencoes:,})")
