@@ -49,9 +49,10 @@ export const DECISOES: { escolha: string; porque: string; descartada: string; in
     descartada: 'Teste Z, que fica errado justamente nesse limite.',
   },
   {
-    escolha: 'Previsão do 2º turno pré-registrada',
-    porque: 'Fica registrada antes da eleição, sem chance de ajuste depois de ver o resultado.',
-    descartada: 'Publicar previsões durante a campanha.',
+    escolha: 'Sem previsão do 2º turno',
+    porque:
+      'O foco ficou na ferramenta de ação (Onde virar voto). Uma previsão publicada antes da eleição pareceria pesquisa eleitoral, e o site não é pesquisa.',
+    descartada: 'Prever o 2º turno urna por urna e registrar a previsão antes da eleição.',
     inicio: true,
   },
 ]

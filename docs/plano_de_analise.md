@@ -104,6 +104,10 @@ o esperado pelo município e pelo perfil das seções) para os mapas de cidade.
 - Extensão acrescentada depois dos resultados (`pipeline/12_tarifaco.py`): exposição ao tarifaço dos EUA, medida como
   log(1 + exportações para os EUA por habitante em 2024, API do Comex Stat), no modelo de efeitos. Estava na lista do
   nível 2 do plano original; ficou fora dos blocos do Shapley, que já estavam fixados.
+- **Previsão do 2º turno retirada (decisão do usuário em 07/10, registrada em 08/10).** O item 5 abaixo e a etapa 8 do
+  pipeline não serão feitos. O foco passou a ser a ferramenta "Onde virar voto" (`docs/plano_virar_voto.md`), e uma
+  previsão divulgada antes da eleição pareceria pesquisa eleitoral. Depois de 25/10: conferir o 2º turno com o resultado
+  oficial e comparar os turnos urna por urna, sem previsão.
 
 ## Conexão entre técnicas
 
@@ -111,7 +115,7 @@ o esperado pelo município e pelo perfil das seções) para os mapas de cidade.
 2. **Espacial:** Moran global e LISA nos efeitos aleatórios dos municípios (BLUPs). O HLM supõe municípios independentes. Se os vizinhos se parecem, sobra estrutura espacial, e o próximo passo é um multinível com efeito aleatório espacial.
 3. **Clusterização:** k-means sobre interceptos e inclinações, como no artigo. Evolução: regionalização espacial (SKATER ou max-p, com `spopt`), que forma grupos de municípios contíguos.
 4. **Zoom na capital:** resíduos do modelo nacional por local de votação em SP, mais LISA. A Bela Vista vota acima do que perfil, município e estado preveem?
-5. **Previsão do 2º turno:** treinar a passagem do 1º para o 2º turno de 2022 (Lula x Bolsonaro) por seção, aplicar ao 1º turno de 2026, pré-registrar antes de 25/10 e validar depois.
+5. ~~**Previsão do 2º turno:** treinar a passagem do 1º para o 2º turno de 2022 (Lula x Bolsonaro) por seção, aplicar ao 1º turno de 2026, pré-registrar antes de 25/10 e validar depois.~~ Retirada (ver os desvios acima).
 
 ## Dados
 
@@ -140,7 +144,7 @@ Os brutos ficam em `~/dados/tse` (variável `DADOS_RAW`), fora do OneDrive. No p
 6. 🟡 `pipeline/05_hlm_nulo.py`: OLS nulo → HLM2 → HLM3 (Lula e Flávio), ICC e BLUPs; validado contra o statsmodels. Faltam M2–M6 (notebooks).
 6b. ✅ `pipeline/07_exportar_site.py`: dados estáticos do site (zonas, locais, municípios, resumo, malhas).
 7. Espacial: Moran e LISA nos BLUPs, regionalização, zoom em SP.
-8. Previsão do 2º turno e pré-registro (OSF, com embargo), **antes de 25/10**.
+8. ~~Previsão do 2º turno e pré-registro (OSF, com embargo), antes de 25/10.~~ Retirada (ver os desvios acima).
 9. 🟡 Site (`site/`, Vite + React + MapLibre): busca por zona e seção, boletim de urna, camadas, efeito dos estados, mapa nacional, mapa de locais por município, Método e Sobre. Publicação por GitHub Actions no Pages.
 10. Depois de 25/10: validação, análise longitudinal e artigo.
 
@@ -172,7 +176,7 @@ Os brutos ficam em `~/dados/tse` (variável `DADOS_RAW`), fora do OneDrive. No p
 | 7–9/out | Etapas 4–5: base nacional e variáveis de contexto |
 | 10–14/out | Etapa 6: step-up multinível |
 | 15–17/out | Etapa 7: espacial, regionalização e zoom em SP |
-| 17–20/out | Etapa 8: previsão e pré-registro |
+| 17–20/out | ~~Etapa 8: previsão e pré-registro~~ (retirada) |
 | 18–23/out | Etapa 9: site |
 | 24/out | Publicação |
 | 25/out | Site congelado |

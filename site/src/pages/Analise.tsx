@@ -319,8 +319,8 @@ export function Analise() {
               <div className="cartao">
                 <h3>Dá para conferir</h3>
                 <p className="secundario" style={{ marginBottom: 0 }}>
-                  Dados públicos, código aberto e validação contra o TSE. A previsão do 2º turno será registrada antes da
-                  eleição e aberta depois, para qualquer pessoa ver se o método funciona. Volte depois de 25 de outubro.
+                  Dados públicos, código aberto e validação contra o TSE, urna por urna. Depois de 25 de outubro, a mesma
+                  conferência vale para o 2º turno, e os dois turnos serão comparados urna por urna.
                 </p>
               </div>
             </div>

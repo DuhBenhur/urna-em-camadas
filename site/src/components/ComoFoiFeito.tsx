@@ -60,9 +60,16 @@ export function ComoFoiFeito({ resumo, candidato, explicacao }: { resumo: Resumo
       numero: moran !== undefined ? `índice de Moran do que o modelo não explica: ${moran.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} (0 seria acaso)` : undefined,
     },
     {
-      titulo: 'A previsão',
+      titulo: 'Onde virar voto',
+      situacao: 'feito',
+      texto:
+        'Com o resultado do 1º turno escola por escola, a mesma conta para os dois candidatos: em que bairros e escolas há mais gente que faltou ou que votou em outro candidato, branco ou nulo.',
+      numero: `${inteiro(resumo.totais.abstencoes)} pessoas faltaram; ${inteiro(resumo.ufs.reduce((s, u) => s + u.abertos, 0))} votos ficaram fora dos dois finalistas`,
+    },
+    {
+      titulo: 'Depois do 2º turno',
       situacao: 'a seguir',
-      texto: 'Previsão do 2º turno por urna, registrada antes de 25 de outubro e aberta só depois da eleição, com a conferência dos acertos.',
+      texto: 'Conferir o 2º turno com o resultado oficial, urna por urna, como foi feito com o 1º, e comparar os dois turnos.',
     },
   ]
 

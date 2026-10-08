@@ -263,8 +263,9 @@ export function Metodo() {
 
       <h2>{explicacao ? 10 : 8}. Próximas etapas</h2>
       <ul>
-        <li>O 2º turno (25 de outubro): a mesma decomposição para o resultado final e a comparação entre os dois turnos.</li>
-        <li>Previsão do 2º turno por seção, pré-registrada antes de 25 de outubro e publicada só depois da eleição, com a conferência dos acertos.</li>
+        <li>Depois de 25 de outubro: conferir o 2º turno com o resultado oficial, urna por urna, como no 1º turno.</li>
+        <li>Comparar os dois turnos urna por urna, com a mesma decomposição em camadas.</li>
+        <li>Sem previsão do 2º turno: o foco ficou na ferramenta “Onde virar voto” (ver as decisões acima).</li>
       </ul>
 
       <h2>{explicacao ? 11 : 9}. Limitações</h2>
