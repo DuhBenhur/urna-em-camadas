@@ -19,6 +19,12 @@ export type UF = {
   validos: number
   v13: number
   v22: number
+  /** 1º turno: aptos que não votaram; votos nos outros 10 candidatos + brancos + nulos (pipeline/07) */
+  faltosos: number
+  abertos: number
+  /** saldo possível ao lembrar quem faltou, somado escola por escola */
+  saldo13: number
+  saldo22: number
   u13: number
   u22: number
 }
@@ -148,6 +154,12 @@ export type Municipio = {
   u13: number
   u22: number
   zonas: number[]
+  /** 1º turno: aptos que não votaram; votos nos outros 10 candidatos + brancos + nulos (pipeline/07) */
+  faltosos: number
+  abertos: number
+  /** saldo possível ao lembrar quem faltou, somado escola por escola */
+  saldo13: number
+  saldo22: number
   /** o que o perfil não explica (p.p.), bolsão espacial (LISA, 0–4) e região de voto (pipeline/10, 11) */
   sp13?: number | null
   sp22?: number | null
@@ -167,6 +179,9 @@ export type Local = {
   validos: number
   v13: number
   v22: number
+  /** 1º turno: aptos que não votaram; votos nos outros 10 candidatos + brancos + nulos (pipeline/07) */
+  faltosos: number
+  abertos: number
   /** surpresa: resultado − esperado pelo município e pelo perfil do eleitorado do local (proporção) */
   s13?: number | null
   s22?: number | null

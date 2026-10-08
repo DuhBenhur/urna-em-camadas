@@ -28,6 +28,10 @@ export function Sobre() {
           oficiais já apurados.
         </li>
         <li>Não tem vínculo com partidos, candidaturas ou campanhas, e não recebe dinheiro de ninguém.</li>
+        <li>
+          Não pede voto. A página “Onde virar voto” faz a mesma conta para os dois candidatos do 2º turno; quem escolhe o lado
+          é quem usa. Ela aponta lugares (escolas e bairros), nunca pessoas, e traz as regras da lei eleitoral para conversar.
+        </li>
         <li>Não faz enquetes nem coleta dados de quem visita. A busca pela sua zona e seção acontece só no seu navegador.</li>
         <li>Não publica conteúdo novo no dia da eleição (25 de outubro de 2026).</li>
       </ul>

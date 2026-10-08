@@ -341,16 +341,30 @@ type PropsLocais = {
   /** "surpresa": resultado − esperado pelo município e pelo perfil do eleitorado do local (pipeline/07) */
   variavel?: 'margem' | 'surpresa'
   candidato?: NumeroCandidato
+  /** "Onde virar voto": o que define o tamanho do círculo (padrão: votos válidos), em escala relativa ao maior */
+  tamanho?: (l: Local) => number
+  /** linha a mais na dica e no balão */
+  linhaExtra?: (l: Local) => string
+  /** muda quando `tamanho` ou `linhaExtra` mudam (ação, candidato), para o mapa refazer os dados */
+  chave?: string
 }
 
 // raio cresce com o zoom: na cidade inteira os ~2 mil locais de SP não podem virar uma mancha.
 // `extra` aumenta o círculo do local selecionado em cada parada (o zoom só pode ficar no topo do interpolate).
-const raioLocal = (extra = 0): ExpressionSpecification => [
-  'interpolate', ['linear'], ['zoom'],
-  9, ['+', ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 1.5, 40, 3, 90, 5], extra * 0.6],
-  12, ['+', ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 3, 40, 6, 90, 10], extra * 0.8],
-  15, ['+', ['interpolate', ['linear'], ['sqrt', ['get', 'validos']], 10, 5, 40, 10, 90, 16], extra],
-]
+// `maxRaiz` (raiz do maior tamanho) troca a escala fixa de votos válidos por uma relativa: o maior local fica com o
+// raio máximo e um local sem potencial vira um ponto pequeno.
+const raioLocal = (extra = 0, maxRaiz?: number): ExpressionSpecification => {
+  const r = (a: number, b: number, c: number): ExpressionSpecification =>
+    maxRaiz
+      ? ['interpolate', ['linear'], ['sqrt', ['get', 'tam']], 0, a * 0.6, Math.max(maxRaiz, 1), c * 1.2]
+      : ['interpolate', ['linear'], ['sqrt', ['get', 'tam']], 10, a, 40, b, 90, c]
+  return [
+    'interpolate', ['linear'], ['zoom'],
+    9, ['+', r(1.5, 3, 5), extra * 0.6],
+    12, ['+', r(3, 6, 10), extra * 0.8],
+    15, ['+', r(5, 10, 16), extra],
+  ]
+}
 
 /** Classe de cor do local: margem Lula − Flávio, ou surpresa no voto do candidato (sem dado: cinza). */
 function corLocal(l: Local, variavel: 'margem' | 'surpresa', candidato: NumeroCandidato): number {
@@ -368,7 +382,7 @@ function aplicarSelecao(m: maplibregl.Map, chave: string | null) {
 }
 
 /** Balão do local selecionado. Nomes vêm dos dados: entram como texto, nunca como HTML. */
-function conteudoBalao(l: Local): HTMLElement {
+function conteudoBalao(l: Local, extra = ''): HTMLElement {
   const div = document.createElement('div')
   const linha = (texto: string, forte = false) => {
     const el = document.createElement(forte ? 'strong' : 'div')
@@ -380,11 +394,12 @@ function conteudoBalao(l: Local): HTMLElement {
   if (l.bairro) linha(l.bairro)
   linha(`Lula ${pct(l.v13 / l.validos)} · Flávio ${pct(l.v22 / l.validos)}`)
   linha(`${l.secoes} ${l.secoes === 1 ? 'seção' : 'seções'} · ${l.validos.toLocaleString('pt-BR')} votos válidos`)
+  if (extra) linha(extra)
   return div
 }
 
 /** Locais de votação de um município sobre mapa de ruas (OpenFreeMap). Tamanho = votos válidos; cor = margem. */
-export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'margem', candidato = 13 }: PropsLocais) {
+export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'margem', candidato = 13, tamanho, linhaExtra, chave = '' }: PropsLocais) {
   const container = useRef<HTMLDivElement>(null)
   const mapa = useRef<maplibregl.Map | null>(null)
   const [dica, setDica] = useState<Dica>(null)
@@ -398,6 +413,11 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
   const balao = useRef<maplibregl.Popup | null>(null)
 
   const comCoordenada = locais.filter((l) => l.lat !== null && l.lon !== null)
+  const maxRaiz = tamanho ? Math.sqrt(Math.max(0, ...comCoordenada.map(tamanho))) : undefined
+  const maxRaizRef = useRef(maxRaiz)
+  maxRaizRef.current = maxRaiz
+  const linhaExtraRef = useRef(linhaExtra)
+  linhaExtraRef.current = linhaExtra
   const dados: FeatureCollection = {
     type: 'FeatureCollection',
     features: comCoordenada.map((l) => ({
@@ -409,6 +429,8 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
         nome: l.nome,
         bairro: l.bairro,
         validos: l.validos,
+        tam: tamanho ? tamanho(l) : l.validos,
+        extra: linhaExtra ? linhaExtra(l) : '',
         lula: l.v13 / l.validos,
         flavio: l.v22 / l.validos,
         surpresa: (candidato === 13 ? l.s13 : l.s22) ?? null,
@@ -446,7 +468,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
         source: 'locais',
         paint: {
           'circle-color': corPorClasse(),
-          'circle-radius': raioLocal(),
+          'circle-radius': raioLocal(0, maxRaizRef.current),
           'circle-stroke-color': cssVar('--superficie'),
           'circle-stroke-width': 1.5,
         },
@@ -458,7 +480,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
         filter: ['==', ['get', 'chave'], ''],
         paint: {
           'circle-color': corPorClasse(),
-          'circle-radius': raioLocal(5),
+          'circle-radius': raioLocal(5, maxRaizRef.current),
           'circle-stroke-color': cssVar('--tinta'),
           'circle-stroke-width': 3,
         },
@@ -480,6 +502,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
         linhas: [
           p.bairro,
           `${Number(p.validos).toLocaleString('pt-BR')} votos válidos`,
+          p.extra ?? '',
           surpresaRef.current && surpresa !== null ? `${pp(surpresa)} em relação ao esperado` : '',
         ].filter(Boolean),
       })
@@ -505,11 +528,16 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
     m.setStyle(`https://tiles.openfreemap.org/styles/${temaEscuro() ? 'dark' : 'positron'}`)
   }, [versaoTema])
 
-  // troca de vista (resultado ou surpresa) ou de candidato: só as cores mudam
+  // troca de vista (resultado ou surpresa), de candidato ou de ação: refaz cores, tamanhos e dicas
   useEffect(() => {
-    const fonte = mapa.current?.getSource('locais') as GeoJSONSource | undefined
+    const m = mapa.current
+    const fonte = m?.getSource('locais') as GeoJSONSource | undefined
     fonte?.setData(dados)
-  }, [variavel, candidato])
+    if (m?.getLayer('locais')) {
+      m.setPaintProperty('locais', 'circle-radius', raioLocal(0, maxRaiz))
+      m.setPaintProperty('locais-sel', 'circle-radius', raioLocal(5, maxRaiz))
+    }
+  }, [variavel, candidato, chave])
 
   useEffect(() => {
     const m = mapa.current
@@ -522,7 +550,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
     m.easeTo({ center: [l.lon!, l.lat!], zoom: Math.max(m.getZoom(), 15) })
     balao.current = new maplibregl.Popup({ closeButton: false, closeOnClick: false, offset: 18, maxWidth: '280px' })
       .setLngLat([l.lon!, l.lat!])
-      .setDOMContent(conteudoBalao(l))
+      .setDOMContent(conteudoBalao(l, linhaExtraRef.current?.(l) ?? ''))
       .addTo(m)
   }, [selecionado])
 

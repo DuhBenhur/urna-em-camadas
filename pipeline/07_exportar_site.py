@@ -116,10 +116,46 @@ def conferencia(b: pd.DataFrame) -> dict:
     }
 
 
+# "Onde virar voto" (2º turno): quem faltou e quem não votou em nenhum dos dois finalistas no 1º turno
+AGG_VIRAR = {"_aptos": ("QT_APTOS", "sum"), "_comparecimento": ("QT_COMPARECIMENTO", "sum"),
+             "_validos": ("QT_VALIDOS", "sum"), "_brancos": ("QT_BRANCOS", "sum"), "_nulos": ("QT_NULOS", "sum"),
+             "_v13": ("V_13", "sum"), "_v22": ("V_22", "sum")}
+COLUNAS_VIRAR = ["faltosos", "abertos"]
+COLUNAS_SALDO = ["saldo13", "saldo22"]
+
+
+def saldos_por_escola(base: pd.DataFrame) -> pd.DataFrame:
+    """Saldo possível ao lembrar quem faltou, calculado escola por escola (local de votação):
+    faltosos × (votos do candidato − do adversário) ÷ válidos, só onde ele ficou à frente.
+    Municípios e estados recebem a soma das escolas, para que todos os níveis contem a mesma história
+    (um estado onde o candidato perdeu ainda tem escolas onde ele ganhou)."""
+    g = (base.groupby(["SG_UF", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"])
+         [["QT_APTOS", "QT_COMPARECIMENTO", "QT_VALIDOS", "V_13", "V_22"]].sum().reset_index())
+    faltosos = g.QT_APTOS - g.QT_COMPARECIMENTO
+    validos = g.QT_VALIDOS.where(g.QT_VALIDOS > 0)
+    for n, o in ((13, 22), (22, 13)):
+        g[f"saldo{n}"] = (faltosos * (g[f"V_{n}"] - g[f"V_{o}"]) / validos).clip(lower=0).fillna(0)
+    return g[["SG_UF", "CD_MUNICIPIO", *COLUNAS_SALDO]]
+
+
+def somar_saldos(base: pd.DataFrame, chave: str) -> pd.DataFrame:
+    return saldos_por_escola(base).groupby(chave)[COLUNAS_SALDO].sum().round().astype(int)
+
+
+def virar_voto(df: pd.DataFrame) -> pd.DataFrame:
+    """faltosos = aptos − comparecimento; abertos = votos nos outros 10 candidatos + brancos + nulos."""
+    df = df.copy()
+    df["faltosos"] = (df._aptos - df._comparecimento).astype(int)
+    df["abertos"] = (df._validos - df._v13 - df._v22 + df._brancos + df._nulos).astype(int)
+    return df.drop(columns=[c for c in df.columns if c.startswith("_")])
+
+
 def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, modelos: dict) -> dict:
     tot = base[["QT_APTOS", "QT_COMPARECIMENTO", "QT_ABSTENCOES", "QT_VALIDOS", "QT_BRANCOS", "QT_NULOS"]].sum()
     votos = base[[f"V_{n}" for n in ORDEM_CANDIDATOS]].sum()
-    por_uf = base.groupby("SG_UF")[["QT_APTOS", "QT_VALIDOS", "V_13", "V_22"]].sum()
+    por_uf = virar_voto(base.groupby("SG_UF").agg(QT_APTOS=("QT_APTOS", "sum"), QT_VALIDOS=("QT_VALIDOS", "sum"),
+                                                  V_13=("V_13", "sum"), V_22=("V_22", "sum"), **AGG_VIRAR)
+                        ).join(somar_saldos(base, "SG_UF"))
     efeitos_uf = municipios.groupby("SG_UF")[["u_uf_13", "u_uf_22"]].first()
     return {
         "gerado_em": date.today().isoformat(),
@@ -136,6 +172,7 @@ def resumo(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataFrame, m
                     for num, m in modelos["candidatos"].items()},
         "ufs": [{"uf": uf, "nome": NOMES_UF[uf], "aptos": int(r.QT_APTOS), "validos": int(r.QT_VALIDOS),
                  "v13": int(r.V_13), "v22": int(r.V_22),
+                 **{c: int(getattr(r, c)) for c in COLUNAS_VIRAR + COLUNAS_SALDO},
                  "u13": round(float(efeitos_uf.loc[uf, "u_uf_13"]), 4),
                  "u22": round(float(efeitos_uf.loc[uf, "u_uf_22"]), 4)}
                 for uf, r in por_uf.iterrows()],
@@ -197,13 +234,14 @@ def acrescentar_modelos(base: pd.DataFrame, municipios: pd.DataFrame, exp: dict 
 def indice_municipios(base: pd.DataFrame, municipios: pd.DataFrame) -> dict:
     agg = (base.groupby("CD_MUNICIPIO")
            .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"), v13=("V_13", "sum"),
-                v22=("V_22", "sum"), zonas=("NR_ZONA", lambda z: sorted(set(int(x) for x in z))))
+                v22=("V_22", "sum"), zonas=("NR_ZONA", lambda z: sorted(set(int(x) for x in z))),
+                **AGG_VIRAR)
            .reset_index())
-    m = municipios.merge(agg, on="CD_MUNICIPIO")
+    m = virar_voto(municipios.merge(agg, on="CD_MUNICIPIO")).merge(somar_saldos(base, "CD_MUNICIPIO"), on="CD_MUNICIPIO")
     m["u13"] = m.u_mun_13.round(4)
     m["u22"] = m.u_mun_22.round(4)
     colunas = ["CD_MUNICIPIO", "CD_MUNICIPIO_IBGE", "NM_MUNICIPIO", "SG_UF", "secoes", "validos", "v13", "v22",
-               "u13", "u22", "zonas"] + [c for c in ["sp13", "sp22", "lisa13", "lisa22", "regiao"] if c in m.columns]
+               "u13", "u22", "zonas", *COLUNAS_VIRAR, *COLUNAS_SALDO] + [c for c in ["sp13", "sp22", "lisa13", "lisa22", "regiao"] if c in m.columns]
     return tabela(m[colunas].rename(columns={"CD_MUNICIPIO": "cd", "CD_MUNICIPIO_IBGE": "ibge",
                                               "NM_MUNICIPIO": "nome", "SG_UF": "uf"}))
 
@@ -213,9 +251,10 @@ def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.Dat
     perfil = list(PERFIL_L1.values())
     por_local = (base.groupby(["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"])
                  .agg(secoes=("NR_SECAO", "size"), validos=("QT_VALIDOS", "sum"),
-                      v13=("V_13", "sum"), v22=("V_22", "sum"),
+                      v13=("V_13", "sum"), v22=("V_22", "sum"), **AGG_VIRAR,
                       ELEIT_PERFIL=("ELEIT_PERFIL", "sum"), **{c: (c, "sum") for c in perfil})
                  .reset_index()
+                 .pipe(virar_voto)
                  .merge(locais.drop(columns="SG_UF"), on=["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"], how="left"))
     extras = []
     if exp is not None:
@@ -228,7 +267,8 @@ def exportar_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.Dat
             esperado = expit(g00 + efeito + desvio_perfil(por_local, comp, beta))
             por_local[f"s{n}"] = (por_local[f"v{n}"] / por_local.validos - esperado).round(4)
         extras = ["s13", "s22"]
-    colunas = ["NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL", "NM_BAIRRO", "LAT", "LON", "secoes", "validos", "v13", "v22", *extras]
+    colunas = ["NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL", "NM_BAIRRO", "LAT", "LON", "secoes", "validos", "v13", "v22",
+               *COLUNAS_VIRAR, *extras]
     for cd, grupo in por_local.groupby("CD_MUNICIPIO"):
         gravar(SAIDA / "locais" / f"{cd}.json",
                tabela(grupo[colunas].rename(columns={"NR_ZONA": "zona", "NR_LOCAL_VOTACAO": "local",

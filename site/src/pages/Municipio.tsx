@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { LegendaEscala, MapaLocais } from '../components/Mapas'
 import { normalizar, registros, useLocais, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
@@ -14,7 +14,8 @@ export function Municipio() {
   const { dados: indice } = useMunicipios()
   const { dados: locais } = useLocais(cd || null)
   const [filtro, setFiltro] = useState('')
-  const [selecionado, setSelecionado] = useState<string | null>(null)
+  const [params] = useSearchParams()
+  const [selecionado, setSelecionado] = useState<string | null>(params.get('local'))
   const [limite, setLimite] = useState(30)
   const [vista, setVista] = useState<'margem' | 'surpresa'>('margem')
   const [candidato, setCandidato] = useState<NumeroCandidato>(13)

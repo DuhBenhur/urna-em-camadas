@@ -4,6 +4,7 @@ import { ComoLer } from '../components/ComoLer'
 import { useConferencia, useExplicacao, useHistoria, useResumo } from '../lib/dados'
 import { inteiro, pct } from '../lib/formato'
 import { quedaComMunicipio } from '../lib/historia'
+import { CANDIDATOS } from '../lib/modelo'
 
 // Uma urna real da 1ª Zona de São Paulo (Bela Vista), na E.E. Caetano de Campos
 const EXEMPLO = '/urna/SP/1/240'
@@ -31,6 +32,25 @@ export function Inicio() {
 
   return (
     <div className="conteudo">
+      <aside className="destaque-virar" aria-labelledby="destaque-virar-titulo">
+        <div>
+          <div className="rotulo-pequeno">2º turno · 25 de outubro</div>
+          <p id="destaque-virar-titulo" className="destaque-virar-titulo">
+            <strong>Onde virar voto:</strong> escolha o candidato e veja, bairro a bairro e escola a escola, onde uma conversa
+            pode render mais.
+          </p>
+        </div>
+        <div className="destaque-virar-botoes">
+          {([13, 22] as const).map((n) => (
+            <Link key={n} className="botao-candidato" to={`/virar?c=${n}`}>
+              <span className="chave" style={{ background: CANDIDATOS[n].cor }} aria-hidden="true" />
+              {CANDIDATOS[n].nome} ({CANDIDATOS[n].partido})
+            </Link>
+          ))}
+        </div>
+        <p className="destaque-virar-nota">A mesma conta para os dois. O site não pede voto para ninguém.</p>
+      </aside>
+
       <section className="heroi">
         <h1>A sua urna, conferida e explicada</h1>
         <p className="secundario">

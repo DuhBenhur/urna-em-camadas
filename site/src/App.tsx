@@ -12,6 +12,7 @@ import { Urna } from './pages/Urna'
 // páginas com mapa carregam o MapLibre (~800 kB) só quando abertas
 const Mapa = lazy(() => import('./pages/Mapa').then((m) => ({ default: m.Mapa })))
 const Municipio = lazy(() => import('./pages/Municipio').then((m) => ({ default: m.Municipio })))
+const Virar = lazy(() => import('./pages/Virar').then((m) => ({ default: m.Virar })))
 
 function VoltarAoTopo() {
   const { pathname } = useLocation()
@@ -40,6 +41,7 @@ export function App() {
         <Suspense fallback={<div className="conteudo carregando">Carregando…</div>}>
           <Routes>
             <Route path="/" element={<Inicio />} />
+            <Route path="/virar" element={<Virar />} />
             <Route path="/analise" element={<Analise />} />
             <Route path="/conferencia" element={<Conferencia />} />
             <Route path="/urna/:uf/:zona/:secao" element={<Urna />} />
