@@ -20,7 +20,7 @@ Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com
 - Falar de lugares (escolas, bairros) e de pessoas só no agregado ("quem faltou"); nunca de indivíduos.
 - Toda tela de ação traz a lei (compra de voto, transporte de eleitores, propaganda em prédio público, boca de urna, notícia falsa) e o que os números não dizem.
 - Sem enquetes no site durante a campanha (Lei 9.504/97, art. 33, §5º). Sem impulsionamento pago. Sem deepfake; conteúdo gerado com IA é rotulado.
-- Sem previsão do 2º turno (decisão de 07/10). Último deploy até 24/10; nenhum conteúdo novo no dia 25/10.
+- Sem previsão do 2º turno (decisão de 07/10), e o site não fala dela (08/10): o que não foi entregue ao público não aparece para o público. Último deploy até 24/10; nenhum conteúdo novo no dia 25/10.
 - Só dados agregados (LGPD).
 
 ## Estrutura

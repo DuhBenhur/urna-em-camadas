@@ -65,11 +65,4 @@ export const DECISOES: { escolha: string; porque: string; descartada: string; in
     porque: 'Três números simples podem ser conferidos um a um. A terceira, que depende do modelo, leva o selo de experimental.',
     descartada: 'Um índice único que misturasse as três contas: uma caixa-preta.',
   },
-  {
-    escolha: 'Sem previsão do 2º turno',
-    porque:
-      'O foco ficou na ferramenta de ação (Onde virar voto). Uma previsão publicada antes da eleição pareceria pesquisa eleitoral, e o site não é pesquisa.',
-    descartada: 'Prever o 2º turno urna por urna e registrar a previsão antes da eleição.',
-    inicio: true,
-  },
 ]

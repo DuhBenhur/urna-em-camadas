@@ -13,6 +13,7 @@ Antes de começar, leia o `HANDOFF.md` (estado do projeto) e o `CLAUDE.md` (conv
 > - **3ª ação (P1.1):** os dados mostraram um limite que o texto do plano não previa: as escolas mais abaixo do esperado ficam, em boa parte, onde o adversário é forte por motivos que o modelo não vê (renda do bairro, história política). Em São Paulo, para Lula, bairros ricos; para Flávio, o centro expandido. O aviso, o "Como calculamos" e o Método dizem isso. Fica para o usuário decidir se mantém a ação (experimental, com o aviso), se tira da inicial ou se retira.
 > - **Imagem de compartilhamento (P1.5):** a pirâmide de camadas saiu (a barra vermelha era mais larga que a azul); entrou um desenho neutro das escolas perto de você, com o anel de 2 km.
 > - **Cartão "perto de mim" (P2.2):** só números sem lado (quem faltou e quem votou em outro candidato, branco ou nulo), sem cor nem conta de candidato; o link compartilhado não leva candidato.
+> - **Previsão (P0.1):** depois do P0.1, o usuário pediu que o site não fale da previsão em lugar nenhum (o público nunca a viu): a decisão "Sem previsão do 2º turno" e a linha das próximas etapas saíram do site e do README. O registro fica em `docs/plano_de_analise.md`. Não recolocar.
 > - **Também:** o capítulo da análise passou de `?c=` para `?cap=` (o `?c=` ficou para o candidato; links antigos continuam valendo); a lei completa ganhou o impulsionamento pago (art. 57-C); o capítulo 4 ganhou os quatro níveis, que a inicial cita; trechos abertos por link não ficam mais embaixo do cabeçalho fixo.
 
 ---

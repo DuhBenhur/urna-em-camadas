@@ -270,7 +270,6 @@ export function Metodo() {
       <ul>
         <li>Depois de 25 de outubro: conferir o 2º turno com o resultado oficial, urna por urna, como no 1º turno.</li>
         <li>Comparar os dois turnos urna por urna, com a mesma decomposição em camadas.</li>
-        <li>Sem previsão do 2º turno: o foco ficou na ferramenta “Onde virar voto” (ver as decisões acima).</li>
       </ul>
 
       <h2>{n + 5}. Limitações</h2>

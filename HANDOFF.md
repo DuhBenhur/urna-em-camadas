@@ -71,7 +71,7 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Só Python. `gpboost` é o motor (o `statsmodels` leva ~5 min por modelo e quebra com `use_sparse`).
 - Os dois candidatos do 2º turno são modelados, e o site deixa escolher: decompor só um lado pareceria partidário.
 - Cores: Lula vermelho, Flávio azul (convenção dos mapas eleitorais = polos do par divergente validado). Braço vermelho calculado com a mesma luminosidade OKLCH da rampa azul (`site/src/lib/cores.ts`). Paleta validada com o `validate_palette.js` da skill de dataviz.
-- Previsão do 2º turno: não será feita; a promessa saiu do site em 08/10 (P0.1), e o desvio está registrado em `docs/plano_de_analise.md`.
+- Previsão do 2º turno: não será feita; a promessa saiu do site em 08/10 (P0.1), e o desvio está registrado em `docs/plano_de_analise.md`. Por decisão do usuário (08/10), o site também não fala dela, nem como decisão nem como próxima etapa: o público nunca viu a previsão, então a menção só ocupava espaço. O registro fica no plano de análise e no histórico do repositório.
 - Ações sem candidato escolhido: o bloco da urna não escolhe ninguém; o mapa e o município abrem na conta sem lado (votos em aberto). O cartão "perto de mim" só traz números sem lado, e o link compartilhado não leva candidato.
 - Cores do "Onde virar voto" no mapa: uma cor por candidato, cinza para os votos em aberto; 5 classes fixas e iguais para os dois candidatos, para os mapas poderem ser comparados.
 - **Centro do projeto (08/10):** "Onde virar voto". O resto do site serve a essa história (`docs/plano_virar_voto.md`).

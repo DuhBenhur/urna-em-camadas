@@ -19,7 +19,7 @@ Três contas separadas, sem índice composto, calculadas escola por escola (loca
 | Votos em aberto: outros candidatos, brancos e nulos (não têm lado) | 15.251.315 | 15.251.315 |
 | Votos abaixo do esperado pelo perfil (experimental) | 2.421.342 | 2.080.423 |
 
-A exportação do site ([`pipeline/07_exportar_site.py`](pipeline/07_exportar_site.py)) só publica se essas contas fecharem entre estados, municípios e escolas. Sem previsão do 2º turno.
+A exportação do site ([`pipeline/07_exportar_site.py`](pipeline/07_exportar_site.py)) só publica se essas contas fecharem entre estados, municípios e escolas.
 
 ## O que já se sabe
 
