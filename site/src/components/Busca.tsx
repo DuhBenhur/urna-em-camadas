@@ -1,30 +1,13 @@
-import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { comCandidato, useCandidato } from '../lib/candidato'
-import { normalizar, useMunicipios, useResumo } from '../lib/dados'
+import { useResumo } from '../lib/dados'
 
 /**
- * Dois caminhos até a urna: quem tem o título (ou o e-Título) sabe UF, zona e seção;
- * quem não tem procura pelo município e chega à seção pelos locais de votação.
+ * O caminho direto até a urna: quem tem o título (ou o e-Título) sabe o estado, a zona e a seção. Quem não sabe procura
+ * a cidade e a escola na própria ferramenta (passo "Onde?").
  */
-export function Busca() {
-  const [modo, setModo] = useState<'titulo' | 'municipio'>('titulo')
-  return (
-    <div className="cartao">
-      <div className="abas" role="group" aria-label="Como encontrar sua urna">
-        <button aria-pressed={modo === 'titulo'} onClick={() => setModo('titulo')}>
-          Tenho zona e seção
-        </button>
-        <button aria-pressed={modo === 'municipio'} onClick={() => setModo('municipio')}>
-          Procurar pelo município
-        </button>
-      </div>
-      {modo === 'titulo' ? <BuscaTitulo /> : <BuscaMunicipio />}
-    </div>
-  )
-}
-
-function BuscaTitulo() {
+export function BuscaTitulo() {
   const { dados: resumo } = useResumo()
   const [candidato] = useCandidato()
   const navegar = useNavigate()
@@ -68,56 +51,5 @@ function BuscaTitulo() {
         Nada do que você digita sai do seu navegador.
       </p>
     </form>
-  )
-}
-
-function BuscaMunicipio() {
-  const { dados: indice } = useMunicipios()
-  const [candidato] = useCandidato()
-  const [texto, setTexto] = useState('')
-  const sugestoes = useMemo(() => {
-    const q = normalizar(texto)
-    if (!indice || q.length < 2) return []
-    const comeca: typeof indice.lista = []
-    const contem: typeof indice.lista = []
-    for (const m of indice.lista) {
-      const n = normalizar(m.nome)
-      if (n.startsWith(q)) comeca.push(m)
-      else if (n.includes(q)) contem.push(m)
-    }
-    // municípios maiores primeiro: "São Paulo" antes de "São Paulo das Missões"
-    const porTamanho = (a: { validos: number }, b: { validos: number }) => b.validos - a.validos
-    return [...comeca.sort(porTamanho), ...contem.sort(porTamanho)].slice(0, 8)
-  }, [indice, texto])
-
-  return (
-    <div>
-      <label htmlFor="b-mun">Município</label>
-      <input
-        id="b-mun"
-        value={texto}
-        onChange={(e) => setTexto(e.target.value)}
-        placeholder={indice ? 'Digite o nome do município' : 'Carregando municípios…'}
-        autoComplete="off"
-        aria-describedby="b-mun-ajuda"
-      />
-      <p id="b-mun-ajuda" className="discreto" style={{ marginTop: 8, marginBottom: 0 }}>
-        Depois escolha o local de votação e a seção.
-      </p>
-      {sugestoes.length > 0 && (
-        <ul className="sugestoes">
-          {sugestoes.map((m) => (
-            <li key={m.cd}>
-              <Link to={`/municipio/${m.cd}${comCandidato(candidato)}`}>
-                <span>
-                  {m.nome} <span className="secundario">({m.uf})</span>
-                </span>
-                <span className="discreto">{m.secoes.toLocaleString('pt-BR')} seções</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
   )
 }

@@ -41,6 +41,18 @@ def esperar(pg, espera: float = 2.0) -> None:
     time.sleep(espera)
 
 
+def endereco(pg) -> str:
+    """O endereço de verdade: depois de um redirecionamento no mesmo documento, o pg.url do Playwright pode ficar parado."""
+    return pg.evaluate("location.href")
+
+
+def abrir_zona_secao(pg) -> None:
+    """Na ferramenta (inicial), o formulário de zona e seção fica recolhido em "Tenho a zona e a seção"."""
+    if not pg.locator("details.zona-secao").evaluate("d => d.open"):
+        pg.locator("details.zona-secao > summary").click()
+        time.sleep(0.3)
+
+
 def vigiar(pg, erros: list[str]) -> None:
     pg.on("pageerror", lambda e: erros.append(str(e)))
     pg.on("console", lambda m: erros.append(m.text) if m.type == "error" else None)
@@ -69,6 +81,7 @@ def bateria_candidato(nav, b: str) -> None:
     pg.locator(".escolha-candidato button", has_text="Flávio").click()
     time.sleep(1)
     abrir(pg, b + "#/", 1)
+    abrir_zona_secao(pg)
     pg.select_option("#b-uf", "SP")
     pg.fill("#b-zona", "1")
     pg.fill("#b-secao", "240")
@@ -95,6 +108,7 @@ def bateria_candidato(nav, b: str) -> None:
     p = pressionados(pg)
     conferir("análise: Flávio em todos os seletores", len(p) > 1 and all("Flávio" in t for t in p), f"{len(p)} seletores")
     abrir(pg, b + "#/virar", 1.5)
+    conferir("#/virar (endereço antigo) abre a ferramenta", endereco(pg).endswith("#/"), endereco(pg))
     conferir("virar sem ?c: Flávio já escolhido", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
     abrir(pg, b + "#/urna/SP/1/240", 1.5)
     pg.get_by_role("button", name="Lula (PT)").first.click()
@@ -135,18 +149,23 @@ def bateria_acao(nav, b: str) -> None:
     pequenas = pg.evaluate(FONTES_PEQUENAS)
     conferir("inicial: nenhuma prosa abaixo de 16px", not pequenas, str(pequenas[:4]))
     conferir("celular: sem rolagem lateral", pg.evaluate("document.documentElement.scrollWidth") <= 390)
+    abrir(pg, b + "#/urna/SP/403/411", 2.5)
+    topo = pg.evaluate("() => document.getElementById('t-agir').getBoundingClientRect().top")
+    conferir("celular: na urna, 'Daqui até o dia 25' na primeira tela", 0 < topo < 844, f"(topo a {topo:.0f}px)")
     ctx.close()
 
     ctx = nav.new_context(viewport={"width": 1280, "height": 900})
     pg = ctx.new_page()
     vigiar(pg, erros)
     abrir(pg, b + "#/", 1.5)
+    abrir_zona_secao(pg)
     altura = pg.get_by_role("button", name="Ver minha urna").bounding_box()["height"]
     conferir("botão 'Ver minha urna' numa linha só", altura < 50, f"({altura:.0f}px)")
     pg.locator(".escolha-candidato button", has_text="Flávio").click()
     time.sleep(0.5)
     conferir("inicial: escolher Flávio põe ?c=22", pg.url.endswith("#/?c=22"), pg.url)
-    conferir("cartão de quem faltou mostra o saldo de Flávio (4,7 milhões)", "4,7 milhões" in pg.locator(".achados").first.inner_text())
+    conferir("conversa 'lembrar quem faltou' mostra o saldo de Flávio (4,7 milhões)", "4,7 milhões" in pg.locator(".lentes").first.inner_text())
+    abrir_zona_secao(pg)
     pg.select_option("#b-uf", "SP")
     pg.fill("#b-zona", "403")
     pg.fill("#b-secao", "411")
@@ -173,26 +192,26 @@ def bateria_acao(nav, b: str) -> None:
     esperar(pg, 1.5)
     conferir("'voltar' do navegador volta à urna", "#/urna/SP/403/411" in pg.url, pg.url)
     abrir(pg, b + "#/", 1.5)
-    pg.select_option("#l-uf", "PR")
-    pg.get_by_role("button", name="Ver as cidades do Paraná").click()
+    pg.select_option("#v-uf", "PR")
     esperar(pg, 1.5)
-    conferir("por um lugar: estado", pg.url.endswith("#/virar?c=13&uf=PR"), pg.url)
+    conferir("onde: estado", pg.url.endswith("#/?c=13&uf=PR") and pg.get_by_role("heading", name="Cidades do Paraná").count() == 1, pg.url)
     abrir(pg, b + "#/", 1.5)
-    pg.fill("#l-mun", "Curitiba")
+    pg.fill("#v-mun", "Curitiba")
     time.sleep(0.5)
     pg.locator(".campo-municipio .sugestao").first.click()
     esperar(pg, 3)
-    conferir("por um lugar: cidade", "uf=PR" in pg.url and "m=" in pg.url and pg.get_by_role("heading", name="No mapa").count() == 1, pg.url)
+    conferir("onde: cidade", "uf=PR" in pg.url and "m=" in pg.url and pg.get_by_role("heading", name="No mapa").count() == 1, pg.url)
     abrir(pg, b + "#/", 1.5)
     pg.get_by_role("link", name="Todas as regras, com os artigos da lei").click()
     esperar(pg, 2.5)
-    topo = pg.evaluate("() => document.getElementById('como-fazer').getBoundingClientRect().top")
-    conferir("lei: abre no trecho 'Como fazer, dentro da lei'", 0 < topo < 200, f"(topo a {topo:.0f}px)")
-    conferir("lei completa traz o impulsionamento (art. 57-C)", "57-C" in pg.locator(".como-fazer").inner_text())
+    topo = pg.evaluate("() => document.getElementById('lei').getBoundingClientRect().top")
+    conferir("lei: abre no guia, no trecho 'Dentro da lei'", "#/como-usar?ir=lei" in pg.url and 0 < topo < 200, f"(topo a {topo:.0f}px) {pg.url}")
+    conferir("lei completa traz o impulsionamento (art. 57-C)", "57-C" in pg.locator("#lei").inner_text())
     abrir(pg, b + "#/urna/SP/403/411", 2.5)
     pg.get_by_role("link", name="Como calculamos").click()
     esperar(pg, 2.5)
-    conferir("como calculamos: abre o trecho aberto", pg.evaluate("() => document.getElementById('como-calculamos').open"), pg.url)
+    topo = pg.evaluate("() => document.getElementById('conversas').getBoundingClientRect().top")
+    conferir("como calculamos: abre no guia, em 'As três conversas'", "ir=conversas" in pg.url and 0 < topo < 200, f"(topo a {topo:.0f}px)")
     ctx.close()
 
     ctx = nav.new_context(viewport={"width": 1280, "height": 900})
@@ -223,8 +242,8 @@ def bateria_perfil(nav, b: str) -> None:
         conferir(f"município {cd}: tabela de escolas da ação do perfil", linhas == 20, f"({linhas})")
     abrir(pg, b + "#/urna/SP/403/411?c=22&a=perfil", 3)
     agir = pg.locator("#agir").inner_text()
-    conferir("urna, Flávio: perto, abaixo do esperado 3.460", "3.460" in agir)
-    conferir("urna: lista do perfil", "perfil parecido" in agir and pg.locator("#agir .agir-lista li").count() == 3)
+    conferir("urna (D9): sem a conversa do perfil, só as duas principais",
+             "abaixo do esperado" not in agir and pg.locator("#agir .abas button").count() == 4, f"({pg.locator('#agir .abas button').count()} botões nas abas)")
     ctx.close()
 
     ctx = nav.new_context(viewport={"width": 1280, "height": 900})
@@ -233,11 +252,13 @@ def bateria_perfil(nav, b: str) -> None:
     abrir(pg, b + "#/urna/SP/403/411?a=perfil", 3)
     conferir("urna sem candidato, ação do perfil: pede para escolher", "Escolha para quem" in pg.locator("#agir").inner_text())
     abrir(pg, b + "#/")
-    cartoes = pg.locator(".achados").first.inner_text().replace("\n", " ")
-    conferir("inicial sem escolha: os dois números do perfil", "Lula 2,4 milhões" in cartoes and "Flávio 2,1 milhões" in cartoes)
+    avancada = pg.locator(".lentes-avancada").inner_text().replace("\n", " ")
+    conferir("ferramenta sem escolha: a opção avançada traz os dois números", "Lula 2,4 milhões" in avancada and "Flávio 2,1 milhões" in avancada)
     abrir(pg, b + "#/?c=22")
-    cartoes = pg.locator(".achados").first.inner_text()
-    conferir("inicial com Flávio: 2,1 milhões abaixo do esperado", "2,1 milhões" in cartoes and "para Flávio" in cartoes)
+    avancada = pg.locator(".lentes-avancada").inner_text()
+    conferir("ferramenta com Flávio: 2,1 milhões abaixo do esperado", "2,1 milhões" in avancada and "para Flávio" in avancada)
+    abrir(pg, b + "#/mapa?v=virar&a=perfil&c=13", 3)
+    conferir("mapa do Brasil (D9): só as duas conversas", pg.locator("[aria-label='Que tipo de conversa'] button").count() == 2)
     conferir("perfil: sem erros de console", not erros, str(erros[:3]))
     ctx.close()
 
@@ -250,7 +271,18 @@ def bateria_publico(nav, b: str) -> None:
     vigiar(pg, erros)
     abrir(pg, b + "#/", 1.5)
     conferir("título da página", pg.title() == "Urna em Camadas: onde virar voto no 2º turno, bairro a bairro", pg.title())
-    for rota in ["#/", "#/virar", "#/analise", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
+    menu = pg.locator("nav.navegacao a").all_inner_texts()
+    conferir("menu com 6 itens, a ferramenta primeiro (D2)",
+             menu == ["Virar voto", "Como usar", "Confira sua urna", "Entenda", "Método e dados", "Sobre"], str(menu))
+    abrir(pg, b + "#/virar?c=22&uf=PR", 1.5)
+    conferir("#/virar antigo redireciona para a inicial com os parâmetros", endereco(pg).endswith("#/?c=22&uf=PR"), endereco(pg))
+    abrir(pg, b + "#/virar?ir=como-fazer", 1.5)
+    conferir("#/virar?ir=como-fazer vai para a lei no guia", "#/como-usar?ir=lei" in endereco(pg), endereco(pg))
+    abrir(pg, b + "#/como-usar", 1.5)
+    secoes = pg.evaluate("() => ['minuto','conversas','exemplo','lista','lei','compartilhar','glossario','perguntas'].filter(id => document.getElementById(id))")
+    conferir("guia: as 8 seções", len(secoes) == 8, str(secoes))
+    conferir("guia: exemplo calculado (35 escolas)", "35 escolas" in pg.locator("#exemplo").inner_text())
+    for rota in ["#/", "#/como-usar", "#/analise", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
         abrir(pg, b + rota, 1.5)
         texto = pg.locator("main").inner_text().lower()
         conferir(f"{rota}: não cita a previsão do 2º turno", "previsão do 2" not in texto and "pré-regist" not in texto)
@@ -272,6 +304,9 @@ def bateria_publico(nav, b: str) -> None:
     conferir("análise: 7 linhas 'para quem vai conversar'", pg.locator(".para-conversar").count() == 7)
     abrir(pg, b + "#/urna/SP/403/411?c=13", 3)
     conferir("urna: cartão 'perto de mim'", pg.get_by_role("button", name="Compartilhar “perto de mim”").count() == 1)
+    ordem = pg.evaluate("() => [...document.querySelectorAll('main h2')].map(h => h.textContent.trim())")
+    conferir("urna (D6): a ação antes da conferência e das camadas",
+             ordem.index("Daqui até o dia 25") < ordem.index("Confira e entenda esta urna") < ordem.index("A urna em camadas"), str(ordem[:4]))
     conferir("público: sem erros de console", not erros, str(erros[:3]))
     ctx.close()
     # a imagem de compartilhamento publicada é a do repositório

@@ -41,6 +41,8 @@ Problemas:
 
 ## 3. Decisões para o usuário confirmar
 
+> **Confirmadas em 08/10:** o usuário disse "pode seguir com as recomendações". Valem as recomendações da tabela, inclusive a (b) na D9. A implementação começou na mesma sessão.
+
 | | Decisão | Recomendação |
 |---|---|---|
 | D1 | **A inicial vira a própria ferramenta**: `#/` mostra o "Onde virar voto"; `#/virar?...` redireciona para `#/?...` | Sim |

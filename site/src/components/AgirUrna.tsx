@@ -6,23 +6,24 @@ import { useLocais, type Local } from '../lib/dados'
 import { inteiro } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import {
-  LENTES, RAIO_PERTO_KM, TODAS_LENTES, chaveLocal, escolasPerto, km, lerLente, potencial, potencialSomado, somar, type Lente,
+  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLentePrincipal, potencial, potencialSomado, somar,
+  type Lente,
 } from '../lib/virar'
 import { LeiCurta } from './LeiCurta'
 import { SeletorCandidato } from './SeletorCandidato'
-import { SeloExperimental } from './SeloExperimental'
 
 type Props = { uf: string; cd: number; zona: number; local: number; municipio: string }
 
 /**
- * "Daqui até o dia 25" na página da urna: a escola desta urna e as escolas a até 2 km dela, nas ações do "Onde virar
- * voto". Sem candidato escolhido, mostra só o que não tem lado (quem faltou, quem ficou de fora) e pergunta para quem.
+ * "Daqui até o dia 25" na página da urna: a escola desta urna e as escolas a até 2 km dela, nas duas conversas principais
+ * do "Onde virar voto" (a do perfil, experimental, fica só na ferramenta: D9). Sem candidato escolhido, mostra só o que não
+ * tem lado (quem faltou, quem votou em outro) e pergunta para quem.
  */
 export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
   const { dados: locais, erro } = useLocais(cd)
   const [candidato, definirCandidato] = useCandidato()
   const [params, setParams] = useSearchParams()
-  const lente = lerLente(params.get('a'))
+  const lente = lerLentePrincipal(params.get('a'))
   const mudarLente = (l: Lente) =>
     setParams(
       (atual) => {
@@ -39,7 +40,7 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
     [locais, escola],
   )
   const noVirar = (extra: Record<string, string>) =>
-    `/virar?${new URLSearchParams({ ...(candidato ? { c: String(candidato) } : {}), a: lente, uf, m: String(cd), ...extra })}`
+    `/?${new URLSearchParams({ ...(candidato ? { c: String(candidato) } : {}), a: lente, uf, m: String(cd), ...extra })}`
 
   return (
     <section className="cartao agir" id="agir" aria-labelledby="t-agir">
@@ -65,7 +66,7 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
             <PertoDeVoce perto={perto} escola={escola} candidato={candidato} lente={lente} mudarLente={mudarLente}
               link={noVirar({ perto: chaveLocal(escola) })} lugar={`${municipio} (${uf})`}
               // o link compartilhado não leva candidato: quem recebe escolhe o seu
-              linkCompartilhado={`${window.location.origin}${window.location.pathname}#/virar?${new URLSearchParams({ a: 'abertos', uf, m: String(cd), perto: chaveLocal(escola) })}`} />
+              linkCompartilhado={`${window.location.origin}${window.location.pathname}#/?${new URLSearchParams({ a: 'abertos', uf, m: String(cd), perto: chaveLocal(escola) })}`} />
           ) : (
             <div className="agir-bloco">
               <h3>Perto de você</h3>
@@ -81,11 +82,10 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
       <p className="discreto" style={{ marginTop: 16 }}>
         <strong>O que os números não dizem.</strong> Quem faltou é um teto: parte mudou de cidade, está fora do país ou não pode
         votar. O saldo supõe que quem faltou votaria como os vizinhos que votaram. Quem votou em outro candidato, branco ou
-        nulo não tem lado. O “abaixo do esperado” depende do modelo: é pista, não certeza. São somas por escola, nunca dados
-        de pessoas.{' '}
-        <Link to={`/virar?ir=como-calculamos${candidato ? `&c=${candidato}` : ''}`}>Como calculamos</Link>.
+        nulo não tem lado. São somas por escola, nunca dados de pessoas.{' '}
+        <Link to="/como-usar?ir=conversas">Como calculamos</Link>.
       </p>
-      <LeiCurta candidato={candidato} />
+      <LeiCurta />
     </section>
   )
 }
@@ -93,7 +93,6 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
 function NaSuaEscola({ escola, candidato }: { escola: Local; candidato: NumeroCandidato | null }) {
   const cand = candidato ? CANDIDATOS[candidato] : null
   const saldo = candidato ? potencial(escola, candidato, 'faltosos') : 0
-  const abaixo = candidato ? potencial(escola, candidato, 'perfil') : 0
   return (
     <div className="agir-bloco">
       <h3>Na sua escola</h3>
@@ -114,14 +113,6 @@ function NaSuaEscola({ escola, candidato }: { escola: Local; candidato: NumeroCa
           <div>
             <dt>saldo possível para {cand.curto}, se quem faltou votar</dt>
             <dd>{inteiro(Math.round(saldo))}</dd>
-          </div>
-        )}
-        {cand && abaixo > 0 && (
-          <div>
-            <dt>
-              votos de {cand.curto} abaixo do esperado <SeloExperimental />
-            </dt>
-            <dd>{inteiro(Math.round(abaixo))}</dd>
           </div>
         )}
       </dl>
@@ -150,9 +141,8 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
   const cand = candidato ? CANDIDATOS[candidato] : null
   const total = somar(perto)
   const saldo = candidato ? potencialSomado(perto, candidato, 'faltosos') : 0
-  const abaixo = candidato ? potencialSomado(perto, candidato, 'perfil') : 0
   const minha = chaveLocal(escola)
-  // "em aberto" não depende do candidato; "quem faltou" e "o perfil" precisam dele
+  // "em aberto" não depende do candidato; "quem faltou" precisa dele
   const ranking =
     !LENTES[lente].porCandidato || candidato
       ? perto
@@ -183,18 +173,10 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
             <dd>{inteiro(Math.round(saldo))}</dd>
           </div>
         )}
-        {cand && abaixo > 0 && (
-          <div>
-            <dt>
-              votos de {cand.curto} abaixo do esperado <SeloExperimental />
-            </dt>
-            <dd>{inteiro(Math.round(abaixo))}</dd>
-          </div>
-        )}
       </dl>
 
       <div className="abas" role="group" aria-label="Que tipo de conversa" style={{ marginTop: 16 }}>
-        {TODAS_LENTES.map((l) => (
+        {LENTES_PRINCIPAIS.map((l) => (
           <button key={l} aria-pressed={lente === l} onClick={() => mudarLente(l)}>
             {LENTES[l].titulo}
           </button>
@@ -203,11 +185,7 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
       {ranking.length > 0 ? (
         <>
           <p className="agir-legenda">
-            {lente === 'faltosos'
-              ? `Onde lembrar quem faltou rende mais para ${cand!.curto}:`
-              : lente === 'perfil'
-                ? `Onde ${cand!.curto} teve menos votos do que escolas de perfil parecido na cidade (pista, não certeza):`
-                : 'Onde há mais votos em aberto:'}
+            {lente === 'faltosos' ? `Onde lembrar quem faltou rende mais para ${cand!.curto}:` : 'Onde há mais votos em aberto:'}
           </p>
           <ol className="agir-lista">
             {ranking.map((l) => (
@@ -225,17 +203,7 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
           </ol>
         </>
       ) : !cand ? (
-        <p className="agir-nota">
-          Escolha para quem, acima, para ver {lente === 'perfil' ? 'onde o perfil promete mais' : 'onde lembrar quem faltou rende mais'}.
-        </p>
-      ) : lente === 'perfil' ? (
-        <p className="agir-nota">
-          {cand.curto} não ficou abaixo do esperado em nenhuma das {perto.length} escolas perto daqui.{' '}
-          <button className="link-botao" onClick={() => mudarLente('abertos')}>
-            Ver onde há mais votos em aberto
-          </button>
-          .
-        </p>
+        <p className="agir-nota">Escolha para quem, acima, para ver onde lembrar quem faltou rende mais.</p>
       ) : (
         <p className="agir-nota">
           {cand.curto} não ficou à frente em nenhuma das {perto.length} escolas perto daqui: lembrar quem faltou não soma para

@@ -7,47 +7,15 @@ import { feature } from 'topojson-client'
 import type { FeatureCollection, Geometry } from 'geojson'
 import type { Topology } from 'topojson-specification'
 import { carregar, type IndiceMunicipios, type Local, type Resumo } from '../lib/dados'
-import { classe, classeSequencial, escalaAtual, sequencialAtual, temaEscuro, type Rampa } from '../lib/cores'
+import { classe, classeSequencial, escalaAtual, sequencialAtual, temaEscuro } from '../lib/cores'
 import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { potencial, rotuloValor, type Lente } from '../lib/virar'
+import { CLASSE_LISA, CORTES_VIRAR, LIMITES, ROTULOS_LISA, rampaVirar, umaCasa, type VariavelMapa } from '../lib/escalas'
+import { useTema } from '../lib/tema'
 
 // O MapLibre 6 procura o worker ao lado do próprio módulo; no build do Vite ele precisa vir como asset.
 maplibregl.setWorkerUrl(urlWorker)
-
-export type VariavelMapa = 'margem' | 'efeito' | 'semperfil' | 'bolsoes' | 'regioes' | 'virar'
-
-/**
- * "Onde virar voto": limites inferiores das classes 2 a 5 de cada conta, por 100 eleitores aptos. Fixos e iguais para os
- * dois candidatos, para os dois mapas poderem ser comparados; números redondos, tirados da distribuição dos municípios
- * (em 08/10/2026: um terço dos municípios tem saldo zero; a mediana dos votos em aberto é 7,9; a do perfil, cerca de 1).
- */
-export const CORTES_VIRAR: Record<Lente, [number, number, number, number]> = {
-  faltosos: [1, 3, 6, 10],
-  abertos: [6, 8, 10, 12],
-  perfil: [0.5, 1, 2, 3],
-}
-
-/** Votos em aberto não têm lado: rampa cinza. As outras contas são de um candidato: a cor dele. */
-export const rampaVirar = (lente: Lente, candidato: NumeroCandidato): Rampa => (lente === 'abertos' ? 'neutra' : candidato === 13 ? 'lula' : 'flavio')
-
-const umaCasa = (x: number) => x.toLocaleString('pt-BR', { maximumFractionDigits: 1 })
-
-export const LIMITES: Record<'margem' | 'efeito', [number, number, number]> = {
-  margem: [0.05, 0.2, 0.4],
-  efeito: [0.025, 0.075, 0.15],
-}
-
-// LISA (pipeline/11): 1 alto cercado de alto, 2 baixo cercado de alto, 3 baixo cercado de baixo, 4 alto cercado de baixo.
-// "Alto" é mais voto no candidato escolhido do que o perfil e a região fariam prever: vai para o lado da cor dele.
-const CLASSE_LISA: Record<number, [number, number]> = { 0: [3, 3], 1: [0, 6], 4: [2, 4], 2: [4, 2], 3: [6, 0] }
-export const ROTULOS_LISA: Record<number, string> = {
-  1: 'bolsão acima do esperado',
-  4: 'acima do esperado, cercado de abaixo',
-  0: 'sem padrão espacial',
-  2: 'abaixo do esperado, cercado de acima',
-  3: 'bolsão abaixo do esperado',
-}
 
 type Regiao = { margem: number; municipios: number; v13: number; v22: number; validos: number }
 
@@ -81,22 +49,6 @@ function corDoMapa(variavel: VariavelMapa, candidato: NumeroCandidato, lente: Le
 
 function cssVar(nome: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(nome).trim()
-}
-
-/** Reage à troca de tema (botão do site ou do sistema operacional). */
-function useTema(): number {
-  const [versao, setVersao] = useState(0)
-  useEffect(() => {
-    const mudou = () => setVersao((v) => v + 1)
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    window.addEventListener('tema', mudou)
-    mq.addEventListener('change', mudou)
-    return () => {
-      window.removeEventListener('tema', mudou)
-      mq.removeEventListener('change', mudou)
-    }
-  }, [])
-  return versao
 }
 
 type Dica = { x: number; y: number; titulo: string; valor: string; linhas: string[] } | null
@@ -326,75 +278,6 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lent
       <div ref={container} className="mapa" role="region" aria-roledescription="mapa" aria-label="Mapa dos municípios do Brasil; a mesma informação está na busca por município" />
       <CaixaDica dica={dica} />
       {!geo && <p className="carregando">Carregando o mapa…</p>}
-    </div>
-  )
-}
-
-/** Legenda das 5 classes do "Onde virar voto", do pouco para o muito, com a unidade. */
-export function LegendaSequencial({ lente, candidato }: { lente: Lente; candidato: NumeroCandidato }) {
-  useTema()
-  const cores = sequencialAtual(rampaVirar(lente, candidato))
-  const [a, b, c, d] = CORTES_VIRAR[lente].map(umaCasa)
-  const rotulos = [`menos de ${a}`, `${a} a ${b}`, `${b} a ${c}`, `${c} a ${d}`, `${d} ou mais`]
-  return (
-    <div>
-      <div className="legenda-escala legenda-sequencial">
-        {cores.map((cor, i) => (
-          <div key={i}>
-            <span style={{ background: cor }} aria-hidden="true" />
-            {rotulos[i]}
-          </div>
-        ))}
-      </div>
-      <p className="legenda" style={{ maxWidth: 520, marginTop: 4 }}>
-        {rotuloValor(lente, CANDIDATOS[candidato].curto)}, de cada 100 eleitores aptos do município
-      </p>
-    </div>
-  )
-}
-
-/** Legenda da escala divergente em 7 classes; Lula à esquerda, Flávio à direita. */
-export function LegendaEscala({ variavel, candidato }: { variavel: VariavelMapa | 'surpresa'; candidato: NumeroCandidato }) {
-  useTema()
-  const e = escalaAtual()
-  if (variavel === 'bolsoes') {
-    const lado = candidato === 13 ? 0 : 1
-    return (
-      <div className="legenda" style={{ marginTop: 12 }}>
-        {[1, 4, 0, 2, 3].map((l) => (
-          <span key={l}>
-            <span className="chave chave-quadrada" style={{ background: e[CLASSE_LISA[l][lado]] }} aria-hidden="true" />
-            {ROTULOS_LISA[l]}
-          </span>
-        ))}
-      </div>
-    )
-  }
-  const escala = variavel === 'margem' || variavel === 'regioes' ? 'margem' : 'efeito'
-  const [a, b, c] = LIMITES[escala].map((x) => Math.round(x * 1000) / 10)
-  const rotulos = [`> ${c}`, `${b} a ${c}`, `${a} a ${b}`, `± ${a}`, `${a} a ${b}`, `${b} a ${c}`, `> ${c}`]
-  const quem = variavel === 'semperfil' ? 'acima do que perfil e região preveem' : variavel === 'surpresa' ? 'local vota acima do esperado' : 'município empurra a favor'
-  const naRegiao = variavel === 'regioes' ? ' na região' : ''
-  const titulo =
-    escala === 'margem'
-      ? [`Lula à frente${naRegiao} (pontos)`, `Flávio à frente${naRegiao} (pontos)`]
-      : candidato === 13
-        ? [`${quem} de Lula (pontos)`, 'contra Lula']
-        : ['contra Flávio', `${quem} de Flávio (pontos)`]
-  return (
-    <div>
-      <div className="legenda-escala" aria-hidden="true">
-        {e.map((cor, i) => (
-          <div key={i}>
-            <span style={{ background: cor }} />
-            {rotulos[i]}
-          </div>
-        ))}
-      </div>
-      <div className="legenda" style={{ maxWidth: 520, justifyContent: 'space-between', marginTop: 4 }}>
-        <span>← {titulo[0]}</span>
-        <span>{titulo[1]} →</span>
-      </div>
     </div>
   )
 }

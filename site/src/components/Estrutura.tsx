@@ -51,13 +51,12 @@ export function Cabecalho() {
           Urna em Camadas
         </Link>
         <nav className="navegacao" aria-label="Principal">
-          <NavLink to="/" end>Início</NavLink>
-          <NavLink to="/virar" className="nav-destaque">Virar voto</NavLink>
-          <NavLink to="/analise">Análise</NavLink>
-          <NavLink to="/conferencia">Conferência</NavLink>
-          <NavLink to="/mapa">Mapa</NavLink>
-          <NavLink to="/metodo">Método</NavLink>
-          <NavLink to="/dados">Dados</NavLink>
+          {/* a ferramenta primeiro; o técnico num lugar só (decisão D2 do docs/plano_reorganizacao.md) */}
+          <NavLink to="/" end className="nav-destaque">Virar voto</NavLink>
+          <NavLink to="/como-usar">Como usar</NavLink>
+          <NavLink to="/conferencia">Confira sua urna</NavLink>
+          <NavLink to="/analise">Entenda</NavLink>
+          <NavLink to="/metodo">Método e dados</NavLink>
           <NavLink to="/sobre">Sobre</NavLink>
         </nav>
         <button className="botao-tema" onClick={alternar} aria-label={escuroAgora ? 'Usar tema claro' : 'Usar tema escuro'}>

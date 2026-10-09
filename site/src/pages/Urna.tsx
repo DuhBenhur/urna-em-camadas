@@ -161,14 +161,16 @@ export function Urna() {
         Nesta urna, Lula teve <strong>{cada100(s.v13 / s.validos)}</strong> votos válidos, {comparacao(sobra(13))}
         {referencia}. Flávio Bolsonaro teve <strong>{cada100(s.v22 / s.validos)}</strong>, {comparacao(sobra(22))}.
       </p>
-      <p className="ir-agir">
-        <button className="link-botao" onClick={() => document.getElementById('agir')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
-          Daqui até o dia 25: onde conversar perto desta urna
-        </button>{' '}
-        <span aria-hidden="true">↓</span>
-      </p>
 
-      <div className="grade-2" style={{ marginTop: 24 }}>
+      {/* a ação primeiro, depois a conferência e as camadas (decisão D6 do docs/plano_reorganizacao.md) */}
+      <AgirUrna uf={arquivo.uf} cd={s.cd} zona={nZona} local={s.local} municipio={municipio.nome} />
+
+      <h2>Confira e entenda esta urna</h2>
+      <p className="secundario">
+        O boletim desta urna, conferido com o resultado oficial, e o que vem do estado, da cidade e da própria urna no voto de
+        cada candidato.
+      </p>
+      <div className="grade-2" style={{ marginTop: 16 }}>
         <div>
           <BoletimUrna secao={s} candidatos={resumo.candidatos} uf={arquivo.uf} municipio={municipio.nome.toUpperCase()} zona={nZona} local={nomeLocal} bairro={bairro} />
           {s.conf === 1 && (
@@ -225,8 +227,6 @@ export function Urna() {
           </div>
         </section>
       </div>
-
-      <AgirUrna uf={arquivo.uf} cd={s.cd} zona={nZona} local={s.local} municipio={municipio.nome} />
 
       <h2>Quem vota nesta seção</h2>
       <p className="secundario">

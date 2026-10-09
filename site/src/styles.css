@@ -287,8 +287,6 @@ td.num { white-space: nowrap; }
 .selo strong { color: var(--tinta); }
 .passos-conferencia { max-width: 68ch; padding-left: 1.4em; }
 .passos-conferencia li { margin-bottom: 12px; }
-.conferencia-inicio { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; margin-top: 32px; }
-.conferencia-inicio .valor { font-size: clamp(1.6rem, 3.2vw, 2.2rem); font-weight: 650; line-height: 1.1; }
 
 /* Celular: marca e tema na primeira linha; o menu inteiro embaixo, quebrando em duas linhas (nada fica escondido) */
 @media (max-width: 560px) {
@@ -309,11 +307,6 @@ td.num { white-space: nowrap; }
 .resumo-urna { font-size: 1.15rem; max-width: 64ch; margin-top: 20px; padding: 14px 18px; border-radius: var(--raio); background: var(--superficie); border: 1px solid var(--borda); }
 .como-ler { max-width: 68ch; color: var(--tinta-2); border-left: 3px solid var(--eixo); padding: 2px 0 2px 14px; margin-top: 24px; }
 .ajuda-busca { margin-top: 12px; color: var(--tinta-2); }
-.achados { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
-.achado { display: flex; flex-direction: column; }
-.achado h3 { margin-top: 0; font-size: 1.2rem; }
-.achado p { flex: 1; }
-.achado a { font-weight: 600; min-height: 24px; }
 
 /* ===== Onde virar voto (2º turno) ===== */
 .nav-destaque { font-weight: 650; color: var(--tinta) !important; box-shadow: inset 0 0 0 1px var(--eixo); }
@@ -346,18 +339,40 @@ td.num { white-space: nowrap; }
 }
 .lentes button span { color: var(--tinta-2); font-size: 1rem; }
 .lentes button[aria-pressed="true"] { border-color: var(--tinta); box-shadow: inset 0 0 0 1px var(--tinta), var(--sombra); background: var(--superficie); }
+/* o número do Brasil em cada conversa (passo 3) */
+.lentes button .lente-numero { color: var(--tinta); font-size: 1.125rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+/* a conversa do perfil, experimental, como opção avançada: separada e de borda tracejada */
+.lentes-avancada { margin-top: 12px; }
+.lentes-avancada button { border-style: dashed; }
+.lentes-avancada button[aria-pressed="true"] { border-style: solid; }
 
-/* Inicial: as duas portas (pela minha urna, por um lugar) e os jeitos de fazer diferença */
-.portas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; align-items: start; }
-.porta h3 { margin: 0 0 4px; font-size: 1.15rem; }
-.porta > p { margin-bottom: 12px; }
-/* na coluna estreita da porta, o botão da busca ganha uma linha inteira em vez de quebrar o texto */
-.porta .campos > .botao { grid-column: 1 / -1; }
-.jeito-numero { font-size: clamp(1.8rem, 3.5vw, 2.4rem); font-weight: 650; line-height: 1.1; margin: 0 0 6px; font-variant-numeric: tabular-nums; }
-.achado .jeito-numero + p { margin-top: 0; }
-/* sem candidato escolhido, os dois números lado a lado, com o mesmo peso */
-.jeito-dois { display: grid; gap: 2px; margin: 0 0 6px; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
-.jeito-dois strong { font-size: 1.5rem; font-weight: 650; }
+/* passo 2: ir direto à urna, com a zona e a seção */
+.zona-secao { margin-top: 16px; max-width: 760px; }
+.zona-secao > summary { cursor: pointer; font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; gap: 8px; text-decoration: underline; text-decoration-color: var(--eixo); text-underline-offset: 3px; }
+.zona-secao[open] > summary { margin-bottom: 12px; }
+.zona-secao > form { padding: 16px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+/* na coluna estreita, o botão da busca ganha uma linha inteira em vez de quebrar o texto */
+.zona-secao .campos > .botao { grid-column: 1 / -1; }
+.como-usar-curto > h2 { margin-top: 0; }
+.como-usar-curto ol { padding-left: 1.4em; max-width: 68ch; }
+.como-usar-curto li { margin-bottom: 8px; }
+
+/* Guia "Como usar" */
+.sumario { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 8px; padding: 12px 0; border-block: 1px solid var(--borda); }
+.sumario a { min-height: 32px; display: inline-flex; align-items: center; }
+.passos-guia { padding-left: 1.4em; max-width: 68ch; }
+.passos-guia li { margin-bottom: 10px; }
+.conversa-guia { max-width: 72ch; margin-top: 20px; padding-left: 14px; border-left: 3px solid var(--eixo); }
+.conversa-guia h3 { margin: 0 0 6px; }
+.conversa-guia p { margin-bottom: 8px; }
+.conversa-avancada { border-left-style: dashed; }
+.lista-guia { padding-left: 20px; max-width: 72ch; }
+.lista-guia li { margin-bottom: 8px; }
+.glossario { display: grid; grid-template-columns: max-content 1fr; gap: 8px 20px; max-width: 80ch; }
+.glossario dt { font-weight: 650; }
+.glossario dd { margin: 0; color: var(--tinta-2); }
+@media (max-width: 560px) { .glossario { grid-template-columns: 1fr; gap: 2px; } .glossario dd { margin-bottom: 10px; } }
+.como-usar h3 { margin-top: 1.4em; }
 
 /* A lei, versão curta */
 .lei-curta { margin-top: 24px; }
@@ -365,10 +380,8 @@ td.num { white-space: nowrap; }
 .lei-curta ul { padding-left: 20px; margin: 0 0 10px; }
 .lei-curta li { margin-bottom: 6px; max-width: 72ch; }
 .lei-curta a { font-weight: 600; display: inline-block; min-height: 24px; }
-.conferencia-inicio h2 { margin-top: 0; }
 
 /* Página da urna: "Daqui até o dia 25" */
-.ir-agir { margin: 12px 0 0; }
 .agir { margin-top: 32px; border: 2px solid var(--tinta); }
 .agir > h2 { margin-top: 4px; }
 .agir-candidato { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }

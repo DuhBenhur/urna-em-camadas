@@ -1,11 +1,12 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { LegendaEscala, LegendaSequencial, MapaBrasil, type VariavelMapa } from '../components/Mapas'
+import { LegendaEscala, LegendaSequencial } from '../components/Legendas'
+import { MapaBrasil } from '../components/Mapas'
+import type { VariavelMapa } from '../lib/escalas'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { SeloExperimental } from '../components/SeloExperimental'
 import { comCandidato, useCandidato } from '../lib/candidato'
 import { useMunicipios, useResumo } from '../lib/dados'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
-import { LENTES, TODAS_LENTES, lerLente, rotuloValor, type Lente } from '../lib/virar'
+import { LENTES, LENTES_PRINCIPAIS, lerLentePrincipal, rotuloValor, type Lente } from '../lib/virar'
 
 const VISTAS: { chave: VariavelMapa; rotulo: string }[] = [
   { chave: 'virar', rotulo: 'Onde virar voto' },
@@ -24,9 +25,10 @@ export function Mapa() {
   const variavel: VariavelMapa = VISTAS.some((v) => v.chave === pedida) ? pedida! : 'margem'
   const [escolhido, definirCandidato] = useCandidato()
   const candidato: NumeroCandidato = escolhido ?? 13
-  // sem candidato escolhido, o "Onde virar voto" abre na conta que não tem lado (votos em aberto)
+  // sem candidato escolhido, o "Onde virar voto" abre na conta que não tem lado (votos em aberto); a do perfil,
+  // experimental, fica só na ferramenta (D9)
   const pedidaLente = params.get('a')
-  const lente: Lente = pedidaLente ? lerLente(pedidaLente) : escolhido ? 'faltosos' : 'abertos'
+  const lente: Lente = pedidaLente ? lerLentePrincipal(pedidaLente) : escolhido ? 'faltosos' : 'abertos'
   const mudarParametro = (chave: string, valor: string) =>
     setParams(
       (atual) => {
@@ -53,7 +55,7 @@ export function Mapa() {
   const aoClicar = (cd: number) => {
     if (variavel !== 'virar') return navegar(`/municipio/${cd}`)
     const uf = indice?.porCodigo.get(cd)?.uf ?? ''
-    navegar(`/virar?a=${lente}&uf=${uf}&m=${cd}${comCandidato(escolhido, '&')}`)
+    navegar(`/?a=${lente}&uf=${uf}&m=${cd}${comCandidato(escolhido, '&')}`)
   }
 
   return (
@@ -71,10 +73,9 @@ export function Mapa() {
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {variavel === 'virar' && (
             <div className="abas" role="group" aria-label="Que tipo de conversa">
-              {TODAS_LENTES.map((l) => (
+              {LENTES_PRINCIPAIS.map((l) => (
                 <button key={l} aria-pressed={lente === l} onClick={() => mudarParametro('a', l)}>
                   {LENTES[l].titulo}
-                  {LENTES[l].experimental && ' (experimental)'}
                 </button>
               ))}
             </div>
@@ -92,15 +93,9 @@ export function Mapa() {
         <>
           <p className="discreto" style={{ marginTop: 16 }}>
             Clique em um município para ver os bairros e as escolas no “Onde virar voto”. Os mesmos números, em tabela, estado
-            por estado: <Link to={`/virar?a=${lente}${comCandidato(escolhido, '&')}`}>ver a lista</Link>. A conta é a mesma para
+            por estado: <Link to={`/?a=${lente}${comCandidato(escolhido, '&')}`}>ver a lista</Link>. A conta é a mesma para
             os dois candidatos; o site não pede voto para ninguém.
           </p>
-          {lente === 'perfil' && (
-            <p className="aviso">
-              <SeloExperimental /> O esperado vem do modelo do capítulo 4 da análise, que não conhece a renda do bairro nem a
-              história política do lugar: parte do “abaixo do esperado” vem daí. Trate como pista, não como certeza.
-            </p>
-          )}
           {lente === 'faltosos' && (
             <p className="aviso">
               Quem faltou é um teto: parte mudou de cidade, está fora do país ou não pode votar. O saldo supõe que quem faltou

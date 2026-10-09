@@ -23,7 +23,7 @@ export function MetodoVirar({ numero, resumo }: { numero: number; resumo: Resumo
     <>
       <h2>{numero}. Onde virar voto: contas, suposições e limites</h2>
       <p>
-        A ferramenta do 2º turno (<Link to="/virar">Onde virar voto</Link>) usa três contas sobre o resultado oficial do 1º turno,
+        A ferramenta do 2º turno (<Link to="/">Onde virar voto</Link>) usa três contas sobre o resultado oficial do 1º turno,
         feitas escola por escola (local de votação). As três ficam separadas, para cada uma poder ser conferida sozinha;
         nenhuma vira índice. A conta é a mesma para os dois candidatos: trocar o candidato só troca quem é “à frente” e qual
         esperado é usado.
@@ -114,7 +114,7 @@ export function MetodoVirar({ numero, resumo }: { numero: number; resumo: Resumo
         </li>
         <li>
           <strong>Lugares, não pessoas.</strong> Tudo são somas por escola; ninguém é identificado. O site não pede voto e não
-          impulsiona nada; as regras da lei estão no <Link to="/virar?ir=como-fazer">Onde virar voto</Link>.
+          impulsiona nada; as regras da lei estão no guia <Link to="/como-usar?ir=lei">Como usar</Link>.
         </li>
       </ul>
     </>

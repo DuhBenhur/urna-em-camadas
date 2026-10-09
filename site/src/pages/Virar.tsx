@@ -1,20 +1,28 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { BuscaTitulo } from '../components/Busca'
 import { CampoMunicipio } from '../components/CampoMunicipio'
 import { EscolhaCandidato } from '../components/EscolhaCandidato'
-import { LegendaEscala, MapaLocais } from '../components/Mapas'
+import { LegendaEscala } from '../components/Legendas'
+import { LeiCurta } from '../components/LeiCurta'
 import { Passo } from '../components/Passo'
 import { SeloExperimental } from '../components/SeloExperimental'
 import { TabelaRolagem } from '../components/TabelaRolagem'
-import { useCandidato } from '../lib/candidato'
-import { useLocais, useMunicipios, useResumo, type Local } from '../lib/dados'
-import { inteiro, pct, pp } from '../lib/formato'
+import { comCandidato, useCandidato } from '../lib/candidato'
+import { useLocais, useMunicipios, useResumo, type Local, type UF } from '../lib/dados'
+import { inteiro, milhoes, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import {
-  LENTES, RAIO_PERTO_KM, TODAS_LENTES, chaveLocal, escolasPerto, km, lerLente, potencial, potencialSomado, ranquear, rotuloValor,
-  somar, vantagem, type Lente, type Lugar,
+  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLente, potencial, potencialSomado, ranquear,
+  rotuloValor, somar, vantagem, type Lente, type Lugar,
 } from '../lib/virar'
+
+// o mapa (MapLibre, ~800 kB) só carrega quando aparece uma cidade: a inicial é esta página e tem de abrir rápido
+const MapaLocais = lazy(() => import('../components/Mapas').then((m) => ({ default: m.MapaLocais })))
+
+// Uma urna real da 1ª Zona de São Paulo (Bela Vista), na E.E. Caetano de Campos
+const EXEMPLO = '/urna/SP/1/240'
 
 const adversario = (n: NumeroCandidato): NumeroCandidato => (n === 13 ? 22 : 13)
 const votos = (l: Lugar, n: NumeroCandidato) => (n === 13 ? l.v13 : l.v22)
@@ -25,22 +33,26 @@ const resultado = (l: Lugar) => `Lula ${pct(l.v13 / l.validos, 0)} · Flávio ${
 /** "Saldo possível para Lula": cabeçalho de tabela */
 const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
-/** O que cada ação quer dizer, em uma frase, para o candidato escolhido */
+/** O que cada conversa quer dizer, em uma frase, para o candidato escolhido */
 function explicarLente(l: Lente, curto: string): string {
   if (l === 'faltosos') return `Quem não votou no 1º turno. Onde ${curto} ficou à frente, cada pessoa que for votar tende a somar.`
-  if (l === 'abertos') return 'Quem votou em outro candidato, branco ou nulo. No 2º turno, todos escolhem entre os dois.'
+  if (l === 'abertos') return 'Quem votou em outro candidato, branco ou nulo no 1º turno. No 2º turno, todos escolhem entre os dois.'
   return `Escolas onde ${curto} teve menos votos do que escolas de perfil parecido na mesma cidade. Pista, não certeza.`
 }
 
+/**
+ * A ferramenta, que é também a inicial: para quem → onde → que conversa → em que estados, cidades, bairros e escolas há
+ * mais gente para essa conversa. O estado inteiro mora na URL (`?c=&a=&uf=&m=&perto=`), para o link levar tudo.
+ */
 export function Virar() {
   const [params, setParams] = useSearchParams()
+  const navegar = useNavigate()
   const [candidato] = useCandidato()
   const lente = lerLente(params.get('a'))
   const uf = params.get('uf') ?? ''
   const cd = Number(params.get('m')) || null
   // "?perto={zona}-{local}": escola de partida (vinda da página da urna), com o anel de 2 km no mapa
   const perto = params.get('perto')
-  // "?ir=como-fazer" (lista completa da lei) ou "?ir=como-calculamos": abre a página nesse trecho
   const ir = params.get('ir')
 
   const { dados: resumo } = useResumo()
@@ -48,21 +60,19 @@ export function Virar() {
   const municipio = cd ? indice?.porCodigo.get(cd) : undefined
   const ufAtual = uf || municipio?.uf || ''
 
-  // espera os dados que ficam acima do trecho, senão ele desce quando a tabela chega
-  const prontoParaIr = Boolean(ir) && (!candidato || Boolean(resumo && indice))
+  // links antigos para a lei e para o "como calculamos", que agora ficam no guia
   useEffect(() => {
-    if (!prontoParaIr || !ir) return
-    const alvo = document.getElementById(ir)
-    if (alvo instanceof HTMLDetailsElement) alvo.open = true
-    alvo?.scrollIntoView({ block: 'start' })
-  }, [prontoParaIr, ir])
+    if (ir === 'como-fazer' || ir === 'como-calculamos') {
+      navegar(`/como-usar?ir=${ir === 'como-fazer' ? 'lei' : 'conversas'}`, { replace: true })
+    }
+  }, [ir, navegar])
 
-  /** Muda parâmetros da URL; descer de nível (estado, município) entra no histórico, para o "voltar" subir. */
+  /** Muda parâmetros da URL; descer de nível (estado, cidade) entra no histórico, para o "voltar" subir. */
   const mudar = (novos: Record<string, string | null>, historico = false) => {
     const p = new URLSearchParams(params)
     // a escolha pode ter vindo de outra página (cópia da aba): entra na URL para o link compartilhado levar tudo
     if (candidato && !p.has('c')) p.set('c', String(candidato))
-    // a escola de partida é de um município: trocar de lugar a desfaz
+    // a escola de partida é de uma cidade: trocar de lugar a desfaz
     if ('m' in novos) p.delete('perto')
     for (const [k, v] of Object.entries(novos)) {
       if (v === null) p.delete(k)
@@ -73,12 +83,12 @@ export function Virar() {
 
   return (
     <div className="conteudo virar">
-      <section className="heroi" style={{ paddingBottom: 8 }}>
+      <section className="heroi heroi-inicio">
         <div className="rotulo-pequeno">2º turno · 25 de outubro</div>
-        <h1>Onde virar voto</h1>
+        <h1>Onde a sua conversa pode virar voto</h1>
         <p className="secundario">
-          Escolha o candidato e o lugar. Com os números do 1º turno, o site mostra em que bairros e escolas uma conversa pode
-          render mais votos.
+          Com o resultado oficial do 1º turno, urna por urna, o site mostra em que bairros e escolas há mais gente para
+          conversar, para o candidato que você escolher.
         </p>
       </section>
 
@@ -86,80 +96,139 @@ export function Virar() {
         <EscolhaCandidato />
       </Passo>
 
-      {candidato && resumo && indice && (
-        <>
-          <Passo numero={2} titulo="Que tipo de conversa?">
-            <div className="lentes" role="group" aria-label="Tipo de conversa">
-              {TODAS_LENTES.map((l) => (
-                <button key={l} aria-pressed={lente === l} onClick={() => mudar({ a: l })}>
-                  <strong>
-                    {LENTES[l].titulo} {LENTES[l].experimental && <SeloExperimental />}
-                  </strong>
-                  <span>{explicarLente(l, CANDIDATOS[candidato].curto)}</span>
-                </button>
+      <Passo numero={2} titulo="Onde?">
+        {ufAtual && resumo && (
+          <nav className="migalhas" aria-label="Nível" style={{ marginTop: 0, marginBottom: 8 }}>
+            <button className="link-botao" onClick={() => mudar({ uf: null, m: null }, true)}>Brasil</button>
+            {' › '}
+            <button className="link-botao" onClick={() => mudar({ uf: ufAtual, m: null }, true)}>
+              {resumo.ufs.find((u) => u.uf === ufAtual)?.nome}
+            </button>
+            {municipio && <> › {municipio.nome}</>}
+          </nav>
+        )}
+        <div className="campos">
+          <div>
+            <label htmlFor="v-uf">Estado</label>
+            <select id="v-uf" value={ufAtual} onChange={(e) => mudar({ uf: e.target.value || null, m: null }, true)}>
+              <option value="">Brasil inteiro</option>
+              {resumo?.ufs.map((u) => (
+                <option key={u.uf} value={u.uf}>
+                  {u.nome}
+                </option>
               ))}
-            </div>
-          </Passo>
+            </select>
+          </div>
+          <CampoMunicipio id="v-mun" uf={ufAtual} rotulo="Cidade" aoEscolher={(m) => mudar({ uf: m.uf, m: String(m.cd) }, true)} />
+        </div>
+        <details className="zona-secao">
+          <summary>Tenho a zona e a seção: ir direto à minha urna</summary>
+          <BuscaTitulo />
+          <p className="ajuda-busca">
+            A zona e a seção estão no título de eleitor e no aplicativo e-Título, gratuito, do{' '}
+            <a href="https://www.tse.jus.br/">Tribunal Superior Eleitoral</a>. Sem o título à mão? Escolha a sua cidade acima e
+            procure a sua escola. Ou <Link to={`${EXEMPLO}${comCandidato(candidato)}`}>veja uma urna de exemplo, da Bela Vista, em São Paulo</Link>.
+          </p>
+        </details>
+      </Passo>
 
-          <Passo numero={3} titulo="Onde?">
-            <nav className="migalhas" aria-label="Nível" style={{ marginTop: 0 }}>
-              <button className="link-botao" onClick={() => mudar({ uf: null, m: null }, true)}>Brasil</button>
-              {ufAtual && (
-                <>
-                  {' › '}
-                  <button className="link-botao" onClick={() => mudar({ uf: ufAtual, m: null }, true)}>
-                    {resumo.ufs.find((u) => u.uf === ufAtual)?.nome}
-                  </button>
-                </>
-              )}
-              {municipio && <> › {municipio.nome}</>}
-            </nav>
-            <div className="campos" style={{ marginTop: 12 }}>
-              <div>
-                <label htmlFor="v-uf">Estado</label>
-                <select id="v-uf" value={ufAtual} onChange={(e) => mudar({ uf: e.target.value || null, m: null }, true)}>
-                  <option value="">Brasil inteiro</option>
-                  {resumo.ufs.map((u) => (
-                    <option key={u.uf} value={u.uf}>
-                      {u.nome}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <CampoMunicipio id="v-mun" uf={ufAtual} aoEscolher={(m) => mudar({ uf: m.uf, m: String(m.cd) }, true)} />
-            </div>
-          </Passo>
+      <Passo numero={3} titulo="Que tipo de conversa?">
+        <Conversas lente={lente} candidato={candidato} ufs={resumo?.ufs ?? null} aoEscolher={(l) => mudar({ a: l })} />
+      </Passo>
 
-          {municipio ? (
-            <NivelMunicipio cd={municipio.cd} nome={municipio.nome} uf={municipio.uf} total={municipio} candidato={candidato} lente={lente} perto={perto} />
-          ) : ufAtual ? (
-            <NivelLista
-              titulo={`Municípios ${comPreposicao('de', ufAtual, resumo.ufs.find((u) => u.uf === ufAtual)!.nome)}`}
-              itens={indice.lista.filter((m) => m.uf === ufAtual).map((m) => ({ ...m, chave: String(m.cd), rotulo: m.nome }))}
-              candidato={candidato}
-              lente={lente}
-              aoEscolher={(chave) => mudar({ m: chave }, true)}
-              rotuloLugar="Município"
-            />
-          ) : (
-            <NivelLista
-              titulo="Estados"
-              itens={resumo.ufs.map((u) => ({ ...u, chave: u.uf, rotulo: u.nome }))}
-              candidato={candidato}
-              lente={lente}
-              aoEscolher={(chave) => mudar({ uf: chave, m: null }, true)}
-              rotuloLugar="Estado"
-            />
-          )}
-        </>
+      {candidato && resumo && indice ? (
+        municipio ? (
+          <NivelMunicipio cd={municipio.cd} nome={municipio.nome} uf={municipio.uf} total={municipio} candidato={candidato} lente={lente} perto={perto} />
+        ) : ufAtual ? (
+          <NivelLista
+            titulo={`Cidades ${comPreposicao('de', ufAtual, resumo.ufs.find((u) => u.uf === ufAtual)!.nome)}`}
+            itens={indice.lista.filter((m) => m.uf === ufAtual).map((m) => ({ ...m, chave: String(m.cd), rotulo: m.nome }))}
+            candidato={candidato}
+            lente={lente}
+            aoEscolher={(chave) => mudar({ m: chave }, true)}
+            rotuloLugar="Cidade"
+          />
+        ) : (
+          <NivelLista
+            titulo="Estados"
+            itens={resumo.ufs.map((u) => ({ ...u, chave: u.uf, rotulo: u.nome }))}
+            candidato={candidato}
+            lente={lente}
+            aoEscolher={(chave) => mudar({ uf: chave, m: null }, true)}
+            rotuloLugar="Estado"
+          />
+        )
+      ) : candidato ? (
+        <p className="carregando">Carregando…</p>
+      ) : (
+        <p className="aviso" style={{ marginTop: 24 }}>
+          Escolha um candidato, no passo 1, para ver os lugares com mais gente para conversar.
+        </p>
       )}
 
-      {candidato && (!resumo || !indice) && <p className="carregando">Carregando…</p>}
-      {!candidato && <p className="secundario">Escolha um candidato para ver os lugares.</p>}
-
-      <ComoFazer />
-      <ComoCalculamos />
+      <ComoUsarCurto />
+      <LeiCurta Titulo="h2" />
     </div>
+  )
+}
+
+/** Passo 3: as duas conversas de todo lugar, com o número do Brasil, e a do perfil como opção avançada (D9). */
+function Conversas({ lente, candidato, ufs, aoEscolher }: {
+  lente: Lente
+  candidato: NumeroCandidato | null
+  ufs: UF[] | null
+  aoEscolher: (l: Lente) => void
+}) {
+  const soma = (f: (u: UF) => number | undefined) => (ufs ? ufs.reduce((s, u) => s + (f(u) ?? 0), 0) : 0)
+  const cand = candidato ? CANDIDATOS[candidato] : null
+  const numero = (l: Lente): ReactNode => {
+    if (!ufs) return '…'
+    if (l === 'faltosos') {
+      return (
+        <>
+          {milhoes(soma((u) => u.faltosos))} faltaram no 1º turno
+          {cand && `; saldo possível para ${cand.curto}: até ${milhoes(soma((u) => (candidato === 13 ? u.saldo13 : u.saldo22)))}`}
+        </>
+      )
+    }
+    if (l === 'abertos') return <>{milhoes(soma((u) => u.abertos))} votaram em outro candidato, branco ou nulo</>
+    return cand ? (
+      <>
+        {milhoes(soma((u) => (candidato === 13 ? u.gap13 : u.gap22)))} votos abaixo do esperado para {cand.curto}
+      </>
+    ) : (
+      <>
+        Lula {milhoes(soma((u) => u.gap13))} · Flávio {milhoes(soma((u) => u.gap22))} votos abaixo do esperado
+      </>
+    )
+  }
+  const cartao = (l: Lente) => (
+    <button key={l} aria-pressed={lente === l} onClick={() => aoEscolher(l)}>
+      <strong>
+        {l === 'perfil' && 'Opção avançada: '}
+        {LENTES[l].titulo} {LENTES[l].experimental && <SeloExperimental />}
+      </strong>
+      <span className="lente-numero">{numero(l)}</span>
+      <span>{explicarLente(l, cand?.curto ?? 'o seu candidato')}</span>
+    </button>
+  )
+  return (
+    <>
+      <div className="lentes" role="group" aria-label="Que tipo de conversa">
+        {LENTES_PRINCIPAIS.map(cartao)}
+      </div>
+      <div className="lentes lentes-avancada" role="group" aria-label="Opção avançada">
+        {cartao('perfil')}
+      </div>
+      {lente === 'perfil' && (
+        <p className="aviso" style={{ marginTop: 12 }}>
+          <strong>Opção avançada, experimental.</strong> O esperado vem de um modelo que conhece a cidade e a idade, o sexo e a
+          escolaridade de quem vota em cada escola, mas não a renda do bairro nem a história do lugar: muitas vezes, “abaixo do
+          esperado” é um bairro onde o adversário é forte. Trate como pista, não como certeza.{' '}
+          <Link to="/como-usar?ir=conversas">Entenda as três conversas</Link>.
+        </p>
+      )}
+    </>
   )
 }
 
@@ -206,22 +275,13 @@ function Totais({ total, saldo, candidato, lente, onde }: { total: Lugar; saldo:
           {adv.curto} {pct(votos(total, adversario(candidato)) / total.validos, 0)} dos votos válidos
         </p>
       </div>
-      {lente === 'perfil' && (
-        <p className="aviso" style={{ gridColumn: '1 / -1', margin: 0 }}>
-          <strong>Experimental.</strong> O esperado vem do modelo do capítulo 4 da análise: o efeito da cidade e a idade, o sexo e
-          a escolaridade de quem vota em cada escola. Pode indicar onde há mais gente parecida com quem vota em {cand.curto}, mas
-          que não votou nele. Só que o modelo não conhece a renda do bairro nem a história política do lugar, e parte da
-          diferença vem daí: muitas vezes é um bairro onde o adversário é forte por motivos que o modelo não vê. Compara lugares,
-          não pessoas: trate como pista, não como certeza.
-        </p>
-      )}
     </div>
   )
 }
 
 type ItemLista = Lugar & { chave: string; rotulo: string }
 
-/** Brasil (lista de estados) ou estado (lista de municípios): ranking clicável. */
+/** Brasil (lista de estados) ou estado (lista de cidades): ranking clicável. */
 function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }: {
   titulo: string
   itens: ItemLista[]
@@ -232,7 +292,7 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
 }) {
   const [quantos, setQuantos] = useState(20)
   const total = somar(itens)
-  // estados e municípios já trazem o saldo somado escola por escola
+  // estados e cidades já trazem o saldo somado escola por escola
   const saldo = potencialSomado(itens, candidato, lente)
   const ranking = ranquear(itens, candidato, lente, quantos)
   const nItens = itens.filter((i) => potencial(i, candidato, lente) > 0).length
@@ -261,7 +321,7 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
 }
 
 function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = false, comDistancia = false, vazio }: {
-  linhas: (Lugar & { valor: number; nome: ReactNode; bairro?: string; km?: number; s13?: number | null; s22?: number | null })[]
+  linhas: (Lugar & { valor: number; nome: ReactNode; bairro?: string; km?: number })[]
   candidato: NumeroCandidato
   lente: Lente
   rotuloLugar: string
@@ -284,7 +344,7 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
       </p>
     )
   }
-  // nas escolas, a ação do perfil mostra a diferença do esperado, para a conta poder ser conferida
+  // nas escolas, a conversa do perfil mostra a diferença do esperado, para a conta poder ser conferida
   const comSurpresa = lente === 'perfil' && linhas.some((l) => (candidato === 13 ? l.s13 : l.s22) != null)
   return (
     <TabelaRolagem rotulo={`Lugares ordenados ${LENTES[lente].pelo}`}>
@@ -328,7 +388,7 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
   )
 }
 
-/** Município: mapa das escolas, bairros e escolas ordenados. */
+/** Cidade: mapa das escolas, bairros e escolas ordenados, e as escolas perto de uma escola de partida. */
 function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
   cd: number
   nome: string
@@ -345,7 +405,7 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
   const [quantasPerto, setQuantasPerto] = useState(10)
   const cand = CANDIDATOS[candidato]
 
-  // a escola de partida só vale se existe neste município e tem coordenada
+  // a escola de partida só vale se existe nesta cidade e tem coordenada
   const partida = perto ? locais?.find((l) => chaveLocal(l) === perto && l.lat !== null && l.lon !== null) : undefined
   const anel = useMemo(() => (partida ? { lat: partida.lat!, lon: partida.lon!, km: RAIO_PERTO_KM } : null), [partida])
   const vizinhas = useMemo(
@@ -388,17 +448,19 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
         morar perto dela.
       </p>
       <div id="mapa-virar">
-        <MapaLocais
-          locais={locais}
-          selecionado={selecionado}
-          aoSelecionar={setSelecionado}
-          variavel="margem"
-          candidato={candidato}
-          tamanho={tamanho}
-          linhaExtra={(l) => `${rotuloValor(lente, cand.curto)}: ${inteiro(Math.round(tamanho(l)))}`}
-          chave={`${candidato}-${lente}`}
-          anel={anel}
-        />
+        <Suspense fallback={<p className="carregando">Carregando o mapa…</p>}>
+          <MapaLocais
+            locais={locais}
+            selecionado={selecionado}
+            aoSelecionar={setSelecionado}
+            variavel="margem"
+            candidato={candidato}
+            tamanho={tamanho}
+            linhaExtra={(l) => `${rotuloValor(lente, cand.curto)}: ${inteiro(Math.round(tamanho(l)))}`}
+            chave={`${candidato}-${lente}`}
+            anel={anel}
+          />
+        </Suspense>
       </div>
       <LegendaEscala variavel="margem" candidato={candidato} />
       {partida && (
@@ -435,7 +497,7 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
             vazio={
               lente === 'perfil'
                 ? `${cand.nome} não ficou abaixo do esperado em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km.`
-                : `${cand.nome} não ficou à frente em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km. Lembrar quem faltou não soma para ele neste pedaço da cidade; conversar com quem ficou de fora vale em qualquer lugar.`
+                : `${cand.nome} não ficou à frente em nenhuma das ${vizinhas.length} escolas a até ${RAIO_PERTO_KM} km. Lembrar quem faltou não soma para ele neste pedaço da cidade; conversar com quem votou em outro vale em qualquer lugar.`
             }
           />
           {comPotencial.length > quantasPerto && (
@@ -448,12 +510,7 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
 
       <h2>Bairros</h2>
       <p className="secundario">Soma das escolas de cada bairro (o nome do bairro é o do endereço da escola no cadastro do TSE).</p>
-      <TabelaRanking
-        rotuloLugar="Bairro"
-        linhas={bairros.slice(0, 10)}
-        candidato={candidato}
-        lente={lente}
-      />
+      <TabelaRanking rotuloLugar="Bairro" linhas={bairros.slice(0, 10)} candidato={candidato} lente={lente} />
 
       <h2>Escolas</h2>
       <p className="secundario">Toque no nome para ver a escola no mapa; o link “seções” abre as urnas dela.</p>
@@ -482,110 +539,45 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
         </button>
       )}
       <p className="discreto" style={{ marginTop: 16 }}>
-        {nome} ({uf}): {inteiro(locais.length)} escolas. Quer ver tudo do município?{' '}
-        <Link to={`/municipio/${cd}`}>Abra a página de {nome}</Link>.
+        {nome} ({uf}): {inteiro(locais.length)} escolas.{' '}
+        <Link to={`/municipio/${cd}`}>Veja o resultado do 1º turno e as seções de {nome}</Link>.
       </p>
     </section>
   )
 }
 
-function ComoFazer() {
+/** O mínimo para começar; o guia completo fica em "Como usar". */
+function ComoUsarCurto() {
   return (
-    <section className="cartao como-fazer" aria-labelledby="como-fazer" style={{ marginTop: 40 }}>
-      <h2 id="como-fazer" style={{ marginTop: 0 }}>
-        Como fazer, dentro da lei
-      </h2>
-      <ul>
+    <section className="cartao como-usar-curto" aria-labelledby="t-como-usar" style={{ marginTop: 40 }}>
+      <h2 id="t-como-usar">Como usar em 1 minuto</h2>
+      <ol>
         <li>
-          <strong>Converse com quem você conhece</strong> no bairro: família, vizinhos, colegas. Escute antes de argumentar.
+          <strong>Para quem:</strong> escolha o candidato. A conta é a mesma para os dois.
         </li>
         <li>
-          <strong>Para quem faltou:</strong> lembre a data (25 de outubro), o local de votação (está no e-Título) e o documento
-          com foto. Quem não puder votar pode justificar a ausência.
+          <strong>Onde:</strong> escolha o estado e a cidade, ou vá direto à sua urna com a zona e a seção.
         </li>
         <li>
-          <strong>Nada em troca do voto.</strong> Oferecer dinheiro, comida, emprego ou qualquer vantagem é crime (Código
-          Eleitoral, art. 299).
+          <strong>Que conversa:</strong> lembrar quem faltou ou conversar com quem votou em outro. O site mostra as escolas e
+          os bairros com mais gente para essa conversa.
         </li>
-        <li>
-          <strong>Não transporte eleitores no dia da eleição.</strong> Só é permitido levar a própria família no próprio carro
-          (Lei 6.091/1974).
-        </li>
-        <li>
-          <strong>A escola é referência, não palco.</strong> Ela indica o bairro de quem vota ali; propaganda dentro de escolas
-          e prédios públicos é proibida (Lei 9.504/1997, art. 37).
-        </li>
-        <li>
-          <strong>No dia 25,</strong> pedir voto ou fazer propaganda perto das seções é crime (boca de urna, Lei 9.504/1997,
-          art. 39, § 5º).
-        </li>
-        <li>
-          <strong>Só informação verdadeira e com fonte.</strong> Divulgar fato que se sabe falso sobre candidato é crime
-          (Código Eleitoral, art. 323).
-        </li>
-        <li>
-          <strong>Não pague para impulsionar</strong> conteúdo eleitoral nas redes: só candidatos, partidos e coligações podem
-          contratar impulsionamento (Lei 9.504/1997, art. 57-C). Este site não impulsiona nada.
-        </li>
-      </ul>
-      <p className="discreto" style={{ marginBottom: 0 }}>
-        Resumo para orientação, não é aconselhamento jurídico. Em caso de dúvida, consulte o TSE ou o TRE do seu estado.
+      </ol>
+      <p className="discreto">
+        O que os números não dizem: quem faltou é um teto (parte mudou de cidade ou não pode votar), e os votos em aberto não
+        têm lado. São somas por escola, nunca dados de pessoas.
       </p>
+      <div className="acoes">
+        <Link className="botao" to="/como-usar">
+          Guia completo: como usar
+        </Link>
+        <Link className="botao botao-secundario" to="/analise">
+          Por que bairros e escolas?
+        </Link>
+        <Link className="botao botao-secundario" to="/conferencia">
+          Depois de votar, confira a sua urna
+        </Link>
+      </div>
     </section>
-  )
-}
-
-function ComoCalculamos() {
-  return (
-    <details className="como-sabemos" id="como-calculamos" style={{ marginTop: 24 }}>
-      <summary>Como calculamos (e o que os números não dizem)</summary>
-      <ul>
-        <li>
-          <strong>Fonte:</strong> boletins de urna do 1º turno, somados por escola. A soma é{' '}
-          <Link to="/conferencia">idêntica ao resultado oficial do TSE</Link>.
-        </li>
-        <li>
-          <strong>Faltaram:</strong> eleitores aptos que não votaram. É um teto: parte deles mudou de cidade, está fora do país
-          ou ainda consta no cadastro sem poder votar.
-        </li>
-        <li>
-          <strong>Saldo possível:</strong> faltosos × vantagem do candidato na escola (votos dele menos os do adversário,
-          divididos pelos votos válidos), só onde ele ficou à frente. Supõe que quem faltou votaria como os vizinhos que
-          votaram; quem falta costuma ser mais jovem, mais velho ou mais pobre que quem vota. Por isso o número é uma ordem de
-          grandeza, não uma previsão.
-        </li>
-        <li>
-          <strong>Votos em aberto:</strong> votos nos outros 10 candidatos, brancos e nulos. O site não sabe para que lado eles
-          tendem; mostra quantos são e como o lugar votou.
-        </li>
-        <li>
-          <strong>Votos abaixo do esperado (experimental):</strong> para cada escola, o modelo do{' '}
-          <Link to="/analise?cap=c-explicacoes">capítulo 4 da análise</Link> calcula quanto o candidato teria, dado o efeito da
-          cidade e o perfil de quem vota ali (idade, sexo e escolaridade). Onde ele teve menos, a diferença vezes os votos
-          válidos é o número; onde teve mais, zero. A soma é feita escola por escola. Escolas sem o perfil do eleitorado
-          publicado ficam de fora. O modelo não conhece a renda de cada bairro (só a da cidade) nem a história política do
-          lugar: em São Paulo, por exemplo, as escolas mais abaixo do esperado para Lula ficam em bairros ricos, e as mais
-          abaixo para Flávio, no centro expandido. Parte do número é isso, e não gente esperando uma conversa. Depende do
-          modelo (<Link to="/metodo">Método</Link>) e compara lugares, não pessoas: uma escola abaixo do esperado não diz como
-          votou nem como votaria ninguém em particular (falácia ecológica). É pista, não certeza.
-        </li>
-        <li>
-          <strong>Por que não “onde está apertado”:</strong> no 2º turno para presidente, cada voto conta igual no país inteiro.
-          Um voto a mais na Bahia vale o mesmo que um em Santa Catarina. O que importa é quantas pessoas alcançáveis há perto,
-          não se o lugar é disputado.
-        </li>
-        <li>
-          <strong>Lugares, não pessoas:</strong> os números são somas por escola. Ninguém é identificado.
-        </li>
-        <li>
-          <strong>Três contas separadas, sem índice:</strong> juntar as três num número só esconderia a conta. Separadas, cada
-          uma pode ser conferida.
-        </li>
-        <li>
-          <strong>A mesma conta para os dois:</strong> trocar o candidato só troca quem é “à frente” e qual esperado é usado. O
-          site não pede voto para ninguém.
-        </li>
-      </ul>
-    </details>
   )
 }

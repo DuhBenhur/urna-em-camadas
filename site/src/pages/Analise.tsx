@@ -278,7 +278,7 @@ export function Analise() {
             conversa={
               <>
                 os bolsões mostram onde o voto foge do esperado; a terceira ação do{' '}
-                <Link to={`/virar?a=perfil&c=${candidato}`}>“Onde virar voto”</Link> parte deles. É pista, não certeza: parte do que
+                <Link to={`/?a=perfil&c=${candidato}`}>“Onde virar voto”</Link> parte deles. É pista, não certeza: parte do que
                 foge do esperado é o que o modelo não vê.
               </>
             }>
@@ -359,7 +359,7 @@ export function Analise() {
               </div>
             </div>
             <div className="acoes" style={{ marginTop: 24 }}>
-              <Link className="botao" to={`/virar?c=${candidato}`}>
+              <Link className="botao" to={`/?c=${candidato}`}>
                 Onde virar voto
               </Link>
               <Link className="botao botao-secundario" to="/">

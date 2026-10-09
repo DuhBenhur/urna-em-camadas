@@ -19,8 +19,18 @@ export type Lente = 'faltosos' | 'abertos' | 'perfil'
 
 export const TODAS_LENTES: Lente[] = ['faltosos', 'abertos', 'perfil']
 
-/** Lê a ação do parâmetro `?a=` (padrão: lembrar quem faltou). */
+/**
+ * As duas conversas de todo lugar. A do perfil (experimental) fica só dentro da ferramenta, como opção avançada:
+ * os dados mostraram que ela aponta muito para bairros onde o adversário é forte por motivos que o modelo não vê
+ * (decisão D9, docs/plano_reorganizacao.md). Urna, mapa do Brasil e município mostram só estas duas.
+ */
+export const LENTES_PRINCIPAIS: Lente[] = ['faltosos', 'abertos']
+
+/** Lê a conversa do parâmetro `?a=` (padrão: lembrar quem faltou). */
 export const lerLente = (a: string | null): Lente => (a === 'abertos' || a === 'perfil' ? a : 'faltosos')
+
+/** Fora da ferramenta: um link antigo com `?a=perfil` cai em "lembrar quem faltou". */
+export const lerLentePrincipal = (a: string | null): Lente => (a === 'abertos' ? 'abertos' : 'faltosos')
 
 /**
  * Qualquer lugar agregado: estado, município, bairro ou local de votação. Estados e municípios trazem `saldo13`/`saldo22`
@@ -41,8 +51,11 @@ export type Lugar = {
   s22?: number | null
 }
 
-/** `pelo`: "ordenados pelo saldo possível"; `porCandidato`: a conta depende do candidato escolhido. */
-export const LENTES: Record<Lente, { titulo: string; curto: string; medida: string; pelo: string; porCandidato: boolean; experimental?: boolean }> = {
+/**
+ * Os nomes das conversas na tela (um nome para cada coisa; seção 8 do plano de reorganização). `pelo`: "ordenados pelo
+ * saldo possível"; `porCandidato`: a conta depende do candidato escolhido; `subtitulo`: o que o título resume.
+ */
+export const LENTES: Record<Lente, { titulo: string; subtitulo?: string; curto: string; medida: string; pelo: string; porCandidato: boolean; experimental?: boolean }> = {
   faltosos: {
     titulo: 'Lembrar quem faltou',
     curto: 'quem faltou',
@@ -51,8 +64,9 @@ export const LENTES: Record<Lente, { titulo: string; curto: string; medida: stri
     porCandidato: true,
   },
   abertos: {
-    titulo: 'Conversar com quem ficou de fora',
-    curto: 'quem ficou de fora',
+    titulo: 'Conversar com quem votou em outro',
+    subtitulo: 'outros candidatos, branco ou nulo',
+    curto: 'quem votou em outro',
     medida: 'votos em aberto',
     pelo: 'pelos votos em aberto',
     porCandidato: false,

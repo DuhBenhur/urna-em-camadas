@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { LegendaEscala, MapaLocais } from '../components/Mapas'
+import { LegendaEscala } from '../components/Legendas'
+import { MapaLocais } from '../components/Mapas'
 import { normalizar, registros, useLocais, useMunicipios, useResumo, useZona, type Secao } from '../lib/dados'
 import { inteiro, pct, pp } from '../lib/formato'
 import { SeletorCandidato } from '../components/SeletorCandidato'
-import { SeloExperimental } from '../components/SeloExperimental'
 import { comCandidato, useCandidato } from '../lib/candidato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import { TabelaRolagem } from '../components/TabelaRolagem'
-import { LENTES, TODAS_LENTES, lerLente, potencial, rotuloValor, type Lente } from '../lib/virar'
+import { LENTES, LENTES_PRINCIPAIS, lerLentePrincipal, potencial, rotuloValor, type Lente } from '../lib/virar'
 import type { Local } from '../lib/dados'
 
 type Vista = 'margem' | 'surpresa' | 'virar'
@@ -29,7 +29,7 @@ export function Municipio() {
   const candidato: NumeroCandidato = escolhido ?? 13
   // sem candidato escolhido, a vista "Virar voto" abre nos votos em aberto, que não têm lado
   const pedidaLente = params.get('a')
-  const lente: Lente = pedidaLente ? lerLente(pedidaLente) : escolhido ? 'faltosos' : 'abertos'
+  const lente: Lente = pedidaLente ? lerLentePrincipal(pedidaLente) : escolhido ? 'faltosos' : 'abertos'
   // um link com ?a= para este mesmo município (a página não remonta) também abre a vista "Virar voto"
   useEffect(() => {
     if (pedidaLente) setVista('virar')
@@ -125,10 +125,9 @@ export function Municipio() {
         </div>
         {vista === 'virar' && (
           <div className="abas" role="group" aria-label="Que tipo de conversa">
-            {TODAS_LENTES.map((l) => (
+            {LENTES_PRINCIPAIS.map((l) => (
               <button key={l} aria-pressed={lente === l} onClick={() => mudarLente(l)}>
                 {LENTES[l].titulo}
-                {LENTES[l].experimental && ' (experimental)'}
               </button>
             ))}
           </div>
@@ -156,12 +155,7 @@ export function Municipio() {
       <LegendaEscala variavel={vista === 'surpresa' ? 'surpresa' : 'margem'} candidato={candidato} />
       {vista === 'virar' && (
         <p style={{ marginTop: 12 }}>
-          {lente === 'perfil' && (
-            <>
-              <SeloExperimental /> Depende do modelo, que não vê a renda do bairro nem a história do lugar: pista, não certeza.{' '}
-            </>
-          )}
-          <Link to={`/virar?a=${lente}&uf=${municipio.uf}&m=${municipio.cd}${comCandidato(escolhido, '&')}`}>
+          <Link to={`/?a=${lente}&uf=${municipio.uf}&m=${municipio.cd}${comCandidato(escolhido, '&')}`}>
             Ver o ranking de bairros e escolas no “Onde virar voto”
           </Link>
         </p>

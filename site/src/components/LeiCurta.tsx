@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom'
-import { comCandidato } from '../lib/candidato'
-import type { NumeroCandidato } from '../lib/modelo'
 
-/** A lei, versão curta, para toda tela de ação. A lista completa, com os artigos, fica no "Onde virar voto". */
-export function LeiCurta({ candidato = null, Titulo = 'h3' }: { candidato?: NumeroCandidato | null; Titulo?: 'h2' | 'h3' }) {
+/** A lei, versão curta, para toda tela de ação. A lista completa, com os artigos, fica no guia "Como usar". */
+export function LeiCurta({ Titulo = 'h3' }: { Titulo?: 'h2' | 'h3' }) {
   return (
     <div className="lei-curta">
       <Titulo>Dentro da lei</Titulo>
@@ -21,7 +19,7 @@ export function LeiCurta({ candidato = null, Titulo = 'h3' }: { candidato?: Nume
           <strong>Só informação verdadeira</strong>, com fonte.
         </li>
       </ul>
-      <Link to={`/virar?ir=como-fazer${comCandidato(candidato, '&')}`}>Todas as regras, com os artigos da lei</Link>
+      <Link to="/como-usar?ir=lei">Todas as regras, com os artigos da lei</Link>
     </div>
   )
 }
