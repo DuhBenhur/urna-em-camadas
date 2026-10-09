@@ -1,10 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useConferencia, type LinhaConferencia } from '../lib/dados'
 import { inteiro } from '../lib/formato'
-import { REPOSITORIO } from '../lib/projeto'
 import { TabelaRolagem } from '../components/TabelaRolagem'
-
-const PORTAL_TSE = 'https://dadosabertos.tse.jus.br/'
 
 /** Soma das diferenças absolutas entre boletins e resultado oficial, em todos os campos da linha. */
 const diferenca = (l: LinhaConferencia) =>
@@ -47,8 +44,8 @@ export function Conferencia() {
           <strong>Ache a sua zona e a sua seção</strong> no título de eleitor ou no app e-Título.
         </li>
         <li>
-          <strong>Abra a sua urna neste site</strong> (<Link to="/">busca na página inicial</Link>). O boletim aparece com os
-          números publicados pelo TSE, e um selo diz se ele é idêntico ao resultado oficial da seção.
+          <strong>Abra a sua urna neste site</strong> (na <Link to="/">ferramenta</Link>, em “Tenho a zona e a seção”). O
+          boletim aparece com os números publicados pelo TSE, e um selo diz se ele é idêntico ao resultado oficial da seção.
         </li>
         <li>
           <strong>Compare com o boletim impresso.</strong> Ao fim da votação, a urna imprime o boletim, e uma via fica afixada
@@ -101,30 +98,13 @@ export function Conferencia() {
         <p className="carregando">Carregando…</p>
       )}
 
-      <h2>O que foi conferido</h2>
-      <p>
-        Duas publicações do TSE no <a href={PORTAL_TSE}>Portal de Dados Abertos</a>, comparadas urna por urna:
-      </p>
-      <ul>
-        <li>
-          <strong>Os boletins de urna</strong> de cada seção, com a assinatura digital (SHA-512) conferida com a publicada
-          pelo tribunal. É a base de todo este site.
-        </li>
-        <li>
-          <strong>O resultado oficial por seção</strong> (detalhe da votação e votação por seção), que é o que a totalização
-          soma para chegar ao resultado da eleição.
-        </li>
-      </ul>
-      <p>
-        Em cada seção, conferimos {c ? c.campos_conferidos.join(', ') : 'todos os campos do boletim'}. Os eleitores no
-        exterior ficam fora, como no resto do site.
-      </p>
-      <div className="cartao destaque" style={{ marginTop: 16 }}>
-        <h3>O nulo técnico</h3>
+      <div className="cartao destaque" style={{ marginTop: 32 }}>
+        <h3>O detalhe que a conferência pegou</h3>
         <p>
-          Uma candidatura a Presidente foi renunciada, mas o número dela continuou recebendo votos na urna. Esses votos
-          aparecem no boletim, e a totalização os conta como nulos (o nulo técnico). A tabela oficial por seção mostra os
-          nulos da urna e esses votos separados; somadas as duas partes, todas as seções batem.
+          Uma candidatura a Presidente foi renunciada, mas o número dela continuou recebendo votos na urna. Esses votos aparecem
+          no boletim como votos no candidato, e a contagem oficial os trata como nulos (o “nulo técnico”). Na primeira versão
+          deste site, sem esse ajuste, os percentuais saíam errados na segunda casa decimal. Com o ajuste, todas as urnas
+          batem. Sem conferir antes de fazer as contas, o erro teria entrado em todos os números do site.
         </p>
       </div>
 
@@ -140,12 +120,9 @@ export function Conferencia() {
         </li>
       </ul>
 
-      <h2>Para reproduzir</h2>
-      <p>
-        O script <a href={`${REPOSITORIO}/blob/main/pipeline/09_totalizacao_oficial.py`}><code>09_totalizacao_oficial.py</code></a>{' '}
-        monta o resultado oficial por seção e o <a href={`${REPOSITORIO}/blob/main/pipeline/03_validar_controle.py`}><code>03_validar_controle.py</code></a>{' '}
-        compara as {c ? inteiro(c.brasil.secoes) : '…'} urnas campo a campo. Essa comparação roda automaticamente a cada
-        publicação do site: se uma única urna divergir, o site não é publicado.
+      <p className="discreto" style={{ marginTop: 24 }}>
+        Quais arquivos foram comparados, campo a campo, e como refazer a conferência:{' '}
+        <Link to="/metodo?sec=fontes">como a conferência foi feita (técnico)</Link>.
       </p>
     </div>
   )

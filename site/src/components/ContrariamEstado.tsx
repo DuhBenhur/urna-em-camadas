@@ -12,10 +12,10 @@ function Lista({ titulo, itens, candidato }: { titulo: string; itens: Contraria[
         <table>
           <thead>
             <tr>
-              <th>Município</th>
+              <th>Cidade</th>
               <th className="num">{CANDIDATOS[candidato].curto} na cidade</th>
               <th className="num">No estado</th>
-              <th className="num">Efeito</th>
+              <th className="num">Efeito da cidade</th>
             </tr>
           </thead>
           <tbody>

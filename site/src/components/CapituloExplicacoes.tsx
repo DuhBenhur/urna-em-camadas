@@ -4,7 +4,6 @@ import { inteiro, pct, pontosComSinal } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import { BarrasHorizontais } from './BarrasHorizontais'
-import { ComoSabemos } from './ComoSabemos'
 import { PontosHorizontais } from './PontosHorizontais'
 import { TabelaRolagem } from './TabelaRolagem'
 
@@ -32,16 +31,13 @@ const ppNum = pontosComSinal
 /** proporção → "22%"; o que arredonda para zero sai sem sinal */
 const pctSemSinalNoZero = (v: number) => pct(Math.abs(v) < 0.005 ? 0 : v, 0)
 
+/** Os gráficos dos modelos explicativos, para um candidato: o detalhe técnico do bloco "Por que os estados votam diferente?". */
 export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explicacao: Explicacao; resumo: Resumo; candidato: NumeroCandidato }) {
   const n = String(candidato) as '13' | '22'
   const e = explicacao.stepup.candidatos[n]
   const cand = CANDIDATOS[candidato]
-  const icc = resumo.modelos[n].icc.UF
   const com = e.shapley.uf.com_regiao
   const sem = e.shapley.uf.sem_regiao
-  const perfilSecao = com.blocos.idade_sexo + com.blocos.escolaridade
-  const perfilMun = com.blocos.renda_economia + com.blocos.cor_raca + com.blocos.religiao + com.blocos.urbanizacao
-  const regiao = com.blocos.regiao
   const sobra = 1 - com.total
   const nomeUf = (uf: string) => resumo.ufs.find((u) => u.uf === uf)?.nome ?? uf
   const boot = e.bootstrap
@@ -78,38 +74,10 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
 
   return (
     <>
-      <p>
-        Um estado pode votar diferente porque a sua população é diferente (mais jovem, mais escolarizada, mais evangélica) ou
-        porque o lugar pesa por si. O modelo põe essas características em cada camada e mede quanto dos {pct(icc, 0)} do estado
-        elas explicam no voto em {cand.nome}.
-      </p>
-      <div className="grade-3">
-        <div className="cartao tile">
-          <div className="rotulo">explicado pelo perfil dos municípios</div>
-          <div className="valor">{pct(perfilMun, 0)}</div>
-          <p className="nota">renda e economia, cor ou raça, religião, urbanização</p>
-        </div>
-        <div className="cartao tile">
-          <div className="rotulo">explicado pela região do país</div>
-          <div className="valor">{pct(regiao, 0)}</div>
-          <p className="nota">o que sobra em comum entre estados vizinhos</p>
-        </div>
-        <div className="cartao tile">
-          <div className="rotulo">explicado pelo perfil das seções</div>
-          <div className="valor">{pct(perfilSecao, 0)}</div>
-          <p className="nota">idade, sexo e escolaridade de quem vota em cada urna</p>
-        </div>
-      </div>
-      <p style={{ marginTop: 16 }}>
-        Sobram <strong>{pct(sobra, 0)}</strong> da camada do estado sem explicação. O perfil de quem vota em cada urna explica
-        pouco da diferença entre estados; o perfil dos lugares explica muito mais; e boa parte do resto é regional, o que
-        combina com o capítulo da vizinhança.
-      </p>
-
       <h3>O que explica a camada do estado</h3>
       <p className="secundario">
         Parte da variação entre estados no voto em {cand.nome} explicada por cada grupo de características, na média de todas as
-        ordens em que os grupos podem entrar no modelo.
+        ordens em que os grupos podem entrar no modelo. Sobram {pct(sobra, 0)} sem explicação.
       </p>
       <BarrasHorizontais
         barras={barras}
@@ -175,8 +143,8 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
         Separando também o local de votação, a diferença entre as urnas do país no voto em {cand.nome} fica assim:{' '}
         {pct(e.quatro_niveis.icc.uf, 0)} entre estados, {pct(e.quatro_niveis.icc.mun, 0)} entre cidades do mesmo estado,{' '}
         {pct(e.quatro_niveis.icc.local, 0)} entre escolas da mesma cidade e só {pct(e.quatro_niveis.icc.secao, 0)} entre urnas
-        da mesma escola. O que parecia ser da urna é, quase todo, da escola e do bairro em volta. Por isso o{' '}
-        <Link to={`/?c=${candidato}`}>“Onde virar voto”</Link> fala de escolas e bairros, não de seções.
+        da mesma escola. O que parecia ser da urna é, quase todo, da escola e do bairro em volta. Por isso a{' '}
+        <Link to="/">ferramenta</Link> fala de escolas e bairros, não de seções.
       </p>
 
       <h3 style={{ marginTop: 32 }}>A urna ou a cidade?</h3>
@@ -223,23 +191,6 @@ export function CapituloExplicacoes({ explicacao, resumo, candidato }: { explica
         cabecalho={['Estado', 'Diferença (seção bem mais escolarizada)']}
       />
 
-      <ComoSabemos>
-        <p>
-          Modelos multinível com a mesma estrutura do modelo nulo (seção, município, estado), acrescentando grupos de
-          características um de cada vez. A parte explicada é quanto a variância do estado cai em relação ao modelo sem
-          explicações. Como os grupos se sobrepõem (o Nordeste é, em média, mais pobre), a ordem de entrada mudaria o crédito de
-          cada um: por isso a conta é a média de todas as ordens possíveis (valor de Shapley, 128 modelos).
-        </p>
-        <p>
-          “Bem acima da média” é, tecnicamente, um desvio-padrão acima: mais alto que cerca de 5 em cada 6 lugares.
-          “Dentro da cidade” e “entre cidades” vêm do modelo de Mundlak, que separa as duas coisas. A escolaridade da seção é um
-          índice (% com superior completo menos % até o fundamental incompleto), porque as duas medidas andam juntas. A diferença
-          por estado vem de uma inclinação aleatória (testada contra o modelo sem ela), e a por região, de interações entre
-          níveis.
-          Tudo descreve lugares, não pessoas: urnas com mais diplomados votarem de um jeito não diz como votou cada diplomado.{' '}
-          <Link to="/metodo">Método completo</Link>.
-        </p>
-      </ComoSabemos>
     </>
   )
 }

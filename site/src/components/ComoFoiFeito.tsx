@@ -1,139 +1,71 @@
-import { Link } from 'react-router-dom'
-import type { Explicacao, Resumo } from '../lib/dados'
-import { DECISOES } from '../lib/decisoes'
+import type { Conferencia, Explicacao, Resumo } from '../lib/dados'
 import { inteiro, pct } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
-import { REPOSITORIO } from '../lib/projeto'
-import { TabelaRolagem } from './TabelaRolagem'
 
-type Etapa = { titulo: string; situacao: 'feito' | 'em andamento' | 'a seguir'; texto: string; numero?: string }
+type Etapa = { titulo: string; texto: string; numero?: string }
 
-// 4 percentuais do g1 (1ª ZE) + 7 totais oficiais de SP: pipeline/03_validar_controle.py
-const CONFERENCIAS = 11
-
-export function ComoFoiFeito({ resumo, candidato, explicacao }: { resumo: Resumo; candidato: NumeroCandidato; explicacao?: Explicacao | null }) {
+/** O site em uma tela, em linguagem simples: o "como funciona" do primeiro bloco de Método e dados. */
+export function ComoFoiFeito({ resumo, conferencia, explicacao, candidato }: {
+  resumo: Resumo
+  conferencia: Conferencia
+  explicacao: Explicacao
+  candidato: NumeroCandidato
+}) {
   const n = String(candidato) as '13' | '22'
+  const cand = CANDIDATOS[candidato]
   const icc = resumo.modelos[n].icc
-  const shapley = explicacao?.stepup.candidatos[n].shapley.uf.com_regiao.blocos
-  const moran = explicacao?.espacial.candidatos[n].completo.moran_I
+  const lisa = explicacao.espacial.candidatos[n].completo.lisa
   const etapas: Etapa[] = [
     {
       titulo: 'A pergunta',
-      situacao: 'feito',
       texto:
-        'Quanto do resultado de uma urna vem do estado, do município e da própria seção? A ideia de separar as camadas foi inspirada num estudo multinível sobre a renda dos domicílios nos estados brasileiros (referência no Método).',
+        'Quanto do resultado de uma urna vem do estado, da cidade e da própria urna? E, para o 2º turno: em que bairros e escolas há mais gente para conversar?',
     },
     {
       titulo: 'Os dados',
-      situacao: 'feito',
       texto:
-        'Boletins de urna das 27 UFs, perfil do eleitorado e locais de votação (TSE); Censo e PIB (IBGE); Bolsa Família (MDS). Quase 8 GB compactados, todos públicos.',
-      numero: `${inteiro(resumo.totais.secoes)} urnas em ${inteiro(resumo.totais.locais)} locais de votação`,
+        'Boletins de urna, perfil do eleitorado e locais de votação, do TSE; Censo e PIB, do IBGE; Bolsa Família, do MDS; exportações, do MDIC. Todos públicos.',
+      numero: `${inteiro(resumo.totais.secoes)} urnas em ${inteiro(resumo.totais.locais)} escolas`,
     },
     {
       titulo: 'A conferência',
-      situacao: 'feito',
       texto:
-        'Cada arquivo tem a assinatura (SHA-512) conferida com a publicada pelo TSE. Antes de qualquer conta, a base reproduz a totalização oficial de São Paulo e o resultado da 1ª Zona publicado pelo g1.',
-      numero: `${CONFERENCIAS} de ${CONFERENCIAS} conferências batem exatamente`,
+        'Cada arquivo do TSE foi conferido com a assinatura digital publicada pelo tribunal, e cada urna, com o resultado oficial. A conferência roda de novo a cada publicação do site.',
+      numero: `${inteiro(conferencia.brasil.conferem)} de ${inteiro(conferencia.brasil.secoes)} urnas idênticas ao resultado oficial`,
     },
     {
-      titulo: 'O modelo',
-      situacao: 'feito',
-      texto: 'Regressão multinível de três níveis (seção, município, estado), ajustada com gpboost e conferida com statsmodels.',
-      numero: `${CANDIDATOS[candidato].curto}: estado ${pct(icc.UF, 0)} · município ${pct(icc.município, 0)} · seção ${pct(icc.seção, 0)} da variação`,
-    },
-    {
-      titulo: 'As explicações',
-      situacao: explicacao ? 'feito' : 'a seguir',
+      titulo: 'As contas da ferramenta',
       texto:
-        'Perfil da seção (idade, sexo, escolaridade), perfil do município (renda, cor ou raça, religião, urbanização) e região entram no modelo, um grupo por vez. A média de todas as ordens de entrada (128 modelos) reparte o crédito entre os grupos.',
-      numero: shapley
-        ? `${CANDIDATOS[candidato].curto}, camada do estado: perfil dos municípios ${pct(shapley.renda_economia + shapley.cor_raca + shapley.religiao + shapley.urbanizacao, 0)} · região ${pct(shapley.regiao, 0)} · perfil das seções ${pct(shapley.idade_sexo + shapley.escolaridade, 0)}`
-        : undefined,
-    },
-    {
-      titulo: 'O espaço',
-      situacao: explicacao ? 'feito' : 'a seguir',
-      texto:
-        'Quem é vizinho de quem, pela malha do IBGE: os vizinhos se parecem mais do que o acaso explica? Bolsões (LISA), 27 regiões desenhadas pelo voto (SKATER) e um modelo em que o voto pode variar de forma suave pelo mapa.',
-      numero: moran !== undefined ? `índice de Moran do que o modelo não explica: ${moran.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} (0 seria acaso)` : undefined,
-    },
-    {
-      titulo: 'Onde virar voto',
-      situacao: 'feito',
-      texto:
-        'Com o resultado do 1º turno escola por escola, a mesma conta para os dois candidatos: em que bairros e escolas há mais gente que faltou ou que votou em outro candidato, branco ou nulo.',
+        'Quem faltou e quem votou em outro candidato, branco ou nulo são somas simples, escola por escola. Só a opção avançada, “votos abaixo do esperado”, depende do modelo.',
       numero: `${inteiro(resumo.totais.abstencoes)} pessoas faltaram; ${inteiro(resumo.ufs.reduce((s, u) => s + u.abertos, 0))} votos ficaram fora dos dois finalistas`,
     },
     {
-      titulo: 'Depois do 2º turno',
-      situacao: 'a seguir',
-      texto: 'Conferir o 2º turno com o resultado oficial, urna por urna, como foi feito com o 1º, e comparar os dois turnos.',
+      titulo: 'O modelo',
+      texto:
+        'Um modelo estatístico separa o resultado de cada urna em camadas: o que é do estado, da cidade e da própria urna. Depois, mede quanto o perfil dos lugares explica cada camada.',
+      numero: `${cand.curto}: estado ${pct(icc.UF, 0)} · cidade ${pct(icc.município, 0)} · urna ${pct(icc.seção, 0)} da diferença entre urnas`,
+    },
+    {
+      titulo: 'Os vizinhos',
+      texto: 'Por fim, cada cidade é comparada com as vizinhas, para achar bolsões e regiões que votam parecido.',
+      numero: `${cand.curto}: ${inteiro(lisa['alto cercado de alto'] + lisa['baixo cercado de baixo'])} cidades em bolsões`,
     },
   ]
 
   return (
-    <>
-      <ol className="etapas">
-        {etapas.map((e, i) => (
-          <li key={e.titulo} data-situacao={e.situacao}>
-            <span className="etapa-numero" aria-hidden="true">
-              {i + 1}
-            </span>
-            <div>
-              <h3>
-                {e.titulo} <span className="pilula">{e.situacao}</span>
-              </h3>
-              <p>{e.texto}</p>
-              {e.numero && <p className="etapa-dado">{e.numero}</p>}
-            </div>
-          </li>
-        ))}
-      </ol>
-
-      <div className="cartao destaque">
-        <h3>O detalhe que a conferência pegou</h3>
-        <p>
-          Na primeira versão, os percentuais da Bela Vista não batiam com o g1 na segunda casa decimal. O motivo: votos em
-          candidaturas que renunciaram ou foram indeferidas aparecem no boletim de urna como votos no candidato, mas a
-          totalização oficial os conta como nulos, o <em>nulo técnico</em>. Com o ajuste, todas as conferências passaram a
-          bater. Sem validar antes de modelar, esse erro teria entrado em todos os números do site.
-        </p>
-      </div>
-
-      <h3 style={{ marginTop: 32 }}>Por que essas escolhas</h3>
-      <TabelaRolagem>
-        <table>
-          <thead>
-            <tr>
-              <th>Escolha</th>
-              <th>Por quê</th>
-              <th>O que ficou de fora</th>
-            </tr>
-          </thead>
-          <tbody>
-            {DECISOES.filter((d) => d.inicio).map((d) => (
-              <tr key={d.escolha}>
-                <td>
-                  <strong>{d.escolha}</strong>
-                </td>
-                <td>{d.porque}</td>
-                <td className="secundario">{d.descartada}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TabelaRolagem>
-      <p className="discreto" style={{ marginTop: 12 }}>
-        As outras escolhas (logit, teste de variância, motor de estimação) estão no <Link to="/metodo">Método</Link>.
-      </p>
-
-      <p style={{ marginTop: 24 }}>
-        <strong>Bastidores.</strong> Este site foi construído por Eduardo Ben Hur com o Claude Code, o assistente de programação
-        da Anthropic, do download dos dados à verificação visual de cada página. Cada decisão e cada correção estão no{' '}
-        <a href={REPOSITORIO}>histórico do repositório</a>.
-      </p>
-    </>
+    <ol className="etapas">
+      {etapas.map((e, i) => (
+        <li key={e.titulo}>
+          <span className="etapa-numero" aria-hidden="true">
+            {i + 1}
+          </span>
+          <div>
+            <h3>{e.titulo}</h3>
+            <p>{e.texto}</p>
+            {e.numero && <p className="etapa-dado">{e.numero}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
   )
 }

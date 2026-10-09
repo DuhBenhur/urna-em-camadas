@@ -571,7 +571,7 @@ function ComoUsarCurto() {
         <Link className="botao" to="/como-usar">
           Guia completo: como usar
         </Link>
-        <Link className="botao botao-secundario" to="/analise">
+        <Link className="botao botao-secundario" to="/entenda">
           Por que bairros e escolas?
         </Link>
         <Link className="botao botao-secundario" to="/conferencia">

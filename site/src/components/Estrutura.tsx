@@ -55,7 +55,7 @@ export function Cabecalho() {
           <NavLink to="/" end className="nav-destaque">Virar voto</NavLink>
           <NavLink to="/como-usar">Como usar</NavLink>
           <NavLink to="/conferencia">Confira sua urna</NavLink>
-          <NavLink to="/analise">Entenda</NavLink>
+          <NavLink to="/entenda">Entenda</NavLink>
           <NavLink to="/metodo">Método e dados</NavLink>
           <NavLink to="/sobre">Sobre</NavLink>
         </nav>

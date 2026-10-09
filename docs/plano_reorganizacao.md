@@ -225,6 +225,8 @@ Regra: jargão só dentro do "Detalhe técnico". Fora de Método e dados, nenhum
 
 Se atrasar, cortar nesta ordem: busca fase 2 → cidade numa página (D7) → mapa do Brasil dentro da ferramenta → gráficos do Entenda (fica o texto).
 
+**Andamento:** R0 publicado em 08/10 (commit 32f1f0a). R1 publicado em 08/10: Entenda com 1.109 palavras, 0 termos técnicos e 5.744 px; Método e dados com 2 termos técnicos visíveis sem abrir os detalhes. Próximo: R2.
+
 ## 11. Verificação (antes de cada push)
 
 1. Se mexer em dados: `python pipeline/03_validar_controle.py` e `python pipeline/07_exportar_site.py` (a trava tem que passar).

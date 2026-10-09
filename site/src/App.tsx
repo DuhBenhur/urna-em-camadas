@@ -1,10 +1,9 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Cabecalho, Rodape } from './components/Estrutura'
-import { Analise } from './pages/Analise'
 import { ComoUsar } from './pages/ComoUsar'
 import { Conferencia } from './pages/Conferencia'
-import { Dados } from './pages/Dados'
+import { Entenda } from './pages/Entenda'
 import { Metodo } from './pages/Metodo'
 import { Sobre } from './pages/Sobre'
 import { Urna } from './pages/Urna'
@@ -29,6 +28,28 @@ function Redirecionar({ para }: { para: string }) {
   return <Navigate to={{ pathname: para, search }} replace />
 }
 
+/** Capítulos da antiga análise completa: o essencial foi para o Entenda; os bastidores, para Método e dados. */
+const CAPITULOS: Record<string, string> = {
+  'c-jogo': '/entenda?ir=lugar',
+  'c-estado': '/entenda?ir=estado',
+  'c-vizinhanca': '/entenda?ir=vizinhos',
+  'c-explicacoes': '/entenda?ir=escola',
+  'c-surpresas': '/entenda?ir=surpresas',
+  'c-bastidores': '/metodo?sec=simples',
+  'c-importa': '/entenda?ir=conversa',
+}
+
+/** `#/analise?cap=c-estado` (ou o antigo `?c=c-estado`) vai para a resposta certa; o candidato (`c=13|22`) vai junto. */
+function RedirecionarAnalise() {
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  const c = params.get('c')
+  const capitulo = params.get('cap') ?? (c?.startsWith('c-') ? c : null)
+  const destino = (capitulo && CAPITULOS[capitulo]) || '/entenda'
+  const candidato = c === '13' || c === '22' ? `${destino.includes('?') ? '&' : '?'}c=${c}` : ''
+  return <Navigate to={destino + candidato} replace />
+}
+
 function NaoEncontrada() {
   return (
     <div className="conteudo">
@@ -50,13 +71,14 @@ export function App() {
             <Route path="/" element={<Virar />} />
             <Route path="/virar" element={<Redirecionar para="/" />} />
             <Route path="/como-usar" element={<ComoUsar />} />
-            <Route path="/analise" element={<Analise />} />
+            <Route path="/entenda" element={<Entenda />} />
+            <Route path="/analise" element={<RedirecionarAnalise />} />
             <Route path="/conferencia" element={<Conferencia />} />
             <Route path="/urna/:uf/:zona/:secao" element={<Urna />} />
             <Route path="/municipio/:cd" element={<Municipio />} />
             <Route path="/mapa" element={<Mapa />} />
             <Route path="/metodo" element={<Metodo />} />
-            <Route path="/dados" element={<Dados />} />
+            <Route path="/dados" element={<Navigate to="/metodo?sec=dados" replace />} />
             <Route path="/sobre" element={<Sobre />} />
             <Route path="*" element={<NaoEncontrada />} />
           </Routes>

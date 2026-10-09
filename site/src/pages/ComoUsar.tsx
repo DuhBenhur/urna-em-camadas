@@ -120,7 +120,7 @@ export function ComoUsar() {
         </div>
         <p className="discreto">
           As fórmulas, os totais do Brasil e a conferência de cada conta estão em{' '}
-          <Link to="/metodo">Método e dados</Link>.
+          <Link to="/metodo?sec=contas">Método e dados</Link>.
         </p>
       </section>
 
@@ -238,7 +238,7 @@ export function ComoUsar() {
         <h3>De onde vêm os números?</h3>
         <p>
           Dos boletins de urna do 1º turno, publicados pelo TSE. Cada uma das urnas foi conferida com o resultado oficial (
-          <Link to="/conferencia">veja a conferência</Link>); as contas e os dados estão em <Link to="/metodo">Método e dados</Link>.
+          <Link to="/conferencia">veja a conferência</Link>); as contas e os dados estão em <Link to="/metodo?sec=fontes">Método e dados</Link>.
         </p>
       </section>
 

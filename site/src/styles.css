@@ -227,8 +227,7 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
   .grafico circle, .grafico rect, .grafico line.mov { transition: cx 0.4s ease, x 0.4s ease, width 0.4s ease, x1 0.4s ease, x2 0.4s ease; }
 }
 
-/* História da página inicial */
-.intro-historia { margin-top: clamp(48px, 8vw, 88px); padding-top: 24px; border-top: 1px solid var(--borda); }
+/* Respostas do Entenda */
 .capitulo { margin-top: clamp(56px, 9vw, 104px); }
 .capitulo > h2 { margin-top: 0.2em; font-size: clamp(1.5rem, 3.2vw, 2.1rem); max-width: 30ch; }
 .kicker { color: var(--tinta-3); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -239,12 +238,24 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .botao-pequeno { min-height: 32px; padding: 4px 12px; font-weight: 500; }
 .chave-anel { background: var(--superficie); box-shadow: inset 0 0 0 1.5px var(--tinta-2); }
 
-.como-sabemos { margin-top: 20px; border-top: 1px solid var(--borda); padding-top: 12px; max-width: 68ch; }
-.como-sabemos summary { cursor: pointer; color: var(--tinta-2); font-size: 1rem; font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
-.como-sabemos summary::-webkit-details-marker { display: none; }
-.como-sabemos summary::before { content: "+"; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--eixo); font-weight: 500; line-height: 1; }
-.como-sabemos[open] summary::before { content: "−"; }
-.como-sabemos > div { padding-top: 8px; color: var(--tinta-2); font-size: 1rem; }
+.resposta .para-conversar { margin-top: 24px; margin-bottom: 8px; }
+.detalhe-link a::after { content: " →"; }
+
+/* O padrão "técnico para os dois públicos" (BlocoTecnico): pergunta, resposta curta, como funciona e o detalhe fechado */
+.bloco-tecnico { margin-top: clamp(48px, 8vw, 88px); }
+.bloco-tecnico > h2 { margin-top: 0; font-size: clamp(1.4rem, 3vw, 1.9rem); max-width: 32ch; }
+.resposta-curta { font-size: 1.125rem; border-left: 3px solid var(--tinta); padding: 2px 0 2px 14px; max-width: 64ch; }
+.como-funciona { max-width: 72ch; }
+.como-funciona ul { padding-left: 20px; }
+.detalhe-tecnico { margin-top: 20px; border-top: 1px solid var(--borda); padding-top: 12px; }
+.detalhe-tecnico > summary { cursor: pointer; color: var(--tinta-2); font-size: 1rem; font-weight: 600; list-style: none; display: inline-flex; align-items: center; gap: 8px; min-height: 32px; }
+.detalhe-tecnico > summary::-webkit-details-marker { display: none; }
+.detalhe-tecnico > summary::before { content: "+"; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--eixo); font-weight: 500; line-height: 1; }
+.detalhe-tecnico[open] > summary::before { content: "−"; }
+.detalhe-tecnico-conteudo { padding-top: 8px; }
+.detalhe-tecnico-conteudo p, .detalhe-tecnico-conteudo li { max-width: 72ch; }
+.detalhe-tecnico-conteudo ul { padding-left: 20px; }
+.detalhe-tecnico-conteudo li { margin-bottom: 8px; }
 
 /* O jogo de adivinhar */
 .adivinhe { max-width: 760px; }
@@ -261,17 +272,15 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .etapas h3 { margin: 4px 0 4px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .etapas p { margin: 0 0 4px; color: var(--tinta-2); }
 .etapa-numero { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-weight: 650; font-size: 0.9rem; background: var(--tinta); color: var(--plano); }
-.etapas li:not([data-situacao="feito"]) .etapa-numero { background: var(--superficie); color: var(--tinta-2); box-shadow: inset 0 0 0 1.5px var(--eixo); }
 .etapas .etapa-dado { color: var(--tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
 .pilula { font-size: 0.875rem; font-weight: 600; color: var(--tinta-2); border: 1px solid var(--eixo); border-radius: 999px; padding: 1px 8px; letter-spacing: 0.02em; }
 /* conta que depende do modelo: borda tracejada, como algo ainda em teste */
 .pilula-experimental { border-style: dashed; border-color: var(--tinta-3); font-weight: 600; white-space: nowrap; vertical-align: 2px; }
 .destaque { border-left: 3px solid var(--tinta); max-width: 760px; }
 .destaque h3 { margin-top: 0; }
-.destaque p:last-child, .em-breve p:last-child { margin-bottom: 0; }
+.destaque p:last-child { margin-bottom: 0; }
 /* referência bibliográfica: o endereço longo quebra em qualquer ponto, para não estourar o celular */
 .referencia { overflow-wrap: anywhere; color: var(--tinta-2); }
-.em-breve { max-width: 760px; border-style: dashed; box-shadow: none; }
 .cartao > h3:first-child { margin-top: 0; }
 td.num { white-space: nowrap; }
 /* balão do local selecionado: a ponta segue a cor do cartão nos dois temas */
@@ -420,9 +429,8 @@ td.num { white-space: nowrap; }
 .campo-municipio { position: relative; }
 .campo-municipio .sugestoes { position: absolute; left: 0; right: 0; z-index: 6; }
 
-.como-fazer ul, .como-sabemos > ul { padding-left: 20px; }
-.como-fazer li, .como-sabemos > ul li { margin-bottom: 8px; max-width: 72ch; }
-.como-sabemos > ul { color: var(--tinta-2); font-size: 1rem; padding-top: 8px; }
+.como-fazer ul { padding-left: 20px; }
+.como-fazer li { margin-bottom: 8px; max-width: 72ch; }
 /* no celular, as tabelas de "Onde virar voto" ficam com lugar, número principal e resultado */
 @media (max-width: 560px) { .col-sec { display: none; } }
 .bairro-celular { display: none; }

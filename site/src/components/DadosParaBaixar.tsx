@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
 import { REPOSITORIO } from '../lib/projeto'
-import { TabelaRolagem } from '../components/TabelaRolagem'
+import { TabelaRolagem } from './TabelaRolagem'
 
 type Arquivo = { caminho: string; conteudo: string; linhas: string; tamanho: string; script: string }
 
@@ -139,32 +138,31 @@ function TabelaArquivos({ arquivos }: { arquivos: Arquivo[] }) {
   )
 }
 
-export function Dados() {
+/** Os arquivos para baixar, o dicionário e a licença: o detalhe do bloco "Dados para baixar" de Método e dados. */
+export function DadosParaBaixar() {
   return (
-    <div className="conteudo">
-      <h1 style={{ marginTop: 32 }}>Dados</h1>
-      <p className="secundario">
-        Tudo o que o site usa é aberto: os arquivos processados ficam no repositório, em Parquet, e os resultados dos modelos, em
-        JSON. Só dados agregados (por seção, local de votação ou município); nenhum dado de eleitor individual. Para ler um Parquet em Python:{' '}
-        <code>pandas.read_parquet</code> ou DuckDB.
+    <>
+      <p>
+        Os arquivos processados ficam no repositório, em Parquet, e os resultados dos modelos, em JSON. Para ler um Parquet em
+        Python: <code>pandas.read_parquet</code> ou DuckDB.
       </p>
 
-      <h2>Arquivos processados</h2>
+      <h3>Arquivos processados</h3>
       <TabelaArquivos arquivos={PROCESSADOS} />
 
-      <h2>Resultados dos modelos</h2>
+      <h3>Resultados dos modelos</h3>
       <TabelaArquivos arquivos={RESULTADOS} />
       <p style={{ marginTop: 12 }}>
         Os mesmos resultados, com tabelas e figuras, estão no{' '}
         <a href={`${REPOSITORIO}/blob/main/notebooks/10_composicao_contexto.ipynb`}>notebook de composição e contexto</a>.
       </p>
 
-      <h2>Dicionário</h2>
+      <h3>Dicionário</h3>
       {DICIONARIO.map((d) => (
         <section key={d.arquivo}>
-          <h3 style={{ marginTop: 24 }}>
+          <h4 style={{ marginTop: 24 }}>
             <code>{d.arquivo}</code>
-          </h3>
+          </h4>
           <TabelaRolagem>
             <table>
               <thead>
@@ -188,7 +186,7 @@ export function Dados() {
         </section>
       ))}
 
-      <h2>Os arquivos do site</h2>
+      <h3>Os arquivos do site</h3>
       <p className="secundario">
         JSON estáticos gerados por <code>pipeline/07_exportar_site.py</code> a cada publicação, no endereço{' '}
         <code>/urna-em-camadas/dados/</code>. São tabelas compactas: uma lista de colunas e uma lista de linhas.
@@ -208,18 +206,18 @@ export function Dados() {
         </table>
       </TabelaRolagem>
 
-      <h2>Licença e citação</h2>
+      <h3>Licença e citação</h3>
       <p>
         Dados processados, resultados e textos sob <a href="https://creativecommons.org/licenses/by/4.0/deed.pt-br">CC BY 4.0</a>:
         pode copiar, adaptar e republicar, inclusive para fins comerciais, citando a fonte. Código sob licença MIT.
       </p>
       <pre className="cartao" style={{ whiteSpace: 'pre-wrap', fontFamily: 'var(--mono)', fontSize: '0.85rem' }}>
-        Ben Hur, Eduardo. Urna em Camadas: o voto de 2026 em seção, município e estado. 2026. {REPOSITORIO}
+        Ben Hur, Eduardo. Urna em Camadas: onde virar voto no 2º turno, bairro a bairro. 2026. {REPOSITORIO}
       </pre>
       <p className="discreto">
-        Os dados de origem são públicos e pertencem ao TSE, ao IBGE, ao MDS e ao MDIC. Como foram obtidos e conferidos está no{' '}
-        <Link to="/metodo">Método</Link>.
+        Os dados de origem são públicos e pertencem ao TSE, ao IBGE, ao MDS e ao MDIC. Como foram obtidos e conferidos está no
+        bloco "De onde vêm os números", acima.
       </p>
-    </div>
+    </>
   )
 }

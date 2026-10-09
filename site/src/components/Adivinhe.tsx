@@ -19,7 +19,7 @@ type Sorteio = {
 
 type Palpite = { rotulo: string; detalhe: string; valor: number }
 
-const BOTOES = ['Pista 1: o estado', 'Pista 2: o município', 'Pista 3: a escola', 'Abrir a urna']
+const BOTOES = ['Pista 1: o estado', 'Pista 2: a cidade', 'Pista 3: a escola', 'Abrir a urna']
 
 /** Palpite de cada pista = resultado somado das OUTRAS urnas do grupo (a sorteada fica de fora). */
 function palpites(s: Sorteio, resumo: Resumo, n: NumeroCandidato): Palpite[] {
@@ -38,15 +38,15 @@ function palpites(s: Sorteio, resumo: Resumo, n: NumeroCandidato): Palpite[] {
     { rotulo: 'Sem pista', detalhe: 'o resultado do Brasil', valor: brasil },
     { rotulo: 'Sabendo o estado', detalhe: `o resultado ${comPreposicao('de', uf.uf, uf.nome)}`, valor: estado },
     {
-      rotulo: 'Sabendo o município',
+      rotulo: 'Sabendo a cidade',
       detalhe: sozinhaMun ? 'é a única urna da cidade: o palpite não muda' : `o resultado de ${m.nome}`,
       valor: municipio,
     },
     {
       rotulo: 'Sabendo a escola',
       detalhe: sozinhaEsc
-        ? 'é a única urna do local: o palpite não muda'
-        : `${s.escola.urnas === 1 ? 'a outra urna' : `as outras ${s.escola.urnas} urnas`} do mesmo local`,
+        ? 'é a única urna da escola: o palpite não muda'
+        : `${s.escola.urnas === 1 ? 'a outra urna' : `as outras ${s.escola.urnas} urnas`} da mesma escola`,
       valor: escola,
     },
   ]

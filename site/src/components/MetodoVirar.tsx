@@ -16,25 +16,26 @@ abaixo(c, e)   = max(0, −surpresa(c, e)) × válidos(e)
 
 município, estado, Brasil = soma das escolas`
 
-/** Método do "Onde virar voto": as três contas, por que somar escola por escola, o que é suposição e o que é limite. */
-export function MetodoVirar({ numero, resumo }: { numero: number; resumo: Resumo | null }) {
+/**
+ * Detalhe técnico das contas da ferramenta (o bloco "Como são feitas as contas da ferramenta?" de Método e dados): as três
+ * fórmulas, os totais para conferir, por que somar escola por escola, o que é suposição e o que é limite.
+ */
+export function MetodoVirar({ resumo }: { resumo: Resumo | null }) {
   const soma = (f: (u: UF) => number | undefined) => (resumo ? inteiro(resumo.ufs.reduce((s, u) => s + (f(u) ?? 0), 0)) : '…')
   return (
     <>
-      <h2>{numero}. Onde virar voto: contas, suposições e limites</h2>
+      <h3>As fórmulas</h3>
       <p>
-        A ferramenta do 2º turno (<Link to="/">Onde virar voto</Link>) usa três contas sobre o resultado oficial do 1º turno,
-        feitas escola por escola (local de votação). As três ficam separadas, para cada uma poder ser conferida sozinha;
-        nenhuma vira índice. A conta é a mesma para os dois candidatos: trocar o candidato só troca quem é “à frente” e qual
-        esperado é usado.
+        Três contas sobre o resultado oficial do 1º turno, feitas por local de votação. Ficam separadas, para cada uma poder ser
+        conferida sozinha; nenhuma vira índice. Trocar o candidato só troca quem é “à frente” e qual esperado é usado.
       </p>
       <pre className="cartao" tabIndex={0} aria-label="Fórmulas do Onde virar voto (role para os lados)" style={{ overflowX: 'auto', fontFamily: 'var(--mono)', fontSize: '0.875rem' }}>
         {FORMULAS}
       </pre>
       <p>
-        O esperado da terceira conta é o do modelo da seção 5: o efeito do estado e do município mais o perfil do eleitorado da
-        escola (idade, sexo e escolaridade), com os coeficientes de dentro da cidade. É a mesma surpresa do mapa de locais de
-        cada município.
+        O esperado da terceira conta é o do modelo explicativo (bloco “Por que os estados votam diferente?”): o efeito do estado
+        e do município mais o perfil do eleitorado da escola (idade, sexo e escolaridade), com os coeficientes de dentro da
+        cidade. É a mesma surpresa do mapa de locais de cada município.
       </p>
       <h3>Os totais, para conferir</h3>
       <TabelaRolagem rotulo="Totais do Onde virar voto no Brasil">
@@ -72,7 +73,8 @@ export function MetodoVirar({ numero, resumo }: { numero: number; resumo: Resumo
           </tbody>
         </table>
       </TabelaRolagem>
-      <ul style={{ marginTop: 16 }}>
+      <h3>Suposições e limites</h3>
+      <ul>
         <li>
           <strong>Por que somar escola por escola.</strong> O saldo de um estado é a soma dos saldos das suas escolas, não o
           saldo calculado com o total do estado: um estado onde o candidato perdeu ainda tem escolas onde ele ganhou, e o saldo

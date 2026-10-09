@@ -6,7 +6,8 @@ Uso:  python site/scripts/testes.py                                             
       python site/scripts/testes.py https://duhbenhur.github.io/urna-em-camadas/   # ao vivo
       python site/scripts/testes.py --so candidato,acao                           # só algumas baterias
 
-Baterias: candidato (P0.2), acao (P0.3 a P0.5), perfil (P1.1), publico (P1.2 a P2.2 e regras do conteúdo público).
+Baterias: candidato (P0.2), acao (P0.3 a P0.5), perfil (P1.1), publico (P1.2 a P2.2, regras do conteúdo público e a
+estrutura da reorganização, docs/plano_reorganizacao.md).
 Cada bateria abre o navegador do zero (a escolha do candidato fica na sessionStorage da aba e vazaria de uma para outra).
 Sai com código 1 se algum critério falhar. Quando a estrutura do site mudar, estes testes mudam junto.
 Requer: pip install playwright (usa o Chrome instalado; sem ele, o Chromium do Playwright).
@@ -104,9 +105,11 @@ def bateria_candidato(nav, b: str) -> None:
     conferir("município depois de recarregar: Flávio", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
     abrir(pg, b + "#/mapa?v=efeito")
     conferir("mapa: Flávio pressionado", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
-    abrir(pg, b + "#/analise")
+    abrir(pg, b + "#/entenda")
+    conferir("entenda: Flávio no seletor (um só, no topo)", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
+    abrir(pg, b + "#/metodo")
     p = pressionados(pg)
-    conferir("análise: Flávio em todos os seletores", len(p) > 1 and all("Flávio" in t for t in p), f"{len(p)} seletores")
+    conferir("método e dados: Flávio em todos os seletores", len(p) == 5 and all("Flávio" in t for t in p), f"{len(p)} seletores")
     abrir(pg, b + "#/virar", 1.5)
     conferir("#/virar (endereço antigo) abre a ferramenta", endereco(pg).endswith("#/"), endereco(pg))
     conferir("virar sem ?c: Flávio já escolhido", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
@@ -126,10 +129,14 @@ def bateria_candidato(nav, b: str) -> None:
     pg2.get_by_role("button", name="Surpresa").click()
     time.sleep(0.5)
     conferir("link com ?c=22 em aba nova leva Flávio ao município", pressionados(pg2) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg2)))
-    for rota in ["#/analise?cap=c-estado", "#/analise?c=c-estado"]:
+    # endereços antigos da análise: cada capítulo vai para a resposta certa (ou para Método e dados), com o candidato
+    for rota, alvo, destino in [("#/analise?cap=c-estado", "e-estado", "#/entenda?ir=estado"),
+                                ("#/analise?c=c-estado", "e-estado", "#/entenda?ir=estado"),
+                                ("#/analise?cap=c-surpresas&c=22", "e-surpresas", "#/entenda?ir=surpresas&c=22"),
+                                ("#/analise?cap=c-bastidores", "m-simples", "#/metodo?sec=simples")]:
         abrir(pg, b + rota)
-        topo = pg.evaluate("() => document.getElementById('c-estado').getBoundingClientRect().top")
-        conferir(f"{rota} abre no capítulo", abs(topo) < 140, f"(topo a {topo:.0f}px)")
+        topo = pg.evaluate(f"() => document.getElementById('{alvo}').getBoundingClientRect().top")
+        conferir(f"{rota} vai para {destino}", endereco(pg).endswith(destino) and abs(topo) < 140, f"(topo a {topo:.0f}px) {endereco(pg)}")
     conferir("candidato: sem erros de console", not erros, str(erros[:3]))
     ctx.close()
 
@@ -282,7 +289,8 @@ def bateria_publico(nav, b: str) -> None:
     secoes = pg.evaluate("() => ['minuto','conversas','exemplo','lista','lei','compartilhar','glossario','perguntas'].filter(id => document.getElementById(id))")
     conferir("guia: as 8 seções", len(secoes) == 8, str(secoes))
     conferir("guia: exemplo calculado (35 escolas)", "35 escolas" in pg.locator("#exemplo").inner_text())
-    for rota in ["#/", "#/como-usar", "#/analise", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
+    conferir("menu: 'Entenda' leva ao Entenda", pg.locator("nav.navegacao a", has_text="Entenda").get_attribute("href") == "#/entenda")
+    for rota in ["#/", "#/como-usar", "#/entenda", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
         abrir(pg, b + rota, 1.5)
         texto = pg.locator("main").inner_text().lower()
         conferir(f"{rota}: não cita a previsão do 2º turno", "previsão do 2" not in texto and "pré-regist" not in texto)
@@ -290,7 +298,29 @@ def bateria_publico(nav, b: str) -> None:
     conferir("método: referência como inspiração, com o DOI",
              pg.get_by_role("heading", name="Inspiração metodológica").count() == 1
              and pg.locator("a[href='https://doi.org/10.22167/2675-441X-2024824']").count() >= 1)
-    conferir("método: seção 8, Onde virar voto", pg.locator("h2", has_text="8. Onde virar voto").count() == 1)
+    blocos = pg.evaluate("""() => [...document.querySelectorAll('main section.bloco-tecnico')].map(s => s.id)""")
+    conferir("método e dados: os 9 blocos, na ordem, e a inspiração no fim",
+             blocos == ["m-simples", "m-fontes", "m-contas", "m-modelo", "m-explicacoes", "m-espaco", "m-numeros", "m-dados",
+                        "m-reproduzir", "m-inspiracao"], str(blocos))
+    padrao = pg.evaluate("""() => [...document.querySelectorAll('main section.bloco-tecnico')].filter(s => s.id !== 'm-inspiracao')
+        .every(s => s.querySelector(':scope > h2') && s.querySelector(':scope > .resposta-curta') && s.querySelector(':scope > details.detalhe-tecnico'))""")
+    conferir("método e dados: cada bloco com pergunta, resposta curta e detalhe técnico", padrao)
+    conferir("método e dados: sem ?sec, todos os detalhes fechados",
+             pg.evaluate("() => [...document.querySelectorAll('details.detalhe-tecnico')].every(d => !d.open)"))
+    abrir(pg, b + "#/metodo?sec=contas", 2)
+    topo = pg.evaluate("() => document.getElementById('m-contas').getBoundingClientRect().top")
+    conferir("método e dados: ?sec=contas rola até o bloco e abre o detalhe",
+             pg.evaluate("() => document.querySelector('#m-contas details').open") and 0 < topo < 140, f"(topo a {topo:.0f}px)")
+    conferir("método e dados: as fórmulas no detalhe das contas", "saldo(c, e)" in pg.locator("#m-contas").inner_text())
+    abrir(pg, b + "#/dados", 2)
+    conferir("#/dados vai para Método e dados, no bloco dos dados, aberto",
+             endereco(pg).endswith("#/metodo?sec=dados") and pg.evaluate("() => document.querySelector('#m-dados details').open"),
+             endereco(pg))
+    abrir(pg, b + "#/conferencia", 2)
+    conferencia = pg.locator("main").inner_text()
+    conferir("conferência: sem a parte técnica, com o caminho para ela",
+             "SHA-512" not in conferencia and "Para reproduzir" not in conferencia
+             and pg.locator("main a[href='#/metodo?sec=fontes']").count() == 1)
     abrir(pg, b + "#/mapa?v=virar&a=faltosos&c=13", 4)
     conferir("mapa: legenda sequencial", pg.locator(".legenda-sequencial").count() == 1)
     caixa = pg.locator(".mapa").bounding_box()
@@ -300,8 +330,12 @@ def bateria_publico(nav, b: str) -> None:
     conferir("mapa: dica com a taxa e o total", "de cada 100 eleitores" in dica and "saldo possível para Lula" in dica, dica.replace("\n", " | ")[:100])
     abrir(pg, b + "#/municipio/71072?a=faltosos&c=13", 3)
     conferir("município: vista Virar voto", pg.get_by_role("button", name="Virar voto", exact=True).get_attribute("aria-pressed") == "true")
-    abrir(pg, b + "#/analise", 3)
-    conferir("análise: 7 linhas 'para quem vai conversar'", pg.locator(".para-conversar").count() == 7)
+    abrir(pg, b + "#/entenda", 3)
+    respostas = pg.evaluate("""() => [...document.querySelectorAll('main section.resposta')]
+        .filter(s => s.querySelector('.para-conversar') && s.querySelector('.detalhe-link a[href^="#/metodo?sec="]')).map(s => s.id)""")
+    conferir("entenda: 5 respostas, cada uma com 'para quem vai conversar' e o detalhe técnico",
+             respostas == ["e-lugar", "e-estado", "e-vizinhos", "e-escola", "e-surpresas"], str(respostas))
+    conferir("entenda: fecha com 'Do mapa à conversa'", pg.locator("#e-conversa").count() == 1)
     abrir(pg, b + "#/urna/SP/403/411?c=13", 3)
     conferir("urna: cartão 'perto de mim'", pg.get_by_role("button", name="Compartilhar “perto de mim”").count() == 1)
     ordem = pg.evaluate("() => [...document.querySelectorAll('main h2')].map(h => h.textContent.trim())")

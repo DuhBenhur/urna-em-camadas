@@ -10,7 +10,7 @@ Por trás, uma análise multinível e espacial das 497.897 urnas do Brasil, com 
 
 ## Onde virar voto: as contas
 
-Três contas separadas, sem índice composto, calculadas escola por escola (local de votação) e somadas para cima ([método](https://duhbenhur.github.io/urna-em-camadas/#/metodo)):
+Três contas separadas, sem índice composto, calculadas escola por escola (local de votação) e somadas para cima ([método](https://duhbenhur.github.io/urna-em-camadas/#/metodo?sec=contas)):
 
 | Conta | Lula | Flávio Bolsonaro |
 |---|---|---|

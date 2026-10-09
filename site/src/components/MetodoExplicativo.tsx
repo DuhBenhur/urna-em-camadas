@@ -1,5 +1,7 @@
+import { Link } from 'react-router-dom'
 import type { Explicacao } from '../lib/dados'
 import { inteiro, pct } from '../lib/formato'
+import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { TabelaRolagem } from './TabelaRolagem'
 
 const ROTULOS_SEQUENCIA: Record<string, string> = {
@@ -12,16 +14,15 @@ const TESTES: Record<string, string> = { 'M1 perfil da seção': 'M0 → M1', 'M
 const num = (v: number, casas = 2) => v.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas })
 const valorP = (p: number) => (p < 1e-15 ? '< 10⁻¹⁵' : p < 0.001 ? '< 0,001' : num(p, 3))
 
-/** Seções 5 e 6 do Método: modelos explicativos (pipeline/10) e espaço (pipeline/11), para os dois candidatos. */
-export function MetodoExplicativo({ e }: { e: Explicacao }) {
+/** Detalhe técnico dos modelos explicativos (pipeline/10), para os dois candidatos: o bloco "Por que os estados votam diferente". */
+export function MetodoModelos({ e }: { e: Explicacao }) {
   const c13 = e.stepup.candidatos['13']
   const c22 = e.stepup.candidatos['22']
   const pca = e.stepup.pca_socioeconomico
-  const esp = e.espacial
 
   return (
     <>
-      <h2>5. Modelos explicativos</h2>
+      <h3>Os modelos, passo a passo</h3>
       <p>
         A mesma estrutura do modelo nulo recebe grupos de características, um de cada vez (estratégia <em>step-up</em>), em{' '}
         {inteiro(e.stepup.n_secoes)} seções de {inteiro(e.stepup.n_municipios)} municípios. Ficam de fora as seções sem perfil do
@@ -68,7 +69,7 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
           .map(([k, v]) => `${k.replace('log_renda', 'renda').replace('log_pib', 'PIB').replace('pct_pbf', 'Bolsa Família')} ${num(v)}`)
           .join(', ')}
         ), que resume {pct(pca.variancia_explicada, 0)} da variação conjunta. Na repartição de Shapley, as três ficam no mesmo
-        grupo.
+        grupo. “Bem acima da média”, nos gráficos, é um desvio-padrão acima: mais alto que cerca de 5 em cada 6 lugares.
       </p>
       <p>
         <strong>Dentro e entre cidades.</strong> No modelo de Mundlak, cada variável da seção entra centrada na média do
@@ -85,8 +86,9 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
       <p>
         <strong>Quatro níveis.</strong> Com o local de votação entre a seção e o município, a variação do voto em Lula se divide em
         estado {pct(c13.quatro_niveis.icc.uf, 0)}, município {pct(c13.quatro_niveis.icc.mun, 0)}, local de votação{' '}
-        {pct(c13.quatro_niveis.icc.local, 0)} e seção {pct(c13.quatro_niveis.icc.secao, 0)}: boa parte do que parecia ser da seção é
-        do bairro.
+        {pct(c13.quatro_niveis.icc.local, 0)} e seção {pct(c13.quatro_niveis.icc.secao, 0)}; a do voto em Flávio, em{' '}
+        {pct(c22.quatro_niveis.icc.uf, 0)}, {pct(c22.quatro_niveis.icc.mun, 0)}, {pct(c22.quatro_niveis.icc.local, 0)} e{' '}
+        {pct(c22.quatro_niveis.icc.secao, 0)}: boa parte do que parecia ser da seção é do bairro.
       </p>
       <p>
         <strong>Robustez.</strong> O modelo completo explica {pct(c13.sequencia['M3 + região'].queda.uf, 0)} da variância do estado
@@ -112,31 +114,75 @@ export function MetodoExplicativo({ e }: { e: Explicacao }) {
           variância do estado cai.
         </p>
       )}
+    </>
+  )
+}
 
-      <h2>6. Espaço</h2>
+/**
+ * Detalhe técnico do espaço (pipeline/11): o bloco "O voto muda aos poucos pelo mapa?". Junta o que era o capítulo da
+ * vizinhança e os bolsões da análise com a seção de espaço do método, para os dois candidatos.
+ */
+export function MetodoEspaco({ e, candidato }: { e: Explicacao; candidato: NumeroCandidato }) {
+  const esp = e.espacial
+  const n = String(candidato) as '13' | '22'
+  const c = esp.candidatos[n]
+  const cand = CANDIDATOS[candidato]
+  const regioes = esp.regioes
+  const sp = esp.sao_paulo
+
+  return (
+    <>
+      <h3>Vizinhos e acaso</h3>
       <p>
         Vizinhos são municípios cujos territórios se tocam na malha do IBGE (ilhas ligadas ao município mais próximo). O índice de
         Moran mede o quanto o efeito de cada município se parece com o dos vizinhos: 0 seria acaso. Antes das explicações, ele é{' '}
-        {num(esp.candidatos['13'].nulo.moran_I)} para Lula; depois do modelo completo, {num(esp.candidatos['13'].completo.moran_I)}
-        {' '}(p {valorP(esp.candidatos['13'].completo.p)}, {inteiro(999)} permutações). Os bolsões do mapa são os municípios com LISA
-        significativo a 5%.
+        {num(esp.candidatos['13'].nulo.moran_I)} para Lula e {num(esp.candidatos['22'].nulo.moran_I)} para Flávio; depois do modelo
+        completo, {num(esp.candidatos['13'].completo.moran_I)} e {num(esp.candidatos['22'].completo.moran_I)} (p{' '}
+        {valorP(esp.candidatos['13'].completo.p)}, {inteiro(999)} permutações). Mesmo depois do perfil e da região, o que sobra em
+        cada município não se espalha ao acaso.
+      </p>
+
+      <h3>Bolsões</h3>
+      <p>
+        Os bolsões do mapa são os municípios com LISA significativo a 5%. No voto em {cand.nome}, são{' '}
+        {inteiro(c.completo.lisa['alto cercado de alto'])} municípios em bolsões acima do esperado (“alto cercado de alto”) e{' '}
+        {inteiro(c.completo.lisa['baixo cercado de baixo'])} em bolsões abaixo (“baixo cercado de baixo”).{' '}
+        <Link to={`/mapa?v=bolsoes&c=${candidato}`}>Veja os bolsões no mapa</Link>.
+      </p>
+
+      <h3>Degrau ou rampa?</h3>
+      <p>
+        Se o voto mudasse só aos poucos pelo mapa, como uma rampa, a divisa não faria diferença. Num modelo dos municípios com
+        efeito do estado e um processo gaussiano nas coordenadas (covariância exponencial; a semelhança cai pela metade a cada
+        cerca de {inteiro(Math.round((c.degrau_gradiente.com_gp.alcance_km * Math.LN2) / 10) * 10)} km, no voto em {cand.nome}), a
+        variância do estado cai {pct(esp.candidatos['13'].degrau_gradiente.queda_uf, 0)} para Lula e{' '}
+        {pct(esp.candidatos['22'].degrau_gradiente.queda_uf, 0)} para Flávio: essa parte do “efeito do estado” é gradiente
+        regional, não degrau na divisa.
       </p>
       <p>
-        <strong>Degrau ou rampa.</strong> Num modelo dos municípios com efeito do estado e um processo gaussiano nas coordenadas
-        (covariância exponencial), a variância do estado cai {pct(esp.candidatos['13'].degrau_gradiente.queda_uf, 0)} para Lula e{' '}
-        {pct(esp.candidatos['22'].degrau_gradiente.queda_uf, 0)} para Flávio: essa parte do “efeito do estado” é gradiente regional,
-        não degrau na divisa.
+        Degrau e rampa não se separam por completo: estados são blocos contíguos, e um modelo espacial também consegue imitar
+        blocos. Por isso o número é uma indicação, confirmada pela comparação entre vizinhos e pelas cidades gêmeas (bloco “As
+        contas do Entenda”).
       </p>
+
+      <h3>Regiões de voto</h3>
       <p>
-        <strong>Regiões de voto.</strong> O SKATER (biblioteca <code>spopt</code>) corta a árvore geradora mínima dos municípios
-        vizinhos em {esp.regioes.n} regiões parecidas no voto em Lula e em Flávio (mínimo de 10 municípios cada). Elas explicam{' '}
-        {pct(esp.regioes['13'].r2_regioes, 0)} da variação do logit do voto em Lula entre municípios; os {esp.regioes.n} estados,{' '}
-        {pct(esp.regioes['13'].r2_estados, 0)}.
+        O SKATER (biblioteca <code>spopt</code>) corta a árvore geradora mínima dos municípios vizinhos em {regioes.n} regiões
+        parecidas no voto em Lula e em Flávio (mínimo de 10 municípios cada). No voto em {cand.nome}, elas explicam{' '}
+        {pct(regioes[n].r2_regioes, 0)} da variação do logit entre municípios; os {regioes.n} estados,{' '}
+        {pct(regioes[n].r2_estados, 0)}.{' '}
+        {regioes[n].r2_regioes > regioes[n].r2_estados
+          ? 'O mapa desenhado pelo voto separa melhor que as divisas.'
+          : 'As divisas ainda separam o voto melhor que qualquer recorte só geográfico.'}{' '}
+        <Link to="/mapa?v=regioes">Veja as regiões de voto no mapa</Link>.
       </p>
+
+      <h3>Dentro de São Paulo</h3>
       <p>
-        <strong>São Paulo por local de votação.</strong> A surpresa de cada um dos {inteiro(esp.sao_paulo.n_locais)} locais (resultado
-        menos o esperado pelo município e pelo perfil do eleitorado) tem Moran de {num(esp.sao_paulo['13'].moran_I)} entre os 8
-        locais mais próximos: bairros vizinhos se parecem além do que o perfil explica.
+        A surpresa de cada um dos {inteiro(sp.n_locais)} locais de votação (resultado menos o esperado pelo município e pelo perfil
+        do eleitorado) tem Moran de {num(sp['13'].moran_I)} no voto em Lula e {num(sp['22'].moran_I)} no voto em Flávio, entre os
+        8 locais mais próximos: bairros vizinhos se parecem além do que o perfil explica.{' '}
+        <Link to="/municipio/71072">Veja o mapa da cidade na opção “Surpresa”</Link>.
       </p>
     </>
   )
