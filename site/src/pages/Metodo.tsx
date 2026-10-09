@@ -401,6 +401,9 @@ export function Metodo() {
               {cand.nome}. Passe o mouse ou o dedo sobre as barras.
             </p>
             <EfeitoEstados resumo={resumo} candidato={candidato} />
+            <p style={{ marginTop: 16 }}>
+              O efeito de cada cidade, em relação ao seu estado, está no <Link to={`/mapa?v=efeito&c=${candidato}`}>mapa</Link>.
+            </p>
           </BlocoTecnico>
 
           <BlocoTecnico id="m-explicacoes" pergunta="Por que os estados votam diferente?" aberto={sec === 'explicacoes'}
@@ -423,6 +426,10 @@ export function Metodo() {
             }>
             {seletor}
             <CapituloExplicacoes explicacao={explicacao} resumo={resumo} candidato={candidato} />
+            <p style={{ marginTop: 16 }}>
+              O que o modelo completo não explica, cidade a cidade, está no{' '}
+              <Link to={`/mapa?v=semperfil&c=${candidato}`}>mapa</Link>.
+            </p>
             <MetodoModelos e={explicacao} />
           </BlocoTecnico>
 

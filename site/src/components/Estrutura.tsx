@@ -80,14 +80,20 @@ export function Rodape() {
   return (
     <footer className="rodape">
       <div className="conteudo">
+        <nav className="rodape-links" aria-label="Rodapé">
+          <Link to="/como-usar">Como usar</Link>
+          <Link to="/conferencia">Confira sua urna</Link>
+          <Link to="/metodo">Método e dados</Link>
+          <Link to="/sobre">Sobre</Link>
+        </nav>
         <p>
-          Projeto feito por <strong>Eduardo Ben Hur</strong> com <a href="https://claude.com/claude-code">Claude Code</a>.{' '}
-          <a href={REPOSITORIO}>Código-fonte e dados no GitHub</a>. Todas as informações vêm de bases públicas do Tribunal
-          Superior Eleitoral (TSE), do IBGE e do Ministério do Desenvolvimento e Assistência Social (MDS).
+          <strong>A mesma conta para os dois candidatos. O site não pede voto para ninguém.</strong> Projeto independente, sem
+          vínculo com partidos ou candidaturas. <strong>Não é pesquisa eleitoral</strong>: não entrevista eleitores nem estima
+          intenção de voto; analisa resultados oficiais já apurados.
         </p>
         <p>
-          Projeto independente, sem vínculo com partidos ou candidaturas. <strong>Não é pesquisa eleitoral</strong>: não
-          entrevista eleitores nem estima intenção de voto; analisa resultados oficiais já apurados.
+          Feito por <strong>Eduardo Ben Hur</strong> com <a href="https://claude.com/claude-code">Claude Code</a>, com dados
+          públicos do TSE, do IBGE, do MDS e do MDIC. <a href={REPOSITORIO}>Código-fonte e dados no GitHub</a>.
         </p>
         <p className="discreto">Código sob licença MIT. Dados processados e textos sob CC BY 4.0.</p>
       </div>

@@ -23,7 +23,7 @@ export function LegendaSequencial({ lente, candidato }: { lente: Lente; candidat
         ))}
       </div>
       <p className="legenda" style={{ maxWidth: 520, marginTop: 4 }}>
-        {rotuloValor(lente, CANDIDATOS[candidato].curto)}, de cada 100 eleitores aptos do município
+        {rotuloValor(lente, CANDIDATOS[candidato].curto)}, de cada 100 eleitores aptos da cidade
       </p>
     </div>
   )
@@ -49,7 +49,7 @@ export function LegendaEscala({ variavel, candidato }: { variavel: VariavelMapa 
   const escala = variavel === 'margem' || variavel === 'regioes' ? 'margem' : 'efeito'
   const [a, b, c] = LIMITES[escala].map((x) => Math.round(x * 1000) / 10)
   const rotulos = [`> ${c}`, `${b} a ${c}`, `${a} a ${b}`, `± ${a}`, `${a} a ${b}`, `${b} a ${c}`, `> ${c}`]
-  const quem = variavel === 'semperfil' ? 'acima do que perfil e região preveem' : variavel === 'surpresa' ? 'local vota acima do esperado' : 'município empurra a favor'
+  const quem = variavel === 'semperfil' ? 'acima do que perfil e região preveem' : variavel === 'surpresa' ? 'local vota acima do esperado' : 'cidade empurra a favor'
   const naRegiao = variavel === 'regioes' ? ' na região' : ''
   const titulo =
     escala === 'margem'

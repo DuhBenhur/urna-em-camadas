@@ -1,30 +1,43 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { BuscaTitulo } from '../components/Busca'
-import { CampoMunicipio } from '../components/CampoMunicipio'
+import { BuscaLugar, type Escolha } from '../components/BuscaLugar'
+import { ResultadoCidade, SecoesCidade, type VistaResultado } from '../components/CidadeAbas'
 import { EscolhaCandidato } from '../components/EscolhaCandidato'
-import { LegendaEscala } from '../components/Legendas'
+import { LegendaEscala, LegendaSequencial } from '../components/Legendas'
 import { LeiCurta } from '../components/LeiCurta'
 import { Passo } from '../components/Passo'
 import { SeloExperimental } from '../components/SeloExperimental'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { comCandidato, useCandidato } from '../lib/candidato'
-import { useLocais, useMunicipios, useResumo, type Local, type UF } from '../lib/dados'
+import { useLocais, useMunicipios, useResumo, type IndiceMunicipios, type Local, type Resumo, type UF } from '../lib/dados'
 import { inteiro, milhoes, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import {
-  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLente, potencial, potencialSomado, ranquear,
-  rotuloValor, somar, vantagem, type Lente, type Lugar,
+  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLente, nomeBairro, potencial, potencialSomado,
+  ranquear, rolarQuandoAparecer, rotuloValor, somar, vantagem, type Lente, type Lugar,
 } from '../lib/virar'
 
-// o mapa (MapLibre, ~800 kB) só carrega quando aparece uma cidade: a inicial é esta página e tem de abrir rápido
+// os mapas (MapLibre, ~800 kB) só carregam quando aparecem: o da cidade, ao abrir uma cidade; o do Brasil, quando a pessoa
+// pede. A inicial é esta página e tem de abrir rápido
 const MapaLocais = lazy(() => import('../components/Mapas').then((m) => ({ default: m.MapaLocais })))
+const MapaBrasil = lazy(() => import('../components/Mapas').then((m) => ({ default: m.MapaBrasil })))
 
 // Uma urna real da 1ª Zona de São Paulo (Bela Vista), na E.E. Caetano de Campos
 const EXEMPLO = '/urna/SP/1/240'
 
 const adversario = (n: NumeroCandidato): NumeroCandidato => (n === 13 ? 22 : 13)
+const SEM_BAIRRO = '(sem bairro informado)'
+
+/** A cidade numa página só (decisão D7): onde conversar (o padrão), o resultado do 1º turno e as seções de cada escola. */
+type Aba = 'conversar' | 'resultado' | 'secao'
+const ABAS: [Aba, string][] = [
+  ['conversar', 'Onde conversar'],
+  ['resultado', 'Resultado do 1º turno'],
+  ['secao', 'Ache a sua seção'],
+]
+const lerAba = (a: string | null): Aba => (a === 'resultado' || a === 'secao' ? a : 'conversar')
 const votos = (l: Lugar, n: NumeroCandidato) => (n === 13 ? l.v13 : l.v22)
 
 /** "Lula 61% · Flávio 31%": sempre os dois, na mesma ordem do resto do site. */
@@ -42,17 +55,25 @@ function explicarLente(l: Lente, curto: string): string {
 
 /**
  * A ferramenta, que é também a inicial: para quem → onde → que conversa → em que estados, cidades, bairros e escolas há
- * mais gente para essa conversa. O estado inteiro mora na URL (`?c=&a=&uf=&m=&perto=`), para o link levar tudo.
+ * mais gente para essa conversa. O estado inteiro mora na URL (`?c=&a=&uf=&m=&perto=&bairro=&aba=&local=&vista=`), para o
+ * link levar tudo.
  */
 export function Virar() {
   const [params, setParams] = useSearchParams()
   const navegar = useNavigate()
-  const [candidato] = useCandidato()
+  const [candidato, definirCandidato] = useCandidato()
   const lente = lerLente(params.get('a'))
   const uf = params.get('uf') ?? ''
   const cd = Number(params.get('m')) || null
   // "?perto={zona}-{local}": escola de partida (vinda da página da urna), com o anel de 2 km no mapa
   const perto = params.get('perto')
+  // "?bairro=NOME": o bairro escolhido na busca ou na tabela de bairros, com as escolas dele
+  const bairro = params.get('bairro')
+  // a cidade: "?aba=resultado|secao" (sem aba, "Onde conversar"); "?local={zona}-{local}", a escola escolhida em "Ache a
+  // sua seção"; "?vista=surpresa", o mapa da aba de resultado
+  const aba = lerAba(params.get('aba'))
+  const local = params.get('local')
+  const vista: VistaResultado = params.get('vista') === 'surpresa' ? 'surpresa' : 'margem'
   const ir = params.get('ir')
 
   const { dados: resumo } = useResumo()
@@ -67,18 +88,56 @@ export function Virar() {
     }
   }, [ir, navegar])
 
+  // quem chega por um link de aba (os endereços antigos da página do município) vê a cidade, não o topo da ferramenta
+  const rolou = useRef(false)
+  useEffect(() => {
+    if (rolou.current || !municipio) return
+    rolou.current = true
+    if (local && aba === 'secao') rolarQuandoAparecer('secoes-escola')
+    else if (aba !== 'conversar') rolarQuandoAparecer('cidade')
+  }, [municipio, aba, local])
+
   /** Muda parâmetros da URL; descer de nível (estado, cidade) entra no histórico, para o "voltar" subir. */
   const mudar = (novos: Record<string, string | null>, historico = false) => {
     const p = new URLSearchParams(params)
     // a escolha pode ter vindo de outra página (cópia da aba): entra na URL para o link compartilhado levar tudo
     if (candidato && !p.has('c')) p.set('c', String(candidato))
-    // a escola de partida é de uma cidade: trocar de lugar a desfaz
-    if ('m' in novos) p.delete('perto')
+    // a escola de partida, o bairro e a escola das seções são de uma cidade: trocar de lugar os desfaz
+    if ('m' in novos) {
+      p.delete('perto')
+      p.delete('bairro')
+      p.delete('local')
+    }
     for (const [k, v] of Object.entries(novos)) {
       if (v === null) p.delete(k)
       else p.set(k, v)
     }
     setParams(p, { replace: !historico })
+  }
+
+  /**
+   * A busca única: cidade desce de nível; escola abre "Perto de você" (ou, na aba "Ache a sua seção", as seções dela);
+   * bairro abre as escolas do bairro.
+   */
+  const escolherLugar = (e: Escolha) => {
+    if (e.tipo === 'cidade') {
+      mudar({ uf: e.uf, m: String(e.cd) }, true)
+    } else if (e.tipo === 'escola' && aba === 'secao') {
+      verSecoes(chaveLocal(e.local))
+    } else if (e.tipo === 'escola') {
+      mudar({ perto: chaveLocal(e.local), bairro: null, aba: null }, true)
+      rolarQuandoAparecer('perto-de-voce')
+    } else {
+      escolherBairro(e.nome)
+    }
+  }
+  const escolherBairro = (nome: string) => {
+    mudar({ bairro: nome, perto: null, aba: null }, true)
+    rolarQuandoAparecer('no-bairro')
+  }
+  const verSecoes = (chave: string) => {
+    mudar({ aba: 'secao', local: chave }, true)
+    rolarQuandoAparecer('secoes-escola')
   }
 
   return (
@@ -107,7 +166,7 @@ export function Virar() {
             {municipio && <> › {municipio.nome}</>}
           </nav>
         )}
-        <div className="campos">
+        <div className="campos campos-onde">
           <div>
             <label htmlFor="v-uf">Estado</label>
             <select id="v-uf" value={ufAtual} onChange={(e) => mudar({ uf: e.target.value || null, m: null }, true)}>
@@ -119,7 +178,7 @@ export function Virar() {
               ))}
             </select>
           </div>
-          <CampoMunicipio id="v-mun" uf={ufAtual} rotulo="Cidade" aoEscolher={(m) => mudar({ uf: m.uf, m: String(m.cd) }, true)} />
+          <BuscaLugar id="v-busca" uf={ufAtual} cd={municipio?.cd ?? null} aoEscolher={escolherLugar} />
         </div>
         <details className="zona-secao">
           <summary>Tenho a zona e a seção: ir direto à minha urna</summary>
@@ -136,11 +195,55 @@ export function Virar() {
         <Conversas lente={lente} candidato={candidato} ufs={resumo?.ufs ?? null} aoEscolher={(l) => mudar({ a: l })} />
       </Passo>
 
-      {candidato && resumo && indice ? (
-        municipio ? (
-          <NivelMunicipio cd={municipio.cd} nome={municipio.nome} uf={municipio.uf} total={municipio} candidato={candidato} lente={lente} perto={perto} />
-        ) : ufAtual ? (
+      {resumo && indice && municipio ? (
+        <section className="cidade" id="cidade" aria-labelledby="t-cidade">
+          <h2 id="t-cidade">
+            {municipio.nome} <span className="secundario">({municipio.uf})</span>
+          </h2>
+          <div className="abas" role="group" aria-label={`O que ver em ${municipio.nome}`}>
+            {ABAS.map(([chave, rotulo]) => (
+              <button key={chave} aria-pressed={aba === chave} onClick={() => mudar({ aba: chave === 'conversar' ? null : chave })}>
+                {rotulo}
+              </button>
+            ))}
+          </div>
+          {aba === 'resultado' ? (
+            <ResultadoCidade
+              municipio={municipio}
+              resumo={resumo}
+              candidato={candidato}
+              definirCandidato={definirCandidato}
+              vista={vista}
+              aoMudarVista={(v) => mudar({ vista: v === 'margem' ? null : v })}
+            />
+          ) : aba === 'secao' ? (
+            <SecoesCidade municipio={municipio} local={local} aoEscolherLocal={verSecoes} />
+          ) : candidato ? (
+            <NivelMunicipio
+              cd={municipio.cd}
+              nome={municipio.nome}
+              uf={municipio.uf}
+              total={municipio}
+              candidato={candidato}
+              lente={lente}
+              perto={perto}
+              bairro={bairro}
+              aoEscolherBairro={escolherBairro}
+              aoVerSecoes={verSecoes}
+            />
+          ) : (
+            <p className="aviso">
+              Escolha um candidato, no passo 1, para ver onde conversar em {municipio.nome}. O resultado do 1º turno e as seções,
+              nas outras abas, não dependem dessa escolha.
+            </p>
+          )}
+        </section>
+      ) : candidato && resumo && indice ? (
+        ufAtual ? (
           <NivelLista
+            resumo={resumo}
+            indice={indice}
+            aoAbrirCidade={(uf, cd) => mudar({ uf, m: String(cd) }, true)}
             titulo={`Cidades ${comPreposicao('de', ufAtual, resumo.ufs.find((u) => u.uf === ufAtual)!.nome)}`}
             itens={indice.lista.filter((m) => m.uf === ufAtual).map((m) => ({ ...m, chave: String(m.cd), rotulo: m.nome }))}
             candidato={candidato}
@@ -150,6 +253,9 @@ export function Virar() {
           />
         ) : (
           <NivelLista
+            resumo={resumo}
+            indice={indice}
+            aoAbrirCidade={(uf, cd) => mudar({ uf, m: String(cd) }, true)}
             titulo="Estados"
             itens={resumo.ufs.map((u) => ({ ...u, chave: u.uf, rotulo: u.nome }))}
             candidato={candidato}
@@ -281,8 +387,11 @@ function Totais({ total, saldo, candidato, lente, onde }: { total: Lugar; saldo:
 
 type ItemLista = Lugar & { chave: string; rotulo: string }
 
-/** Brasil (lista de estados) ou estado (lista de cidades): ranking clicável. */
-function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }: {
+/** Brasil (lista de estados) ou estado (lista de cidades): o mapa do Brasil, se a pessoa pedir, e o ranking clicável. */
+function NivelLista({ resumo, indice, aoAbrirCidade, titulo, itens, candidato, lente, aoEscolher, rotuloLugar }: {
+  resumo: Resumo
+  indice: IndiceMunicipios
+  aoAbrirCidade: (uf: string, cd: number) => void
   titulo: string
   itens: ItemLista[]
   candidato: NumeroCandidato
@@ -291,6 +400,7 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
   rotuloLugar: string
 }) {
   const [quantos, setQuantos] = useState(20)
+  const [verMapa, setVerMapa] = useState(false)
   const total = somar(itens)
   // estados e cidades já trazem o saldo somado escola por escola
   const saldo = potencialSomado(itens, candidato, lente)
@@ -300,6 +410,34 @@ function NivelLista({ titulo, itens, candidato, lente, aoEscolher, rotuloLugar }
   return (
     <section style={{ marginTop: 24 }}>
       <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={onde} />
+      {/* a conversa do perfil, experimental, não vai para o mapa do Brasil (D9) */}
+      {LENTES_PRINCIPAIS.includes(lente) &&
+        (verMapa ? (
+          <div style={{ marginTop: 16 }}>
+            <Suspense fallback={<p className="carregando">Carregando o mapa…</p>}>
+              <MapaBrasil
+                resumo={resumo}
+                indice={indice}
+                variavel="virar"
+                candidato={candidato}
+                lente={lente}
+                aoClicar={(cd) => {
+                  const uf = indice.porCodigo.get(cd)?.uf
+                  if (uf) aoAbrirCidade(uf, cd)
+                }}
+              />
+            </Suspense>
+            <LegendaSequencial lente={lente} candidato={candidato} />
+            <p className="discreto" style={{ marginTop: 8 }}>
+              Em cada cidade, de cada 100 eleitores aptos, para as cidades grandes não dominarem o mapa. Toque numa cidade para
+              ver os bairros e as escolas dela.
+            </p>
+          </div>
+        ) : (
+          <button className="botao botao-secundario" style={{ marginTop: 16 }} onClick={() => setVerMapa(true)}>
+            Ver no mapa do Brasil
+          </button>
+        ))}
       <h2>{titulo}</h2>
       <p className="secundario">
         Ordenados {LENTES[lente].pelo}
@@ -388,8 +526,11 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
   )
 }
 
-/** Cidade: mapa das escolas, bairros e escolas ordenados, e as escolas perto de uma escola de partida. */
-function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
+/**
+ * Aba "Onde conversar" da cidade: mapa das escolas, as escolas perto de uma escola de partida ou de um bairro, e bairros e
+ * escolas ordenados.
+ */
+function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto, bairro, aoEscolherBairro, aoVerSecoes }: {
   cd: number
   nome: string
   uf: string
@@ -398,6 +539,11 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
   lente: Lente
   /** "{zona}-{local}" da escola de partida, ou null */
   perto: string | null
+  /** bairro escolhido (como `nomeBairro`), ou null */
+  bairro: string | null
+  aoEscolherBairro: (nome: string) => void
+  /** abre a aba "Ache a sua seção" com a escola escolhida */
+  aoVerSecoes: (chave: string) => void
 }) {
   const { dados: locais } = useLocais(cd)
   const [selecionado, setSelecionado] = useState<string | null>(perto)
@@ -405,8 +551,14 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
   const [quantasPerto, setQuantasPerto] = useState(10)
   const cand = CANDIDATOS[candidato]
 
-  // a escola de partida só vale se existe nesta cidade e tem coordenada
-  const partida = perto ? locais?.find((l) => chaveLocal(l) === perto && l.lat !== null && l.lon !== null) : undefined
+  // uma escola escolhida na busca troca a marcada no mapa
+  useEffect(() => {
+    if (perto) setSelecionado(perto)
+  }, [perto])
+
+  // a escola de partida só vale se existe nesta cidade; sem coordenada, não há "perto"
+  const escolhida = perto ? locais?.find((l) => chaveLocal(l) === perto) : undefined
+  const partida = escolhida && escolhida.lat !== null && escolhida.lon !== null ? escolhida : undefined
   const anel = useMemo(() => (partida ? { lat: partida.lat!, lon: partida.lon!, km: RAIO_PERTO_KM } : null), [partida])
   const vizinhas = useMemo(
     () => (locais && anel ? escolasPerto(locais, anel).map((l) => ({ ...l, valor: potencial(l, candidato, lente) })) : []),
@@ -422,7 +574,7 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
     if (!locais) return []
     const grupos = new Map<string, Local[]>()
     for (const l of locais) {
-      const b = (l.bairro || '').trim().toUpperCase() || '(sem bairro informado)'
+      const b = nomeBairro(l) || SEM_BAIRRO
       grupos.set(b, [...(grupos.get(b) ?? []), l])
     }
     return [...grupos.entries()]
@@ -431,6 +583,17 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
       .sort((a, b) => b.valor - a.valor)
   }, [locais, candidato, lente])
 
+  const doBairro = useMemo(
+    () =>
+      locais && bairro
+        ? locais
+            .filter((l) => nomeBairro(l) === bairro)
+            .map((l) => ({ ...l, valor: potencial(l, candidato, lente) }))
+            .sort((a, b) => b.valor - a.valor)
+        : [],
+    [locais, bairro, candidato, lente],
+  )
+
   if (!locais) return <p className="carregando">Carregando escolas…</p>
   const saldo = potencialSomado(locais, candidato, lente)
   const escolas = ranquear(locais, candidato, lente, quantas)
@@ -438,10 +601,10 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
   const tamanho = (l: Local) => potencial(l, candidato, lente)
 
   return (
-    <section style={{ marginTop: 24 }}>
+    <>
       <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={`em ${nome}`} />
 
-      <h2>No mapa</h2>
+      <h3>No mapa</h3>
       <p className="secundario">
         Cada círculo é uma escola (local de votação). O tamanho mostra {lente === 'faltosos' ? 'o' : 'os'}{' '}
         {rotuloValor(lente, cand.nome)}; a cor, quem ficou à frente no 1º turno. As pessoas que votam numa escola costumam
@@ -472,9 +635,20 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
         </p>
       )}
 
+      {escolhida && !partida && (
+        <p className="aviso" id="perto-de-voce" style={{ marginTop: 24 }}>
+          {escolhida.nome} não tem localização no cadastro do TSE, então não dá para mostrar as escolas perto dela.{' '}
+          {nomeBairro(escolhida) && (
+            <button className="link-botao" onClick={() => aoEscolherBairro(nomeBairro(escolhida))}>
+              Veja as escolas do bairro {nomeBairro(escolhida)}
+            </button>
+          )}
+        </p>
+      )}
+
       {partida && (
         <>
-          <h2>Perto de você</h2>
+          <h3 id="perto-de-voce">Perto de você</h3>
           <p className="secundario">
             As {vizinhas.length} escolas a até {RAIO_PERTO_KM} km de {partida.nome} (contando ela), ordenadas{' '}
             {LENTES[lente].pelo}
@@ -508,12 +682,62 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
         </>
       )}
 
-      <h2>Bairros</h2>
-      <p className="secundario">Soma das escolas de cada bairro (o nome do bairro é o do endereço da escola no cadastro do TSE).</p>
-      <TabelaRanking rotuloLugar="Bairro" linhas={bairros.slice(0, 10)} candidato={candidato} lente={lente} />
+      {bairro && doBairro.length > 0 && (
+        <>
+          <h3 id="no-bairro">No bairro {bairro}</h3>
+          <p className="secundario">
+            {doBairro.length === 1
+              ? `A única escola do bairro: ${rotuloValor(lente, cand.curto)}, ${inteiro(Math.round(doBairro[0].valor))}.`
+              : `As ${doBairro.length} escolas do bairro, ordenadas ${LENTES[lente].pelo}${LENTES[lente].porCandidato ? ` para ${cand.nome}` : ''} (no bairro todo: ${inteiro(Math.round(potencialSomado(doBairro, candidato, lente)))}).`}{' '}
+            Toque no nome para ver a escola no mapa.
+          </p>
+          <TabelaRanking
+            rotuloLugar="Escola"
+            linhas={doBairro
+              .filter((l) => l.valor > 0)
+              .map((l) => ({
+                ...l,
+                nome: (
+                  <button className="link-botao" onClick={() => selecionarNoMapa(chaveLocal(l))}>
+                    {l.nome}
+                  </button>
+                ),
+              }))}
+            candidato={candidato}
+            lente={lente}
+            vazio={
+              lente === 'perfil'
+                ? `${cand.nome} não ficou abaixo do esperado em nenhuma escola do bairro.`
+                : `${cand.nome} não ficou à frente em nenhuma escola do bairro. Lembrar quem faltou não soma para ele aqui; conversar com quem votou em outro vale em qualquer lugar.`
+            }
+          />
+        </>
+      )}
 
-      <h2>Escolas</h2>
-      <p className="secundario">Toque no nome para ver a escola no mapa; o link “seções” abre as urnas dela.</p>
+      <h3>Bairros</h3>
+      <p className="secundario">
+        Soma das escolas de cada bairro (o nome do bairro é o do endereço da escola no cadastro do TSE). Toque no nome para ver
+        as escolas do bairro.
+      </p>
+      <TabelaRanking
+        rotuloLugar="Bairro"
+        linhas={bairros.slice(0, 10).map((b) => ({
+          ...b,
+          nome:
+            b.nome === SEM_BAIRRO ? (
+              b.nome
+            ) : (
+              <button className="link-botao" onClick={() => aoEscolherBairro(b.nome)}>
+                {b.nome}
+              </button>
+            ),
+        }))}
+        candidato={candidato}
+        lente={lente}
+      />
+
+      <h3>Escolas</h3>
+      <p className="secundario">Toque no nome para ver a escola no mapa; “seções” abre as urnas dela.</p>
       <TabelaRanking
         rotuloLugar="Escola"
         comBairro
@@ -524,9 +748,9 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
               <button className="link-botao" onClick={() => selecionarNoMapa(chaveLocal(l))}>
                 {l.nome}
               </button>{' '}
-              <Link className="discreto" to={`/municipio/${cd}?local=${l.zona}-${l.local}`}>
+              <button className="link-botao discreto" onClick={() => aoVerSecoes(chaveLocal(l))}>
                 seções
-              </Link>
+              </button>
             </>
           ),
         }))}
@@ -539,10 +763,10 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto }: {
         </button>
       )}
       <p className="discreto" style={{ marginTop: 16 }}>
-        {nome} ({uf}): {inteiro(locais.length)} escolas.{' '}
-        <Link to={`/municipio/${cd}`}>Veja o resultado do 1º turno e as seções de {nome}</Link>.
+        {nome} ({uf}): {inteiro(locais.length)} escolas. O resultado do 1º turno e as seções de cada escola estão nas abas
+        acima.
       </p>
-    </section>
+    </>
   )
 }
 

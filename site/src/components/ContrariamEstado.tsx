@@ -22,7 +22,7 @@ function Lista({ titulo, itens, candidato }: { titulo: string; itens: Contraria[
             {itens.map((m) => (
               <tr key={m.cd}>
                 <td>
-                  <Link to={`/municipio/${m.cd}`}>{m.nome}</Link> <span className="discreto">({m.uf})</span>
+                  <Link to={`/?m=${m.cd}&aba=resultado`}>{m.nome}</Link> <span className="discreto">({m.uf})</span>
                 </td>
                 <td className="num">{pct(m.p)}</td>
                 <td className="num">{pct(m.p_uf)}</td>

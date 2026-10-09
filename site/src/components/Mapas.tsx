@@ -224,7 +224,7 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lent
                 : pp(v)
       const linha1 = {
         margem: 'diferença entre os dois mais votados',
-        efeito: `efeito do município no voto em ${CANDIDATOS[ca].curto}`,
+        efeito: `efeito da cidade no voto em ${CANDIDATOS[ca].curto}`,
         semperfil: `o que o perfil e a região não explicam no voto em ${CANDIDATOS[ca].curto}`,
         bolsoes: `voto em ${CANDIDATOS[ca].curto} além do perfil e da região, comparado aos vizinhos`,
         regioes: `região de voto nº ${(mun.regiao ?? -1) + 1}`,
@@ -275,7 +275,7 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lent
 
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={container} className="mapa" role="region" aria-roledescription="mapa" aria-label="Mapa dos municípios do Brasil; a mesma informação está na busca por município" />
+      <div ref={container} className="mapa" role="region" aria-roledescription="mapa" aria-label="Mapa das cidades do Brasil; a mesma informação está nas tabelas da ferramenta" />
       <CaixaDica dica={dica} />
       {!geo && <p className="carregando">Carregando o mapa…</p>}
     </div>
@@ -539,10 +539,10 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
       .addTo(m)
   }, [selecionado])
 
-  if (comCoordenada.length === 0) return <p className="discreto">Sem coordenadas para os locais deste município.</p>
+  if (comCoordenada.length === 0) return <p className="discreto">Sem localização para as escolas desta cidade.</p>
   return (
     <div style={{ position: 'relative' }}>
-      <div ref={container} className="mapa mapa-pequeno" role="region" aria-roledescription="mapa" aria-label="Mapa dos locais de votação do município; a mesma informação está na tabela abaixo" />
+      <div ref={container} className="mapa mapa-pequeno" role="region" aria-roledescription="mapa" aria-label="Mapa das escolas da cidade; a mesma informação está na tabela abaixo" />
       <CaixaDica dica={dica} />
     </div>
   )

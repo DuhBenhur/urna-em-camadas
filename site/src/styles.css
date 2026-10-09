@@ -111,7 +111,13 @@ p { margin: 0 0 1em; max-width: 68ch; }
 .botao-tema { border: 0; background: transparent; color: var(--tinta-2); padding: 6px; border-radius: 8px; cursor: pointer; line-height: 0; }
 .botao-tema:hover { background: var(--borda); color: var(--tinta); }
 
-.rodape { margin-top: 72px; border-top: 1px solid var(--borda); padding-block: 32px 48px; color: var(--tinta-2); font-size: 0.9rem; }
+.rodape { margin-top: 72px; border-top: 1px solid var(--borda); padding-block: 32px 48px; color: var(--tinta-2); font-size: 1rem; }
+.rodape-links { display: flex; flex-wrap: wrap; gap: 4px 20px; margin-bottom: 12px; }
+.rodape-links a { min-height: 32px; display: inline-flex; align-items: center; color: var(--tinta); }
+/* mapa: vistas em dois grupos, cada um com o seu rótulo */
+.grupos-vistas { display: flex; flex-wrap: wrap; gap: 4px 24px; align-items: flex-end; margin-top: 16px; }
+.grupos-vistas .rotulo-pequeno { margin-bottom: 4px; }
+.grupos-vistas .abas { margin-bottom: 12px; }
 .rodape p { max-width: 80ch; }
 
 /* Blocos */
@@ -362,6 +368,13 @@ td.num { white-space: nowrap; }
 .zona-secao > form { padding: 16px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
 /* na coluna estreita, o botão da busca ganha uma linha inteira em vez de quebrar o texto */
 .zona-secao .campos > .botao { grid-column: 1 / -1; }
+/* passo 2: a busca única ganha mais espaço que o estado; no celular, um embaixo do outro */
+.campos-onde { grid-template-columns: minmax(160px, 1fr) minmax(0, 2fr); }
+@media (max-width: 560px) { .campos-onde { grid-template-columns: 1fr; } }
+/* a cidade dentro da ferramenta, com as três abas (D7) */
+.cidade { margin-top: 32px; }
+.cidade > h2 { margin-bottom: 12px; }
+.cidade h3 { margin-top: 40px; font-size: 1.25rem; }
 .como-usar-curto > h2 { margin-top: 0; }
 .como-usar-curto ol { padding-left: 1.4em; max-width: 68ch; }
 .como-usar-curto li { margin-bottom: 8px; }
@@ -428,6 +441,11 @@ td.num { white-space: nowrap; }
 .sugestoes .sugestao:hover, .sugestoes .sugestao:focus-visible { background: var(--borda); }
 .campo-municipio { position: relative; }
 .campo-municipio .sugestoes { position: absolute; left: 0; right: 0; z-index: 6; }
+/* busca única (BuscaLugar): a sugestão marcada pelas setas do teclado */
+.sugestoes[hidden] { display: none; }
+.sugestoes .sugestao[aria-selected="true"] { background: var(--borda); }
+/* só para leitor de tela */
+.so-leitor { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 .como-fazer ul { padding-left: 20px; }
 .como-fazer li { margin-bottom: 8px; max-width: 72ch; }

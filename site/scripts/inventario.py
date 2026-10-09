@@ -14,7 +14,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-ROTAS = ["#/", "#/?c=13", "#/?c=13&uf=SP&m=71072", "#/como-usar", "#/urna/SP/403/411?c=13", "#/municipio/71072",
+ROTAS = ["#/", "#/?c=13", "#/?c=13&uf=SP&m=71072", "#/como-usar", "#/urna/SP/403/411?c=13", "#/?m=71072&aba=resultado",
          "#/mapa?v=virar", "#/entenda", "#/conferencia", "#/metodo", "#/sobre"]
 
 # termos que pedem formação técnica para entender (palavra inteira; "analisa" não conta como LISA)

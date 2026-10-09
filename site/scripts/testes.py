@@ -96,13 +96,15 @@ def bateria_candidato(nav, b: str) -> None:
     time.sleep(2)
     pg.get_by_role("button", name="Surpresa").click()
     time.sleep(1)
-    conferir("município: Flávio pressionado", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
+    p = pressionados(pg)
+    conferir("cidade (aba do resultado): Flávio pressionado", len(p) == 2 and all("Flávio" in x for x in p), str(p))
     pg.reload()
     pg.wait_for_load_state("networkidle")
     time.sleep(2)
     pg.get_by_role("button", name="Surpresa").click()
     time.sleep(1)
-    conferir("município depois de recarregar: Flávio", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
+    p = pressionados(pg)
+    conferir("cidade depois de recarregar: Flávio", len(p) == 2 and all("Flávio" in x for x in p), str(p))
     abrir(pg, b + "#/mapa?v=efeito")
     conferir("mapa: Flávio pressionado", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
     abrir(pg, b + "#/entenda")
@@ -128,7 +130,8 @@ def bateria_candidato(nav, b: str) -> None:
     time.sleep(2)
     pg2.get_by_role("button", name="Surpresa").click()
     time.sleep(0.5)
-    conferir("link com ?c=22 em aba nova leva Flávio ao município", pressionados(pg2) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg2)))
+    p = pressionados(pg2)
+    conferir("link com ?c=22 em aba nova leva Flávio à cidade", len(p) == 2 and all("Flávio" in x for x in p), str(p))
     # endereços antigos da análise: cada capítulo vai para a resposta certa (ou para Método e dados), com o candidato
     for rota, alvo, destino in [("#/analise?cap=c-estado", "e-estado", "#/entenda?ir=estado"),
                                 ("#/analise?c=c-estado", "e-estado", "#/entenda?ir=estado"),
@@ -192,7 +195,7 @@ def bateria_acao(nav, b: str) -> None:
     esperar(pg, 4)
     conferir("botão leva ao mapa com ?perto=", "perto=403-1554" in pg.url and "m=71072" in pg.url and "c=13" in pg.url, pg.url)
     conferir("mapa: tabela 'Perto de você'", pg.get_by_role("heading", name="Perto de você").count() == 1)
-    linhas = pg.locator("h2:has-text('Perto de você') ~ .tabela-rolagem").first.locator("tbody tr").count()
+    linhas = pg.locator("h3:has-text('Perto de você') ~ .tabela-rolagem").first.locator("tbody tr").count()
     conferir("mapa: 10 primeiras escolas na tabela", linhas == 10, f"({linhas})")
     conferir("mapa carregado, com a legenda do anel", pg.locator(".maplibregl-map").count() == 1 and pg.locator(".chave-tracejada").count() == 1)
     pg.go_back()
@@ -203,11 +206,37 @@ def bateria_acao(nav, b: str) -> None:
     esperar(pg, 1.5)
     conferir("onde: estado", pg.url.endswith("#/?c=13&uf=PR") and pg.get_by_role("heading", name="Cidades do Paraná").count() == 1, pg.url)
     abrir(pg, b + "#/", 1.5)
-    pg.fill("#v-mun", "Curitiba")
+    pg.fill("#v-busca", "Curitiba")
     time.sleep(0.5)
-    pg.locator(".campo-municipio .sugestao").first.click()
+    pg.locator("#v-busca-lista [role=option]").first.click()
     esperar(pg, 3)
     conferir("onde: cidade", "uf=PR" in pg.url and "m=" in pg.url and pg.get_by_role("heading", name="No mapa").count() == 1, pg.url)
+    # busca única (D10, fase 1): com a cidade aberta, o mesmo campo acha escolas e bairros, também pelo teclado
+    abrir(pg, b + "#/?c=13&uf=SP&m=71072", 3)
+    conferir("busca: com a cidade aberta, o campo pede escola, bairro ou cidade",
+             pg.locator("label[for='v-busca']").inner_text() == "Escola, bairro ou cidade" and pg.locator("#v-busca").get_attribute("role") == "combobox")
+    pg.fill("#v-busca", "Elisio")
+    time.sleep(0.5)
+    opcoes = pg.locator("#v-busca-lista [role=option]").all_inner_texts()
+    conferir("busca: 'Elisio' sugere a EMEI Elísio Teixeira Leite", any("EMEI. CONJUNTO RESIDENCIAL ELISIO TEIXEIRA LEITE" in o for o in opcoes), str(opcoes[:3]))
+    alvo = next(i for i, o in enumerate(opcoes) if o.startswith("EMEI. CONJUNTO RESIDENCIAL ELISIO TEIXEIRA LEITE"))
+    for _ in range(alvo + 1):
+        pg.keyboard.press("ArrowDown")
+    conferir("busca: as setas marcam a sugestão (aria-activedescendant)",
+             pg.locator("#v-busca").get_attribute("aria-activedescendant") == f"v-busca-op{alvo}")
+    pg.keyboard.press("Enter")
+    esperar(pg, 2)
+    perto = pg.locator("#perto-de-voce").count() and pg.locator("main").inner_text()
+    conferir("busca: Enter abre 'Perto de você' da escola (35 escolas)", "perto=403-1554" in endereco(pg) and "As 35 escolas" in (perto or ""), endereco(pg))
+    pg.fill("#v-busca", "Bela Vista")
+    time.sleep(0.5)
+    pg.locator("#v-busca-lista [role=option]", has_text="BELA VISTA · bairro").first.click()
+    esperar(pg, 2)
+    conferir("busca: o bairro abre as escolas dele", "bairro=BELA+VISTA" in endereco(pg) and "perto=" not in endereco(pg)
+             and pg.get_by_role("heading", name="No bairro BELA VISTA").count() == 1, endereco(pg))
+    pg.fill("#v-busca", "zzzz")
+    time.sleep(0.5)
+    conferir("busca: sem resultado, diz que não achou", "Nenhum lugar com esse nome nesta cidade" in pg.locator(".busca-lugar").inner_text())
     abrir(pg, b + "#/", 1.5)
     pg.get_by_role("link", name="Todas as regras, com os artigos da lei").click()
     esperar(pg, 2.5)
@@ -245,7 +274,7 @@ def bateria_perfil(nav, b: str) -> None:
                  pg.locator(".pilula-experimental").first.is_visible() and "pista, não como certeza" in pg.locator(".virar").inner_text())
     for cd in (9210, 71072):  # São Luís e São Paulo têm escolas sem surpresa (sem perfil publicado)
         abrir(pg, b + f"#/virar?c=13&a=perfil&m={cd}", 4)
-        linhas = pg.locator("h2:has-text('Escolas') ~ .tabela-rolagem").first.locator("tbody tr").count()
+        linhas = pg.locator("h3:has-text('Escolas') ~ .tabela-rolagem").first.locator("tbody tr").count()
         conferir(f"município {cd}: tabela de escolas da ação do perfil", linhas == 20, f"({linhas})")
     abrir(pg, b + "#/urna/SP/403/411?c=22&a=perfil", 3)
     agir = pg.locator("#agir").inner_text()
@@ -329,7 +358,72 @@ def bateria_publico(nav, b: str) -> None:
     dica = pg.locator(".dica").inner_text() if pg.locator(".dica").count() else ""
     conferir("mapa: dica com a taxa e o total", "de cada 100 eleitores" in dica and "saldo possível para Lula" in dica, dica.replace("\n", " | ")[:100])
     abrir(pg, b + "#/municipio/71072?a=faltosos&c=13", 3)
-    conferir("município: vista Virar voto", pg.get_by_role("button", name="Virar voto", exact=True).get_attribute("aria-pressed") == "true")
+    conferir("#/municipio com ?a= vai para a cidade na ferramenta, em 'Onde conversar'",
+             endereco(pg).endswith("#/?c=13&a=faltosos&m=71072")
+             and pg.get_by_role("button", name="Onde conversar").get_attribute("aria-pressed") == "true", endereco(pg))
+    abrir(pg, b + "#/municipio/71072", 3)
+    topo = pg.evaluate("() => document.getElementById('cidade').getBoundingClientRect().top")
+    conferir("#/municipio vai para a aba do resultado, já na cidade",
+             endereco(pg).endswith("#/?m=71072&aba=resultado")
+             and pg.get_by_role("button", name="Resultado do 1º turno").get_attribute("aria-pressed") == "true" and abs(topo) < 200,
+             f"(topo a {topo:.0f}px) {endereco(pg)}")
+    abrir(pg, b + "#/municipio/71072?local=403-1554", 3)
+    conferir("#/municipio?local= abre 'Ache a sua seção' com as seções da escola",
+             endereco(pg).endswith("#/?m=71072&aba=secao&local=403-1554") and pg.get_by_role("link", name="Seção 411").count() == 1,
+             endereco(pg))
+    abrir(pg, b + "#/?c=13&uf=SP&m=71072", 3)
+    pg.locator("main button", has_text="seções").first.click()
+    esperar(pg, 2)
+    conferir("cidade: 'seções' na tabela de escolas abre a aba das seções",
+             "aba=secao" in endereco(pg) and "local=" in endereco(pg) and pg.locator("#secoes-escola a").count() >= 1, endereco(pg))
+    pg.fill("#v-busca", "Elisio")
+    time.sleep(0.5)
+    pg.locator("#v-busca-lista [role=option]", has_text="EMEI. CONJUNTO RESIDENCIAL").first.click()
+    esperar(pg, 2)
+    conferir("busca na aba das seções: a escola abre as seções dela", "local=403-1554" in endereco(pg)
+             and pg.get_by_role("link", name="Seção 411").count() == 1, endereco(pg))
+    ctx_novo = nav.new_context(viewport={"width": 1280, "height": 1000})
+    pg_novo = ctx_novo.new_page()
+    abrir(pg_novo, b + "#/?m=71072&aba=resultado", 3)
+    pg_novo.get_by_role("button", name="Surpresa").click()
+    time.sleep(1)
+    conferir("cidade sem candidato: a surpresa pede a escolha, sem escolher ninguém",
+             pressionados(pg_novo) == [] and "Escolha por qual voto ler a surpresa" in pg_novo.locator("main").inner_text(),
+             str(pressionados(pg_novo)))
+    ctx_novo.close()
+    # R2: mapa em dois grupos, sem jargão; o mapa do Brasil dentro da ferramenta só carrega quando pedido
+    abrir(pg, b + "#/mapa", 4)
+    grupos = pg.locator(".grupos-vistas .rotulo-pequeno").all_inner_texts()
+    conferir("mapa: vistas em dois grupos, abre em 'Onde virar voto'",
+             [g.lower() for g in grupos] == ["para agir", "para entender"]
+             and pg.get_by_role("button", name="Onde virar voto").get_attribute("aria-pressed") == "true", str(grupos))
+    for vista in ["bolsoes", "regioes", "efeito", "semperfil"]:
+        abrir(pg, b + f"#/mapa?v={vista}", 2)
+        texto = pg.locator("main").inner_text()
+        conferir(f"mapa {vista}: sem jargão, com o caminho para o cálculo",
+                 not any(j in texto for j in ["LISA", "SKATER", "modelo de três níveis", "município"])
+                 and pg.locator("main a[href^='#/metodo?sec=']").count() >= 1)
+    # página nova (o módulo do mapa, já carregado nesta, não seria pedido de novo)
+    ctx_rede = nav.new_context(viewport={"width": 1280, "height": 1000})
+    pg_rede = ctx_rede.new_page()
+    vigiar(pg_rede, erros)
+    pedidos: list[str] = []
+    pg_rede.on("request", lambda r: pedidos.append(r.url))
+    abrir(pg_rede, b + "#/?c=13", 2)
+    conferir("ferramenta, nível Brasil: o mapa não carrega antes de pedir", not any("Mapas-" in u for u in pedidos))
+    pg_rede.get_by_role("button", name="Ver no mapa do Brasil").click()
+    esperar(pg_rede, 4)
+    conferir("ferramenta: 'Ver no mapa do Brasil' abre o mapa com a legenda",
+             any("Mapas-" in u for u in pedidos) and pg_rede.locator(".maplibregl-map").count() == 1
+             and pg_rede.locator(".legenda-sequencial").count() == 1)
+    ctx_rede.close()
+    rodape = pg.locator("footer.rodape")
+    conferir("rodapé: links e a frase da neutralidade",
+             rodape.locator(".rodape-links a").all_inner_texts() == ["Como usar", "Confira sua urna", "Método e dados", "Sobre"]
+             and "A mesma conta para os dois candidatos. O site não pede voto para ninguém." in rodape.inner_text())
+    abrir(pg, b + "#/sobre", 1.5)
+    conferir("sobre: como relatar erro e a inspiração metodológica",
+             pg.locator("main a[href$='/issues']").count() == 1 and pg.locator("main a[href='#/metodo?sec=inspiracao']").count() == 1)
     abrir(pg, b + "#/entenda", 3)
     respostas = pg.evaluate("""() => [...document.querySelectorAll('main section.resposta')]
         .filter(s => s.querySelector('.para-conversar') && s.querySelector('.detalhe-link a[href^="#/metodo?sec="]')).map(s => s.id)""")

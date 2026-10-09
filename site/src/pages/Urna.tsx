@@ -144,7 +144,7 @@ export function Urna() {
   return (
     <div className="conteudo">
       <nav className="migalhas" aria-label="Você está em">
-        <Link to="/">Início</Link> › <Link to={`/municipio/${municipio.cd}`}>{municipio.nome} ({arquivo.uf})</Link> › Zona {nZona} › Seção{' '}
+        <Link to="/">Início</Link> › <Link to={`/?m=${municipio.cd}&aba=resultado`}>{municipio.nome} ({arquivo.uf})</Link> › Zona {nZona} › Seção{' '}
         {nSecao}
       </nav>
       <header style={{ marginTop: 16 }}>

@@ -130,12 +130,12 @@ export function CidadesGemeas({ historia, resumo, candidato }: { historia: Histo
               {historia.gemeas.map((g) => (
                 <tr key={`${g.a.cd}-${g.b.cd}`}>
                   <td>
-                    <Link to={`/municipio/${g.a.cd}`}>{nomeCidade(g.a)}</Link>
+                    <Link to={`/?m=${g.a.cd}&aba=resultado`}>{nomeCidade(g.a)}</Link>
                   </td>
                   <td className="num">{pct(p(g.a))}</td>
                   <td className="num">{pct(u(g.a))}</td>
                   <td>
-                    <Link to={`/municipio/${g.b.cd}`}>{nomeCidade(g.b)}</Link> <span className="discreto">({pct(u(g.b))} no estado)</span>
+                    <Link to={`/?m=${g.b.cd}&aba=resultado`}>{nomeCidade(g.b)}</Link> <span className="discreto">({pct(u(g.b))} no estado)</span>
                   </td>
                   <td className="num">{pct(p(g.b))}</td>
                   <td className="num">{String(g.km).replace('.', ',')} km</td>

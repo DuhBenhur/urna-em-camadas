@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { HashRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { Cabecalho, Rodape } from './components/Estrutura'
 import { ComoUsar } from './pages/ComoUsar'
 import { Conferencia } from './pages/Conferencia'
@@ -9,9 +9,8 @@ import { Sobre } from './pages/Sobre'
 import { Urna } from './pages/Urna'
 import { Virar } from './pages/Virar'
 
-// páginas com mapa carregam o MapLibre (~800 kB) só quando abertas; a ferramenta (inicial) carrega o dela só ao abrir uma cidade
+// o mapa do Brasil carrega o MapLibre (~800 kB) só quando aberto; a ferramenta (inicial) carrega o dela só quando aparece
 const Mapa = lazy(() => import('./pages/Mapa').then((m) => ({ default: m.Mapa })))
-const Municipio = lazy(() => import('./pages/Municipio').then((m) => ({ default: m.Municipio })))
 
 function VoltarAoTopo() {
   const { pathname } = useLocation()
@@ -50,6 +49,29 @@ function RedirecionarAnalise() {
   return <Navigate to={destino + candidato} replace />
 }
 
+/**
+ * A antiga página do município virou a cidade dentro da ferramenta (decisão D7): `#/municipio/{cd}` abre a aba do resultado;
+ * com `?local=`, a aba das seções, com a escola escolhida; com `?a=` (vinda do "Virar voto"), a aba "Onde conversar".
+ */
+function RedirecionarMunicipio() {
+  const { cd } = useParams()
+  const antigos = new URLSearchParams(useLocation().search)
+  const novos = new URLSearchParams()
+  const c = antigos.get('c')
+  if (c === '13' || c === '22') novos.set('c', c)
+  const a = antigos.get('a')
+  if (a) novos.set('a', a)
+  novos.set('m', cd ?? '')
+  const local = antigos.get('local')
+  if (local) {
+    novos.set('aba', 'secao')
+    novos.set('local', local)
+  } else if (!a) {
+    novos.set('aba', 'resultado')
+  }
+  return <Navigate to={`/?${novos}`} replace />
+}
+
 function NaoEncontrada() {
   return (
     <div className="conteudo">
@@ -75,7 +97,7 @@ export function App() {
             <Route path="/analise" element={<RedirecionarAnalise />} />
             <Route path="/conferencia" element={<Conferencia />} />
             <Route path="/urna/:uf/:zona/:secao" element={<Urna />} />
-            <Route path="/municipio/:cd" element={<Municipio />} />
+            <Route path="/municipio/:cd" element={<RedirecionarMunicipio />} />
             <Route path="/mapa" element={<Mapa />} />
             <Route path="/metodo" element={<Metodo />} />
             <Route path="/dados" element={<Navigate to="/metodo?sec=dados" replace />} />

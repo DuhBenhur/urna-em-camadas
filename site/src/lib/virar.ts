@@ -133,6 +133,16 @@ export const RAIO_PERTO_KM = 2
 /** Chave de uma escola dentro do município: "{zona}-{local}" (o número do local só é único dentro dele). */
 export const chaveLocal = (l: { zona: number; local: number }) => `${l.zona}-${l.local}`
 
+/** O bairro de uma escola como o site agrupa: o nome do endereço no cadastro do TSE, sem espaços nas pontas, em maiúsculas. */
+export const nomeBairro = (l: { bairro: string }) => (l.bairro || '').trim().toUpperCase()
+
+/** Rola até um elemento assim que ele aparecer (até 3 s): depois de uma escolha que muda o que a página mostra. */
+export function rolarQuandoAparecer(id: string, tentativas = 30): void {
+  const el = document.getElementById(id)
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  else if (tentativas > 0) setTimeout(() => rolarQuandoAparecer(id, tentativas - 1), 100)
+}
+
 type Ponto = { lat: number; lon: number }
 
 /** Distância em km entre dois pontos (haversine, raio médio da Terra). */

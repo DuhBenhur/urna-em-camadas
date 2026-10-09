@@ -182,7 +182,7 @@ export function MetodoEspaco({ e, candidato }: { e: Explicacao; candidato: Numer
         A surpresa de cada um dos {inteiro(sp.n_locais)} locais de votação (resultado menos o esperado pelo município e pelo perfil
         do eleitorado) tem Moran de {num(sp['13'].moran_I)} no voto em Lula e {num(sp['22'].moran_I)} no voto em Flávio, entre os
         8 locais mais próximos: bairros vizinhos se parecem além do que o perfil explica.{' '}
-        <Link to="/municipio/71072">Veja o mapa da cidade na opção “Surpresa”</Link>.
+        <Link to={`/?m=71072&aba=resultado&vista=surpresa&c=${candidato}`}>Veja o mapa da cidade na opção “Surpresa”</Link>.
       </p>
     </>
   )
