@@ -6,8 +6,8 @@ import { useLocais, type Local } from '../lib/dados'
 import { inteiro } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import {
-  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLentePrincipal, potencial, potencialSomado, somar,
-  type Lente,
+  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLentePrincipal, notaColuna, potencial,
+  potencialSomado, somar, type Lente,
 } from '../lib/virar'
 import { LeiCurta } from './LeiCurta'
 import { SeletorCandidato } from './SeletorCandidato'
@@ -79,11 +79,11 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
           )}
         </div>
       ) : null}
+      {escola && candidato && <p className="nota-tabela">{notaColuna('faltosos', candidato, perto ? 'perto' : 'escola')}</p>}
 
       <p className="discreto" style={{ marginTop: 16 }}>
         <strong>O que os números não dizem.</strong> Quem faltou é um teto: parte mudou de cidade, está fora do país ou tem voto
-        facultativo. O saldo supõe que quem faltou votaria como os vizinhos que votaram. Quem votou em outro candidato, branco
-        ou nulo não tem lado. São somas por escola, nunca dados de pessoas. <Link to="/como-usar?ir=limites">Todos os limites</Link>{' '}
+        facultativo. Quem votou em outro candidato, branco ou nulo não tem lado. São somas por escola, nunca dados de pessoas. <Link to="/como-usar?ir=limites">Todos os limites</Link>{' '}
         · <Link to="/como-usar?ir=conversas">Como calculamos</Link>.
       </p>
       <LeiCurta />
@@ -112,7 +112,9 @@ function NaSuaEscola({ escola, candidato }: { escola: Local; candidato: NumeroCa
         </div>
         {cand && saldo > 0 && (
           <div>
-            <dt>saldo possível para {cand.curto}, se quem faltou votar</dt>
+            <dt>
+              saldo possível para {cand.curto}, se quem faltou votar<span aria-hidden="true">*</span>
+            </dt>
             <dd>{inteiro(Math.round(saldo))}</dd>
           </div>
         )}
@@ -172,7 +174,9 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
         </div>
         {cand && saldo > 0 && (
           <div>
-            <dt>saldo possível para {cand.curto}, se quem faltou votar</dt>
+            <dt>
+              saldo possível para {cand.curto}, se quem faltou votar<span aria-hidden="true">*</span>
+            </dt>
             <dd>{inteiro(Math.round(saldo))}</dd>
           </div>
         )}
@@ -188,7 +192,7 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
       {ranking.length > 0 ? (
         <>
           <p className="agir-legenda">
-            {lente === 'faltosos' ? `Onde lembrar quem faltou rende mais para ${cand!.curto}:` : 'Onde há mais votos em aberto:'}
+            {lente === 'faltosos' ? `Onde lembrar quem faltou rende mais para ${cand!.curto} (saldo possível*):` : 'Onde há mais votos em aberto:'}
           </p>
           <ol className="agir-lista">
             {ranking.map((l) => (

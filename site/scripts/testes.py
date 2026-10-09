@@ -73,6 +73,23 @@ FONTES_PEQUENAS = """() => [...document.querySelectorAll('main p, main li, main 
   .filter(([px]) => px < 16)"""
 
 
+# toda tabela com o saldo possível (no cabeçalho ou na primeira coluna) tem a nota com asterisco, ligada por aria-describedby
+TABELAS_SEM_NOTA = """() => [...document.querySelectorAll('main table')]
+  .filter(t => [...t.querySelectorAll('th, tbody td:first-child')].some(c => c.textContent.includes('Saldo possível')))
+  .filter(t => { const id = t.getAttribute('aria-describedby'); const n = id && document.getElementById(id);
+                 return !(n && n.textContent.trim().startsWith('* Saldo possível')) }).length"""
+TABELAS_COM_SALDO = """() => [...document.querySelectorAll('main table')]
+  .filter(t => [...t.querySelectorAll('th, tbody td:first-child')].some(c => c.textContent.includes('Saldo possível'))).length"""
+
+
+def nota_da_tabela(pg, titulo: str) -> str:
+    """O texto da nota da primeira tabela depois do título (h2 ou h3) com este texto."""
+    return pg.evaluate("""(titulo) => { const h = [...document.querySelectorAll('main h2, main h3')].find(x => x.textContent.trim() === titulo);
+        let e = h && h.nextElementSibling; while (e && !e.querySelector('table')) e = e.nextElementSibling;
+        const id = e && e.querySelector('table').getAttribute('aria-describedby'); const n = id && document.getElementById(id);
+        return n ? n.textContent.trim() : '' }""", titulo)
+
+
 def bateria_candidato(nav, b: str) -> None:
     """P0.2: o candidato escolhido viaja pelo site e sobrevive ao recarregar."""
     erros: list[str] = []
@@ -441,6 +458,31 @@ def bateria_publico(nav, b: str) -> None:
     abrir(pg_folha, b + "#/folha?m=71072", 2)
     conferir("folha sem escola nem bairro: pede a escolha", "Escolha uma escola ou um bairro" in pg_folha.locator("main").inner_text())
     ctx_folha.close()
+    # a nota com asterisco embaixo de toda tabela com o saldo possível, com o candidato escolhido (09/10)
+    for rota in ["#/?c=13", "#/?c=22&uf=SP&m=71072", "#/?c=13&uf=SP&m=71072&perto=403-1554", "#/?c=13&uf=SP&m=71072&bairro=BELA+VISTA",
+                 "#/como-usar", "#/metodo?sec=contas", "#/folha?m=71072&perto=403-1554"]:
+        abrir(pg, b + rota, 3)
+        com, sem = pg.evaluate(TABELAS_COM_SALDO), pg.evaluate(TABELAS_SEM_NOTA)
+        conferir(f"{rota}: toda tabela com saldo possível tem a nota com asterisco", com > 0 and sem == 0, f"({com} tabelas, {sem} sem nota)")
+    abrir(pg, b + "#/?c=13", 2)
+    nota = nota_da_tabela(pg, "Estados")
+    conferir("nota dos estados: Lula, o adversário e a soma das escolas",
+             nota.startswith("* Saldo possível para Lula:") and "sobre Flávio" in nota and "Cada estado soma as suas escolas" in nota, nota[:80])
+    abrir(pg, b + "#/?c=22&uf=AL&m=27855", 3)
+    nota = nota_da_tabela(pg, "Bairros")
+    conferir("Maceió, Flávio: a nota dos bairros explica o saldo onde ele ficou atrás no total",
+             nota.startswith("* Saldo possível para Flávio:") and "um bairro onde Flávio ficou atrás no total ainda pode ter saldo" in nota, nota[:80])
+    nota = nota_da_tabela(pg, "Escolas")
+    conferir("Maceió, Flávio: a nota das escolas, sem a frase da soma",
+             nota.startswith("* Saldo possível para Flávio:") and "soma as suas escolas" not in nota, nota[:80])
+    abrir(pg, b + "#/?c=13&a=abertos&uf=SP&m=71072", 3)
+    conferir("conversa 'votos em aberto': a nota não cita candidato", nota_da_tabela(pg, "Escolas").startswith("* Votos em aberto:"))
+    abrir(pg, b + "#/?c=13&a=perfil&uf=SP&m=71072", 3)
+    conferir("conversa do perfil: a nota é do candidato e diz que é experimental",
+             nota_da_tabela(pg, "Escolas").startswith("* Votos abaixo do esperado para Lula (experimental):"))
+    abrir(pg, b + "#/urna/SP/403/411?c=13", 3)
+    conferir("urna: a nota do saldo possível, com o candidato e o 'perto de você'",
+             "* Saldo possível para Lula:" in pg.locator("#agir").inner_text() and "O total de “perto de você” soma" in pg.locator("#agir").inner_text())
     # R2: mapa em dois grupos, sem jargão; o mapa do Brasil dentro da ferramenta só carrega quando pedido
     abrir(pg, b + "#/mapa", 4)
     grupos = pg.locator(".grupos-vistas .rotulo-pequeno").all_inner_texts()

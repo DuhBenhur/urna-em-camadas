@@ -39,7 +39,7 @@ export function MetodoVirar({ resumo }: { resumo: Resumo | null }) {
       </p>
       <h3>Os totais, para conferir</h3>
       <TabelaRolagem rotulo="Totais do Onde virar voto no Brasil">
-        <table>
+        <table aria-describedby="nota-totais-virar">
           <thead>
             <tr>
               <th>Conta</th>
@@ -55,7 +55,9 @@ export function MetodoVirar({ resumo }: { resumo: Resumo | null }) {
               </td>
             </tr>
             <tr>
-              <td>Saldo possível ao lembrar quem faltou</td>
+              <td>
+                Saldo possível ao lembrar quem faltou<span aria-hidden="true">*</span>
+              </td>
               <td className="num">{soma((u) => u.saldo13)}</td>
               <td className="num">{soma((u) => u.saldo22)}</td>
             </tr>
@@ -73,6 +75,10 @@ export function MetodoVirar({ resumo }: { resumo: Resumo | null }) {
           </tbody>
         </table>
       </TabelaRolagem>
+      <p className="nota-tabela" id="nota-totais-virar">
+        * Saldo possível: soma, escola por escola, de faltosos × vantagem do candidato, só nas escolas onde ele ficou à frente
+        (fórmula acima). Teto, não previsão: supõe que quem faltou votaria como os vizinhos.
+      </p>
       <h3>Suposições e limites</h3>
       <ul>
         <li>

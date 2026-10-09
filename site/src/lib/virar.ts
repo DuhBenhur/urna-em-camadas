@@ -1,4 +1,4 @@
-import type { NumeroCandidato } from './modelo'
+import { CANDIDATOS, type NumeroCandidato } from './modelo'
 
 /**
  * "Onde virar voto": três contas simples sobre o 1º turno, iguais para os dois candidatos, cada uma conferível sozinha
@@ -135,6 +135,33 @@ export const chaveLocal = (l: { zona: number; local: number }) => `${l.zona}-${l
 
 /** O bairro de uma escola como o site agrupa: o nome do endereço no cadastro do TSE, sem espaços nas pontas, em maiúsculas. */
 export const nomeBairro = (l: { bairro: string }) => (l.bairro || '').trim().toUpperCase()
+
+/** Onde a conta da tabela é feita: na escola, ou somada das escolas de um bairro, cidade, estado ou do "perto de você". */
+export type NivelNota = 'escola' | 'bairro' | 'cidade' | 'estado' | 'perto'
+
+/**
+ * A nota com asterisco embaixo de toda tabela que mostra o número principal de uma conversa (pedido do usuário em 09/10):
+ * o que o número é, com o nome do candidato escolhido, e o que não é. Nos lugares somados, explica por que um lugar onde o
+ * candidato ficou atrás no total ainda pode ter saldo (vem das escolas onde ele ficou à frente).
+ */
+export function notaColuna(lente: Lente, n: NumeroCandidato, nivel: NivelNota): string {
+  const c = CANDIDATOS[n].curto
+  const o = CANDIDATOS[adversario(n)].curto
+  const um = nivel === 'cidade' ? 'uma' : 'um'
+  const soma =
+    nivel === 'escola'
+      ? ''
+      : nivel === 'perto'
+        ? ` O total de “perto de você” soma as escolas a até ${RAIO_PERTO_KM} km.`
+        : ` Cada ${nivel} soma as suas escolas: por isso ${um} ${nivel} onde ${c} ficou atrás no total ainda pode ter saldo, vindo das escolas onde ele ficou à frente.`
+  if (lente === 'faltosos') {
+    return `* Saldo possível para ${c}: nas escolas onde ${c} ficou à frente no 1º turno, quem faltou multiplicado pela vantagem de ${c} sobre ${o} na escola. Supõe que quem faltou votaria como os vizinhos que votaram ali: é um teto, não uma previsão.${soma}`
+  }
+  if (lente === 'abertos') {
+    return '* Votos em aberto: os votos do 1º turno nos outros dez candidatos, brancos e nulos. Não têm lado: ninguém sabe para quem vão no 2º turno.'
+  }
+  return `* Votos abaixo do esperado para ${c} (experimental): nas escolas onde ${c} teve menos votos do que o modelo esperava, pela cidade e pelo perfil de quem vota ali, a diferença, em votos. O modelo não vê a renda do bairro nem a história do lugar: é pista, não certeza.${nivel === 'escola' ? '' : ' Cada lugar soma as suas escolas.'}`
+}
 
 /** Rola até um elemento assim que ele aparecer (até 3 s): depois de uma escolha que muda o que a página mostra. */
 export function rolarQuandoAparecer(id: string, tentativas = 30): void {

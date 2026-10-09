@@ -142,7 +142,7 @@ export function Folha() {
           {resumoLado(CANDIDATOS[22].curto, flavio)}.
         </p>
         <TabelaRolagem rotulo="Escolas da folha">
-        <table className="folha-tabela">
+        <table className="folha-tabela" aria-describedby="nota-folha">
           <thead>
             <tr>
               <th className="num">#</th>
@@ -152,7 +152,9 @@ export function Folha() {
               <th className="num">Faltaram</th>
               <th className="num">Votos em aberto</th>
               <th>À frente no 1º turno</th>
-              <th className="num">Saldo possível de quem ficou à frente</th>
+              <th className="num">
+                Saldo possível de quem ficou à frente<span aria-hidden="true">*</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -171,6 +173,10 @@ export function Folha() {
           </tbody>
         </table>
         </TabelaRolagem>
+        <p className="folha-nota" id="nota-folha">
+          * Saldo possível: na escola, quem faltou multiplicado pela vantagem de quem ficou à frente; para quem ficou atrás, é
+          zero. Supõe que quem faltou votaria como os vizinhos que votaram ali: é um teto, não uma previsão.
+        </p>
         {linhas.length > NA_FOLHA && (
           <p className="folha-nota">
             As {NA_FOLHA} {conteudo.perto ? 'mais perto' : 'primeiras, em ordem alfabética'}, de {linhas.length}. A lista completa

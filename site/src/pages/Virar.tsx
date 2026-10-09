@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { BuscaTitulo } from '../components/Busca'
 import { BuscaLugar, type Escolha } from '../components/BuscaLugar'
@@ -16,8 +16,8 @@ import { inteiro, milhoes, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
 import { comPreposicao } from '../lib/ufs'
 import {
-  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLente, nomeBairro, potencial, potencialSomado,
-  ranquear, rolarQuandoAparecer, rotuloValor, somar, vantagem, type Lente, type Lugar,
+  LENTES, LENTES_PRINCIPAIS, RAIO_PERTO_KM, chaveLocal, escolasPerto, km, lerLente, nomeBairro, notaColuna, potencial,
+  potencialSomado, ranquear, rolarQuandoAparecer, rotuloValor, somar, vantagem, type Lente, type Lugar, type NivelNota,
 } from '../lib/virar'
 
 // os mapas (MapLibre, ~800 kB) só carregam quando aparecem: o da cidade, ao abrir uma cidade; o do Brasil, quando a pessoa
@@ -475,6 +475,8 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
   vazio?: string
 }) {
   const cand = CANDIDATOS[candidato]
+  // a nota com asterisco do número principal, ligada à tabela para o leitor de tela
+  const idNota = useId()
   if (linhas.length === 0) {
     return (
       <p className="aviso">
@@ -490,14 +492,18 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
   // nas escolas, a conversa do perfil mostra a diferença do esperado, para a conta poder ser conferida
   const comSurpresa = lente === 'perfil' && linhas.some((l) => (candidato === 13 ? l.s13 : l.s22) != null)
   return (
+    <>
     <TabelaRolagem rotulo={`Lugares ordenados ${LENTES[lente].pelo}`}>
-      <table>
+      <table aria-describedby={idNota}>
         <thead>
           <tr>
             <th>{rotuloLugar}</th>
             {comBairro && <th className="col-sec">Bairro</th>}
             {comDistancia && <th className="num">Distância</th>}
-            <th className="num">{maiuscula(rotuloValor(lente, cand.curto))}</th>
+            <th className="num">
+              {maiuscula(rotuloValor(lente, cand.curto))}
+              <span aria-hidden="true">*</span>
+            </th>
             {lente === 'faltosos' && <th className="num col-sec">Faltaram</th>}
             {lente === 'faltosos' && <th className="num col-sec">Vantagem de {cand.curto} no total</th>}
             {comSurpresa && <th className="num col-sec">{cand.curto} em relação ao esperado</th>}
@@ -528,6 +534,10 @@ function TabelaRanking({ linhas, candidato, lente, rotuloLugar, comBairro = fals
         </tbody>
       </table>
     </TabelaRolagem>
+    <p className="nota-tabela" id={idNota}>
+      {notaColuna(lente, candidato, rotuloLugar.toLowerCase() as NivelNota)}
+    </p>
+    </>
   )
 }
 

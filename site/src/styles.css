@@ -247,6 +247,9 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .resposta .para-conversar { margin-top: 24px; margin-bottom: 8px; }
 .detalhe-link a::after { content: " →"; }
 
+/* nota com asterisco embaixo das tabelas: o que o número principal é e o que não é */
+.nota-tabela { margin: 8px 0 0; max-width: 76ch; color: var(--tinta-2); font-size: 1rem; }
+
 /* Os limites dos números, em destaque na ferramenta e no guia */
 .limites { margin-top: 40px; padding: 20px 24px; border: 1px solid var(--borda); border-left: 4px solid var(--tinta); border-radius: var(--raio); background: var(--superficie); max-width: 860px; }
 .limites > h2 { margin-top: 0; font-size: clamp(1.2rem, 2.4vw, 1.45rem); }

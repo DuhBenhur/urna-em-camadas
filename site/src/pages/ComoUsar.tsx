@@ -337,7 +337,7 @@ function Exemplo() {
             contando a sua. Nelas, no 1º turno:
           </p>
           <TabelaRolagem rotulo="O exemplo, para os dois candidatos">
-            <table>
+            <table aria-describedby="nota-exemplo">
               <thead>
                 <tr>
                   <th>Conta, nas {conta.n} escolas</th>
@@ -353,7 +353,9 @@ function Exemplo() {
                   </td>
                 </tr>
                 <tr>
-                  <td>Saldo possível ao lembrar quem faltou</td>
+                  <td>
+                    Saldo possível ao lembrar quem faltou<span aria-hidden="true">*</span>
+                  </td>
                   <td className="num">{inteiro(Math.round(conta.saldo[13]))}</td>
                   <td className="num">{conta.saldo[22] > 0 ? inteiro(Math.round(conta.saldo[22])) : '0 (não ficou à frente em nenhuma)'}</td>
                 </tr>
@@ -371,6 +373,11 @@ function Exemplo() {
               </tbody>
             </table>
           </TabelaRolagem>
+          <p className="nota-tabela" id="nota-exemplo">
+            * Saldo possível: nas escolas onde o candidato ficou à frente, quem faltou multiplicado pela vantagem dele sobre o
+            outro na escola, somado nas {conta.n} escolas. Supõe que quem faltou votaria como os vizinhos que votaram ali: é um
+            teto, não uma previsão.
+          </p>
           <p style={{ marginTop: 12 }}>
             Lendo:{' '}
             {([13, 22] as const)
