@@ -15,7 +15,8 @@ import time
 from playwright.sync_api import sync_playwright
 
 ROTAS = ["#/", "#/?c=13", "#/?c=13&uf=SP&m=71072", "#/como-usar", "#/urna/SP/403/411?c=13", "#/?m=71072&aba=resultado",
-         "#/mapa?v=virar", "#/entenda", "#/conferencia", "#/metodo", "#/sobre"]
+         "#/mapa?v=virar", "#/entenda", "#/conferencia", "#/metodo", "#/sobre",
+         "#/folha?m=71072&perto=403-1554"]
 
 # termos que pedem formação técnica para entender (palavra inteira; "analisa" não conta como LISA)
 JARGAO = ["ICC", "logit", "BLUP", "Shapley", "Mundlak", "LISA", "SKATER", "gpboost", "statsmodels", "Moran", "multinível",

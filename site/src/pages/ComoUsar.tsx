@@ -15,6 +15,7 @@ const SECOES: [string, string][] = [
   ['conversas', 'As três conversas'],
   ['exemplo', 'Um exemplo real'],
   ['lista', 'O que fazer com a lista'],
+  ['limites', 'Os limites'],
   ['lei', 'Dentro da lei'],
   ['compartilhar', 'Compartilhar'],
   ['glossario', 'Glossário'],
@@ -83,7 +84,8 @@ export function ComoUsar() {
           </p>
           <p>
             <strong>O que fazer:</strong> lembrar a data (25 de outubro), o local de votação (está no e-Título) e o documento com
-            foto. Quem não puder votar pode justificar a ausência.
+            foto. Quem não puder votar pode justificar a ausência. Onde ele ficou à frente, lembre também quem já votou nele: parte
+            de quem vota no 1º turno não volta no 2º.
           </p>
           <p>
             <strong>O que o número não diz:</strong> é um teto. Parte de quem faltou mudou de cidade, está fora do país ou não
@@ -136,6 +138,14 @@ export function ComoUsar() {
             <strong>Para quem faltou,</strong> lembre a data, o local e o documento. Quem não puder votar pode justificar.
           </li>
           <li>
+            <strong>Lembre também quem já votou.</strong> Onde o seu candidato ficou à frente, parte de quem votou nele no 1º turno
+            pode não voltar no 2º. O mesmo lembrete (data, local, documento) é barato e está dentro da lei.
+          </li>
+          <li>
+            <strong>Para dividir o trabalho no grupo,</strong> use a folha do bairro: as escolas perto, as duas conversas, o que
+            fazer, a lei e os limites, em uma página para imprimir ou mandar como texto.
+          </li>
+          <li>
             <strong>Leve só informação verdadeira</strong>, com fonte.
           </li>
           <li>
@@ -147,6 +157,45 @@ export function ComoUsar() {
             pessoa votou.
           </li>
         </ul>
+      </section>
+
+      <section id="limites" className="limites" aria-labelledby="t-limites">
+        <h2 id="t-limites">O que estes números não dizem</h2>
+        <p>O site ajuda a escolher onde conversar. Não diz quem vai votar, nem em quem, nem o que dizer. Onde ele para:</p>
+        <h3>Quem faltou é um teto</h3>
+        <p>
+          O cadastro inclui quem mudou de cidade sem transferir o título, quem está fora do país, registros desatualizados e quem
+          tem voto facultativo (16 e 17 anos, mais de 70, quem não é alfabetizado). Por isso, lugares com muitos idosos ou muita
+          mudança aparecem com mais gente do que dá para alcançar. E o saldo supõe que quem faltou votaria como os vizinhos, o que
+          é só uma aproximação.
+        </p>
+        <h3>Votos em aberto não têm lado</h3>
+        <p>
+          O site não sabe para que lado tende quem votou em cada um dos outros dez candidatos, branco ou nulo: alguns podem estar
+          bem mais perto de um dos dois. Por isso a lista é a mesma para quem apoia Lula e para quem apoia Flávio.
+        </p>
+        <h3>Lembrar de votar rende mais do que tentar convencer</h3>
+        <p>
+          Em experimentos de campo, quase todos feitos fora do Brasil, onde o voto não é obrigatório, lembrar as pessoas de votar
+          tem efeito pequeno, mas real, maior quando a conversa é cara a cara. Tentar mudar o voto de alguém, numa eleição geral,
+          rende em média muito pouco. Os estudos estão reunidos no livro <em>Get Out the Vote</em>, de Alan Gerber e Donald
+          Green, e na revisão de 49 experimentos de Joshua Kalla e David Broockman (2018).
+        </p>
+        <h3>A lista orienta; quem conhece o bairro decide</h3>
+        <p>
+          Cada pessoa vota onde está registrada, não necessariamente onde mora, e numa cidade grande as escolas a até{' '}
+          {RAIO_PERTO_KM} km de uma escola reúnem dezenas de milhares de eleitores. O recorte fino (a rua, quem você conhece) é de
+          quem conhece o lugar; o site não desce a esse nível de propósito, para não apontar pessoas.
+        </p>
+        <h3>O site não organiza o grupo</h3>
+        <p>
+          A folha do bairro ajuda a dividir as escolas, mas o site não guarda quem foi aonde nem o que ouviu. Combinem isso no
+          grupo, sem anotar dados de ninguém.
+        </p>
+        <p className="discreto" style={{ marginBottom: 0 }}>
+          E sempre: os números são do resultado oficial do 1º turno e são somas por escola. Dizem o que aconteceu, não o que vai
+          acontecer.
+        </p>
       </section>
 
       <section id="lei" className="cartao como-fazer" aria-labelledby="t-lei">
@@ -189,6 +238,11 @@ export function ComoUsar() {
           Na página da sua urna, o cartão "perto de mim" mostra quantas pessoas faltaram e quantas votaram em outro candidato,
           branco ou nulo nas escolas a até {RAIO_PERTO_KM} km da sua. Só números sem lado: o cartão não cita candidato e não
           pede voto. Ele mostra o nome da sua escola; compartilhe só se quiser.
+        </p>
+        <p>
+          Para o seu grupo, a folha do bairro (na página da sua urna e, na ferramenta, em "Perto de você" e "No bairro") junta numa
+          página as escolas, as duas conversas, o que fazer, a lei e os limites. Dá para imprimir, salvar em PDF ou mandar como
+          texto. Ela também não cita candidato: para cada escola, mostra quem ficou à frente no 1º turno, e serve aos dois lados.
         </p>
       </section>
 

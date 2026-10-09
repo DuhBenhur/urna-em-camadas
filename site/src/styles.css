@@ -247,6 +247,63 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .resposta .para-conversar { margin-top: 24px; margin-bottom: 8px; }
 .detalhe-link a::after { content: " →"; }
 
+/* Os limites dos números, em destaque na ferramenta e no guia */
+.limites { margin-top: 40px; padding: 20px 24px; border: 1px solid var(--borda); border-left: 4px solid var(--tinta); border-radius: var(--raio); background: var(--superficie); max-width: 860px; }
+.limites > h2 { margin-top: 0; font-size: clamp(1.2rem, 2.4vw, 1.45rem); }
+.limites ul { padding-left: 20px; margin-bottom: 12px; }
+.limites li { margin-bottom: 10px; max-width: 72ch; }
+.limites h3 { margin-top: 20px; }
+.limites p { max-width: 72ch; }
+.limites > p:last-child { margin-bottom: 0; }
+
+/* Folha do bairro: na tela, uma prévia da página; no papel, uma página A4 */
+.folha-acoes { margin-top: 32px; }
+.folha-texto { margin-top: 12px; }
+.folha-texto summary { cursor: pointer; color: var(--tinta-2); min-height: 32px; }
+.folha-texto pre { white-space: pre-wrap; font-family: var(--fonte); font-size: 1rem; background: var(--superficie); border: 1px solid var(--borda); border-radius: var(--raio); padding: 12px 16px; }
+.folha { margin-top: 24px; padding: 24px; border: 1px solid var(--borda); border-radius: var(--raio); background: var(--superficie); }
+.folha h1 { margin: 4px 0 8px; font-size: clamp(1.4rem, 3vw, 1.9rem); }
+.folha h2 { margin: 16px 0 6px; font-size: 1.1rem; }
+.folha ul { padding-left: 18px; margin: 0; }
+.folha li { margin-bottom: 6px; }
+.folha-tabela { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.folha-tabela th, .folha-tabela td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grade); vertical-align: top; }
+.folha-tabela th { font-size: 0.9rem; color: var(--tinta-2); font-weight: 600; }
+.folha-tabela .num { text-align: right; }
+.folha-colunas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 0 32px; margin-top: 8px; }
+.folha-pe { margin-top: 16px; color: var(--tinta-3); overflow-wrap: anywhere; }
+.folha-frente { white-space: nowrap; }
+/* no celular, a prévia da tabela rola para os lados, como as outras tabelas do site; no papel, cabe na página */
+@media (max-width: 560px) {
+  .folha { padding: 16px; }
+  .folha-tabela { min-width: 720px; }
+  .folha-tabela th { white-space: nowrap; }
+}
+@media print {
+  :root, :root[data-theme="dark"] {
+    color-scheme: light; --plano: #fff; --superficie: #fff; --tinta: #000; --tinta-2: #333; --tinta-3: #555;
+    --grade: #d4d4d4; --eixo: #bbb; --borda: rgba(0, 0, 0, 0.18); --sombra: none;
+  }
+  @page { size: A4; margin: 11mm; }
+  html, body { background: #fff; }
+  .cabecalho, .rodape, .nao-imprimir { display: none !important; }
+  .conteudo { max-width: none; padding: 0; }
+  .folha { margin: 0; padding: 0; border: 0; font-size: 9.6pt; line-height: 1.28; }
+  .folha .tabela-rolagem { overflow: visible; }
+  .folha-tabela { min-width: 0; }
+  .folha .rotulo-pequeno { font-size: 8pt; }
+  .folha h1 { font-size: 15pt; margin: 2px 0 4px; }
+  .folha h2 { font-size: 10.5pt; margin: 8px 0 3px; }
+  .folha p { margin: 0 0 4px; max-width: none; }
+  .folha li { margin-bottom: 2px; }
+  .folha-tabela { font-size: 8.8pt; line-height: 1.22; margin-top: 4px; }
+  .folha-tabela th { font-size: 8pt; }
+  .folha-tabela th, .folha-tabela td { padding: 2px 4px; }
+  .folha-colunas { grid-template-columns: 1fr 1fr; gap: 0 14px; margin-top: 4px; }
+  .folha-pe { font-size: 7.5pt; margin-top: 6px; }
+  .folha a { color: inherit; text-decoration: none; }
+}
+
 /* O padrão "técnico para os dois públicos" (BlocoTecnico): pergunta, resposta curta, como funciona e o detalhe fechado */
 .bloco-tecnico { margin-top: clamp(48px, 8vw, 88px); }
 .bloco-tecnico > h2 { margin-top: 0; font-size: clamp(1.4rem, 3vw, 1.9rem); max-width: 32ch; }

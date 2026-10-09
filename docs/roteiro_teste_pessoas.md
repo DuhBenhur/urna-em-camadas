@@ -27,6 +27,8 @@ Uma pessoa comum, sem ajuda, consegue achar a escola onde vota e dizer onde, per
 | 4 | "O que é proibido fazer para pedir voto? Ache no site." | Chega à lei (no fim da ferramenta ou em "Como usar") |
 | 5 | "Abra a página da sua urna e me diga se o resultado dela confere com o oficial." | Acha o selo de conferência |
 | 6 | Só para quem se interessar: "Onde está explicado como esse número foi calculado?" | Chega a "Método e dados" pelo link certo |
+| 7 | Para quem faz trabalho de base: "Com esta lista, como você dividiria o trabalho do seu grupo?" | Usa a folha do bairro (imprime, salva ou manda como texto) ou explica outro jeito; anote o que faltou |
+| 8 | "O que estes números não dizem?" | Cita pelo menos dois limites (quem faltou é teto; votos em aberto sem lado; lembrar rende mais que convencer) |
 
 ## Depois das tarefas
 

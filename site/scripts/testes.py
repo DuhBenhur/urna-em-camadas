@@ -14,6 +14,7 @@ Requer: pip install playwright (usa o Chrome instalado; sem ele, o Chromium do P
 """
 import argparse
 import hashlib
+import re
 import sys
 import time
 import urllib.request
@@ -315,8 +316,14 @@ def bateria_publico(nav, b: str) -> None:
     abrir(pg, b + "#/virar?ir=como-fazer", 1.5)
     conferir("#/virar?ir=como-fazer vai para a lei no guia", "#/como-usar?ir=lei" in endereco(pg), endereco(pg))
     abrir(pg, b + "#/como-usar", 1.5)
-    secoes = pg.evaluate("() => ['minuto','conversas','exemplo','lista','lei','compartilhar','glossario','perguntas'].filter(id => document.getElementById(id))")
-    conferir("guia: as 8 seções", len(secoes) == 8, str(secoes))
+    secoes = pg.evaluate("() => ['minuto','conversas','exemplo','lista','limites','lei','compartilhar','glossario','perguntas'].filter(id => document.getElementById(id))")
+    conferir("guia: as 9 seções, com os limites", len(secoes) == 9, str(secoes))
+    guia = pg.locator("main").inner_text()
+    conferir("guia: lembrar também quem já votou (item 2) e a folha do bairro",
+             "Lembre também quem já votou" in guia and "quem já votou nele" in guia and "folha do bairro" in guia)
+    conferir("guia: os limites, com as fontes da evidência",
+             all(t in pg.locator("#limites").inner_text() for t in ["Quem faltou é um teto", "Votos em aberto não têm lado",
+                 "Lembrar de votar rende mais", "quem conhece o bairro decide", "não organiza o grupo", "Kalla e David Broockman"]))
     conferir("guia: exemplo calculado (35 escolas)", "35 escolas" in pg.locator("#exemplo").inner_text())
     conferir("menu: 'Entenda' leva ao Entenda", pg.locator("nav.navegacao a", has_text="Entenda").get_attribute("href") == "#/entenda")
     for rota in ["#/", "#/como-usar", "#/entenda", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
@@ -391,6 +398,49 @@ def bateria_publico(nav, b: str) -> None:
              pressionados(pg_novo) == [] and "Escolha por qual voto ler a surpresa" in pg_novo.locator("main").inner_text(),
              str(pressionados(pg_novo)))
     ctx_novo.close()
+    # limites em destaque na ferramenta, antes dos resultados (pedido de 09/10)
+    abrir(pg, b + "#/?c=13", 2)
+    limites = pg.locator("section.limites")
+    conferir("ferramenta: os limites em destaque, antes dos resultados",
+             limites.count() == 1 and limites.locator("li").count() == 5
+             and limites.locator("a[href='#/como-usar?ir=limites']").count() == 1
+             and pg.evaluate("""() => { const l = document.querySelector('section.limites'), r = [...document.querySelectorAll('main h2')].find(h => h.textContent === 'Estados');
+                 return !!(l && r && (l.compareDocumentPosition(r) & Node.DOCUMENT_POSITION_FOLLOWING)) }"""))
+    # folha do bairro: uma página, sem lado, com o texto para o grupo
+    abrir(pg, b + "#/?c=13&uf=SP&m=71072&perto=403-1554", 3)
+    conferir("ferramenta: 'Perto de você' leva à folha do bairro",
+             pg.get_by_role("link", name="Folha do bairro: imprimir ou mandar ao grupo").get_attribute("href") == "#/folha?m=71072&perto=403-1554")
+    abrir(pg, b + "#/?c=13&uf=SP&m=71072&bairro=BELA+VISTA", 3)
+    conferir("ferramenta: 'No bairro' leva à folha do bairro",
+             pg.get_by_role("link", name="Folha do bairro: imprimir ou mandar ao grupo").get_attribute("href") == "#/folha?m=71072&bairro=BELA+VISTA")
+    abrir(pg, b + "#/urna/SP/403/411", 3)
+    conferir("urna: a folha do bairro ao lado do mapa",
+             pg.get_by_role("link", name="Folha do bairro para o grupo").get_attribute("href") == "#/folha?m=71072&perto=403-1554")
+    ctx_folha = nav.new_context(viewport={"width": 1280, "height": 1000})
+    pg_folha = ctx_folha.new_page()
+    vigiar(pg_folha, erros)
+    abrir(pg_folha, b + "#/folha?m=71072&perto=403-1554", 2)
+    folha = pg_folha.locator("article.folha").inner_text()
+    conferir("folha (perto): título, 15 escolas na página e a nota das outras",
+             pg_folha.get_by_role("heading", level=1).inner_text() == "Perto de EMEI. CONJUNTO RESIDENCIAL ELISIO TEIXEIRA LEITE"
+             and pg_folha.locator(".folha-tabela tbody tr").count() == 15 and "As 15 mais perto, de 35" in folha)
+    conferir("folha: sem lado (os dois candidatos no resumo) e com os limites",
+             "Lula ficou à frente em 35 escolas" in folha and "Flávio não ficou à frente em nenhuma" in folha
+             and "O que estes números não dizem" in folha and "quem já votou nele" in folha)
+    # o texto fica num <details> fechado: o conteúdo do DOM, não o texto visível
+    texto = pg_folha.locator(".folha-texto pre").text_content() or ""
+    conferir("folha: o texto para o grupo, com o link e sem candidato no link",
+             texto.startswith("Folha do bairro: Perto de EMEI.") and "Duas conversas:" in texto
+             and re.search(r"#/folha\?m=71072&perto=403-1554$", texto.strip()) is not None and "c=" not in texto.split("#/folha")[-1])
+    pdf = pg_folha.pdf(format="A4", prefer_css_page_size=True, print_background=True)
+    paginas = re.findall(rb"/Count\s+(\d+)", pdf)
+    conferir("folha: cabe numa página A4", paginas == [b"1"], str(paginas))
+    abrir(pg_folha, b + "#/folha?m=71072&bairro=BELA+VISTA", 2)
+    conferir("folha (bairro): as 10 escolas do bairro",
+             pg_folha.get_by_role("heading", level=1).inner_text() == "Bairro BELA VISTA" and pg_folha.locator(".folha-tabela tbody tr").count() == 10)
+    abrir(pg_folha, b + "#/folha?m=71072", 2)
+    conferir("folha sem escola nem bairro: pede a escolha", "Escolha uma escola ou um bairro" in pg_folha.locator("main").inner_text())
+    ctx_folha.close()
     # R2: mapa em dois grupos, sem jargão; o mapa do Brasil dentro da ferramenta só carrega quando pedido
     abrir(pg, b + "#/mapa", 4)
     grupos = pg.locator(".grupos-vistas .rotulo-pequeno").all_inner_texts()

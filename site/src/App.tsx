@@ -4,6 +4,7 @@ import { Cabecalho, Rodape } from './components/Estrutura'
 import { ComoUsar } from './pages/ComoUsar'
 import { Conferencia } from './pages/Conferencia'
 import { Entenda } from './pages/Entenda'
+import { Folha } from './pages/Folha'
 import { Metodo } from './pages/Metodo'
 import { Sobre } from './pages/Sobre'
 import { Urna } from './pages/Urna'
@@ -93,6 +94,7 @@ export function App() {
             <Route path="/" element={<Virar />} />
             <Route path="/virar" element={<Redirecionar para="/" />} />
             <Route path="/como-usar" element={<ComoUsar />} />
+            <Route path="/folha" element={<Folha />} />
             <Route path="/entenda" element={<Entenda />} />
             <Route path="/analise" element={<RedirecionarAnalise />} />
             <Route path="/conferencia" element={<Conferencia />} />

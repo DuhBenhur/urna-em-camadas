@@ -6,6 +6,7 @@ import { ResultadoCidade, SecoesCidade, type VistaResultado } from '../component
 import { EscolhaCandidato } from '../components/EscolhaCandidato'
 import { LegendaEscala, LegendaSequencial } from '../components/Legendas'
 import { LeiCurta } from '../components/LeiCurta'
+import { LimitesNumeros } from '../components/LimitesNumeros'
 import { Passo } from '../components/Passo'
 import { SeloExperimental } from '../components/SeloExperimental'
 import { TabelaRolagem } from '../components/TabelaRolagem'
@@ -48,7 +49,9 @@ const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 /** O que cada conversa quer dizer, em uma frase, para o candidato escolhido */
 function explicarLente(l: Lente, curto: string): string {
-  if (l === 'faltosos') return `Quem não votou no 1º turno. Onde ${curto} ficou à frente, cada pessoa que for votar tende a somar.`
+  if (l === 'faltosos') {
+    return `Quem não votou no 1º turno. Onde ${curto} ficou à frente, cada pessoa que for votar tende a somar; lembre também quem já votou nele de voltar no dia 25.`
+  }
   if (l === 'abertos') return 'Quem votou em outro candidato, branco ou nulo no 1º turno. No 2º turno, todos escolhem entre os dois.'
   return `Escolas onde ${curto} teve menos votos do que escolas de perfil parecido na mesma cidade. Pista, não certeza.`
 }
@@ -194,6 +197,8 @@ export function Virar() {
       <Passo numero={3} titulo="Que tipo de conversa?">
         <Conversas lente={lente} candidato={candidato} ufs={resumo?.ufs ?? null} aoEscolher={(l) => mudar({ a: l })} />
       </Passo>
+
+      <LimitesNumeros />
 
       {resumo && indice && municipio ? (
         <section className="cidade" id="cidade" aria-labelledby="t-cidade">
@@ -679,6 +684,11 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto, bairro, 
               Mostrar todas ({inteiro(comPotencial.length - quantasPerto)} restantes)
             </button>
           )}
+          <div className="acoes" style={{ marginTop: 16 }}>
+            <Link className="botao botao-secundario" to={`/folha?${new URLSearchParams({ m: String(cd), perto: chaveLocal(partida) })}`}>
+              Folha do bairro: imprimir ou mandar ao grupo
+            </Link>
+          </div>
         </>
       )}
 
@@ -711,6 +721,11 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto, bairro, 
                 : `${cand.nome} não ficou à frente em nenhuma escola do bairro. Lembrar quem faltou não soma para ele aqui; conversar com quem votou em outro vale em qualquer lugar.`
             }
           />
+          <div className="acoes" style={{ marginTop: 16 }}>
+            <Link className="botao botao-secundario" to={`/folha?${new URLSearchParams({ m: String(cd), bairro })}`}>
+              Folha do bairro: imprimir ou mandar ao grupo
+            </Link>
+          </div>
         </>
       )}
 
@@ -787,10 +802,6 @@ function ComoUsarCurto() {
           os bairros com mais gente para essa conversa.
         </li>
       </ol>
-      <p className="discreto">
-        O que os números não dizem: quem faltou é um teto (parte mudou de cidade ou não pode votar), e os votos em aberto não
-        têm lado. São somas por escola, nunca dados de pessoas.
-      </p>
       <div className="acoes">
         <Link className="botao" to="/como-usar">
           Guia completo: como usar

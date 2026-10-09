@@ -65,6 +65,7 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
           {perto ? (
             <PertoDeVoce perto={perto} escola={escola} candidato={candidato} lente={lente} mudarLente={mudarLente}
               link={noVirar({ perto: chaveLocal(escola) })} lugar={`${municipio} (${uf})`}
+              linkFolha={`/folha?${new URLSearchParams({ m: String(cd), perto: chaveLocal(escola) })}`}
               // o link compartilhado não leva candidato: quem recebe escolhe o seu
               linkCompartilhado={`${window.location.origin}${window.location.pathname}#/?${new URLSearchParams({ a: 'abertos', uf, m: String(cd), perto: chaveLocal(escola) })}`} />
           ) : (
@@ -80,10 +81,10 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
       ) : null}
 
       <p className="discreto" style={{ marginTop: 16 }}>
-        <strong>O que os números não dizem.</strong> Quem faltou é um teto: parte mudou de cidade, está fora do país ou não pode
-        votar. O saldo supõe que quem faltou votaria como os vizinhos que votaram. Quem votou em outro candidato, branco ou
-        nulo não tem lado. São somas por escola, nunca dados de pessoas.{' '}
-        <Link to="/como-usar?ir=conversas">Como calculamos</Link>.
+        <strong>O que os números não dizem.</strong> Quem faltou é um teto: parte mudou de cidade, está fora do país ou tem voto
+        facultativo. O saldo supõe que quem faltou votaria como os vizinhos que votaram. Quem votou em outro candidato, branco
+        ou nulo não tem lado. São somas por escola, nunca dados de pessoas. <Link to="/como-usar?ir=limites">Todos os limites</Link>{' '}
+        · <Link to="/como-usar?ir=conversas">Como calculamos</Link>.
       </p>
       <LeiCurta />
     </section>
@@ -127,7 +128,7 @@ function NaSuaEscola({ escola, candidato }: { escola: Local; candidato: NumeroCa
   )
 }
 
-function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar, linkCompartilhado }: {
+function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar, linkCompartilhado, linkFolha }: {
   perto: (Local & { km: number })[]
   escola: Local
   candidato: NumeroCandidato | null
@@ -136,6 +137,8 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
   link: string
   lugar: string
   linkCompartilhado: string
+  /** a folha do bairro: as escolas perto, as conversas, a lei e os limites, para imprimir ou mandar ao grupo */
+  linkFolha: string
 }) {
   const [copiado, setCopiado] = useState(false)
   const cand = candidato ? CANDIDATOS[candidato] : null
@@ -214,9 +217,14 @@ function PertoDeVoce({ perto, escola, candidato, lente, mudarLente, link, lugar,
           .
         </p>
       )}
-      <Link className="botao" to={link} style={{ marginTop: 16 }}>
-        Ver as escolas perto daqui no mapa
-      </Link>
+      <div className="acoes" style={{ marginTop: 16 }}>
+        <Link className="botao" to={link}>
+          Ver as escolas perto daqui no mapa
+        </Link>
+        <Link className="botao botao-secundario" to={linkFolha}>
+          Folha do bairro para o grupo
+        </Link>
+      </div>
       <CompartilharPerto escola={escola} lugar={lugar} escolas={perto.length} faltaram={total.faltosos} abertos={total.abertos}
         url={linkCompartilhado} copiado={copiado} aoCopiar={() => {
           setCopiado(true)
