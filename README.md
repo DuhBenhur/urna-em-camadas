@@ -119,6 +119,6 @@ cd site && npm install && npm run dev
 
 Projeto feito por **Eduardo Ben Hur** com [Claude Code](https://claude.com/claude-code). Código-fonte e dados neste repositório. Todas as informações vêm de bases públicas do TSE, do IBGE e do MDS. Projeto independente, sem vínculo com partidos ou candidaturas. **Não é pesquisa eleitoral.**
 
-Continuação metodológica de: Gomes, E. B. Q.; Tarantin Junior, W. *Efeitos das unidades federativas na renda disponível per capita por domicílio: uma análise multinível*. Quaestum, v. 6, e2675824, 2025. https://doi.org/10.22167/2675-441X-2024824
+Inspiração metodológica (a ideia de separar o resultado em camadas com um modelo multinível): GOMES, E. B. H. de Q.; TARANTIN JUNIOR, W. Efeitos das unidades federativas na renda disponível per capita por domicílio: uma análise multinível : Effects of federative units on per capita household disposable income: A multilevel analysis. **Quaestum**, [S. l.], v. 6, p. 1–21, 2025. DOI: [10.22167/2675-441X-2024824](https://doi.org/10.22167/2675-441X-2024824). Disponível em: https://ipecege.emnuvens.com.br/quaestum/article/view/824. Acesso em: 8 out. 2026.
 
 Código sob [MIT](LICENSE). Dados processados e textos sob [CC BY 4.0](LICENSE-DADOS.md).

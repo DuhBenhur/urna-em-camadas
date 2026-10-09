@@ -21,7 +21,7 @@ export function ComoFoiFeito({ resumo, candidato, explicacao }: { resumo: Resumo
       titulo: 'A pergunta',
       situacao: 'feito',
       texto:
-        'Quanto do resultado de uma urna vem do estado, do município e da própria seção? O desenho vem de um estudo sobre a renda nos estados brasileiros, agora aplicado ao voto.',
+        'Quanto do resultado de uma urna vem do estado, do município e da própria seção? A ideia de separar as camadas foi inspirada num estudo multinível sobre a renda dos domicílios nos estados brasileiros (referência no Método).',
     },
     {
       titulo: 'Os dados',

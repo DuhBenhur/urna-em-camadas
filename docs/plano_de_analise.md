@@ -2,7 +2,7 @@
 
 Projeto de portfólio de ciência de dados, sem vínculo partidário. Análise multinível e espacial do 1º turno presidencial de 2026 no Brasil, com zoom na cidade de São Paulo, publicada em site com método e código abertos. Tudo em Python.
 
-Continuação de: Gomes, E.B.Q.; Tarantin Junior, W. *Efeitos das unidades federativas na renda disponível per capita por domicílio: uma análise multinível*. Quaestum 6: e2675824, 2025. https://doi.org/10.22167/2675-441X-2024824
+Inspiração metodológica (não é continuação do estudo; dele vem a ideia de separar o resultado em camadas com um modelo multinível): GOMES, E. B. H. de Q.; TARANTIN JUNIOR, W. Efeitos das unidades federativas na renda disponível per capita por domicílio: uma análise multinível : Effects of federative units on per capita household disposable income: A multilevel analysis. **Quaestum**, [S. l.], v. 6, p. 1–21, 2025. DOI: [10.22167/2675-441X-2024824](https://doi.org/10.22167/2675-441X-2024824). Disponível em: https://ipecege.emnuvens.com.br/quaestum/article/view/824. Acesso em: 8 out. 2026.
 
 ## Pergunta
 
@@ -10,7 +10,7 @@ Quanto da variação do voto presidencial no 1º turno de 2026 está entre estad
 
 Gancho: a 1ª ZE (Bela Vista, SP) deu 60,58% a Lula, contra 46,58% na capital. É efeito do perfil do eleitorado, do município, do estado ou de algo que o modelo não vê?
 
-## O que o artigo deixou em aberto e como este projeto responde
+## O que vem do artigo e o que muda aqui
 
 | Artigo (limitações e sugestões) | Este projeto |
 |---|---|

@@ -284,13 +284,18 @@ export function Metodo() {
         <li>Boa Esperança do Norte (MT) foi criado depois do Censo e da malha de 2022: as urnas estão na base, mas o município fica fora das comparações entre vizinhos.</li>
       </ul>
 
-      <h2>Origem</h2>
+      <h2>Inspiração metodológica</h2>
       <p>
-        Este projeto continua o desenho de Gomes e Tarantin Junior,{' '}
-        <a href="https://doi.org/10.22167/2675-441X-2024824">
-          <em>Efeitos das unidades federativas na renda disponível per capita por domicílio: uma análise multinível</em>
-        </a>{' '}
-        (Quaestum, 2025), que aplicou a mesma estratégia a domicílios dentro dos estados.
+        A ideia de separar o resultado em camadas (o que é do estado, do município e da urna) com um modelo multinível foi
+        inspirada num estudo que separou da mesma forma a renda dos domicílios nos estados brasileiros:
+      </p>
+      <p className="referencia">
+        GOMES, E. B. H. de Q.; TARANTIN JUNIOR, W. Efeitos das unidades federativas na renda disponível per capita por
+        domicílio: uma análise multinível : Effects of federative units on per capita household disposable income: A multilevel
+        analysis. <strong>Quaestum</strong>, [S. l.], v. 6, p. 1–21, 2025. DOI:{' '}
+        <a href="https://doi.org/10.22167/2675-441X-2024824">10.22167/2675-441X-2024824</a>. Disponível em:{' '}
+        <a href="https://ipecege.emnuvens.com.br/quaestum/article/view/824">https://ipecege.emnuvens.com.br/quaestum/article/view/824</a>.
+        Acesso em: 8 out. 2026.
       </p>
     </div>
   )

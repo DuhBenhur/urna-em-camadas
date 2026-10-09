@@ -269,6 +269,8 @@ td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .destaque { border-left: 3px solid var(--tinta); max-width: 760px; }
 .destaque h3 { margin-top: 0; }
 .destaque p:last-child, .em-breve p:last-child { margin-bottom: 0; }
+/* referência bibliográfica: o endereço longo quebra em qualquer ponto, para não estourar o celular */
+.referencia { overflow-wrap: anywhere; color: var(--tinta-2); }
 .em-breve { max-width: 760px; border-style: dashed; box-shadow: none; }
 .cartao > h3:first-child { margin-top: 0; }
 td.num { white-space: nowrap; }
