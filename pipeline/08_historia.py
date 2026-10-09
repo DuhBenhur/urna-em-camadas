@@ -1,4 +1,4 @@
-"""Números da história contada na página inicial do site, e a "surpresa" de cada urna.
+"""Números do Entenda e de Método e dados (o jogo de adivinhar, vizinhos, cidades gêmeas), e a "surpresa" de cada urna.
 
 Tudo descritivo, a partir da base por seção, dos efeitos do HLM3 nulo (05) e da malha municipal do IBGE.
 Os dois candidatos do 2º turno (Lula, 13, e Flávio Bolsonaro, 22) saem sempre lado a lado.

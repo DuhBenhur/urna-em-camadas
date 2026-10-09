@@ -1,5 +1,7 @@
 # Plano: reorganizar o site em torno de "virar voto"
 
+> **Estado em 09/10/2026:** decisões D1 a D10 confirmadas; R0, R1 e R2 publicados, além da folha do bairro, dos limites em destaque e da nota com asterisco nas tabelas (pedidos do usuário depois do R2). Falta o R3, que depende do usuário (roteiro em [`roteiro_teste_pessoas.md`](roteiro_teste_pessoas.md)). O diagnóstico da seção 2 descreve o site de antes da reorganização.
+
 Escrito em 08/10/2026 para a sessão que vai implementar, e para o Eduardo revisar e decidir. Prazo duro: último deploy em **24/10**; nada novo no dia 25/10 (2º turno).
 
 **Antes de começar:** ler o `HANDOFF.md`, o `CLAUDE.md` e este plano. **Confirmar com o usuário as decisões da seção 3** (D1 a D10). Implementar só o que estiver confirmado; se ele disser "pode seguir as recomendações", valem as recomendações. Este plano substitui o P2.3 e a pendência da 3ª ação do `docs/plano_virar_voto.md` (que está executado até o P2.2).

@@ -119,40 +119,49 @@ o esperado pelo município e pelo perfil das seções) para os mapas de cidade.
 
 ## Dados
 
+Situação atualizada em 09/10/2026.
+
 | Fonte | Conteúdo | Nível | Situação |
 |---|---|---|---|
 | TSE, boletim de urna 1T 2026 (27 UFs) | votos por seção | 1 | baixado, SHA-512 ok |
 | TSE, perfil do eleitorado por seção 2026 | gênero, idade, escolaridade | 1 | baixado |
 | TSE, locais de votação 2026 | lat/long e seções agregadas | 1 | baixado |
 | TSE, tabela oficial de municípios TSE ↔ IBGE | junção com dados do IBGE | 2 | baixado |
-| IBGE, Censo 2022 | renda, cor/raça, religião, urbanização | 2 | a baixar |
-| MDS, Bolsa Família | famílias beneficiárias | 2 | a baixar |
-| IBGE, PIB dos municípios | PIB per capita | 2 | a baixar |
-| Comex Stat | exportações aos EUA por município | 2 | a baixar |
-| TSE, boletim de urna 1T e 2T 2022 | longitudinal e previsão | 1 | a baixar |
-| TSE, boletim de urna 2T 2026 | validação da previsão | 1 | após 25/10 |
+| TSE, resultado oficial por seção (detalhe e votação) | conferência urna por urna | 1 | baixado |
+| IBGE, Censo 2022 | renda, cor/raça, religião, urbanização | 2 | baixado (API de agregados) |
+| MDS, Bolsa Família | pessoas beneficiárias (ago/2026) | 2 | baixado |
+| IBGE, PIB dos municípios | PIB per capita | 2 | baixado (API de agregados) |
+| Comex Stat | exportações aos EUA por município (2024) | 2 | baixado (API; só na extensão do tarifaço) |
+| TSE, boletim de urna 1T e 2T 2022 | longitudinal e previsão | 1 | não usado (a previsão foi retirada) |
+| TSE, boletim de urna 2T 2026 | conferência do 2º turno e comparação dos turnos | 1 | após 25/10 |
 
 Os brutos ficam em `~/dados/tse` (variável `DADOS_RAW`), fora do OneDrive. No projeto entram só Parquets processados.
 
 ## Pipeline
 
+Situação atualizada em 09/10/2026.
+
 1. ✅ `pipeline/01_baixar_tse.py`: baixa os brutos e confere o SHA-512.
 2. ✅ `pipeline/02_recortar_capital.py`: recorte da capital (Presidente, Governador, Senador) com a coluna `VOTO_VALIDO`.
 3. ✅ `pipeline/03_validar_controle.py`: reproduz os 4 percentuais do g1 para a 1ª ZE. Só bateu depois de excluir os nulos técnicos (candidaturas indeferidas ou renunciadas, em `config.VOTOS_NAO_VALIDOS`).
 4. ✅ `pipeline/04_base_nacional.py`: base nacional por seção (votos + perfil + coordenadas). Validada contra a totalização oficial de SP (7 totais exatos).
-5. 🟡 `pipeline/06_contexto_municipal.py`: Censo 2022 e PIB via API do IBGE, ligados pela tabela oficial TSE ↔ IBGE (feito). Faltam Bolsa Família, Comex Stat e as variáveis de UF.
-6. 🟡 `pipeline/05_hlm_nulo.py`: OLS nulo → HLM2 → HLM3 (Lula e Flávio), ICC e BLUPs; validado contra o statsmodels. Faltam M2–M6 (notebooks).
-6b. ✅ `pipeline/07_exportar_site.py`: dados estáticos do site (zonas, locais, municípios, resumo, malhas).
-7. Espacial: Moran e LISA nos BLUPs, regionalização, zoom em SP.
+5. ✅ `pipeline/06_contexto_municipal.py`: Censo 2022, PIB e Bolsa Família por município, ligados pela tabela oficial TSE ↔ IBGE. As exportações (Comex Stat) entraram depois, só na extensão do tarifaço (`12`).
+6. ✅ `pipeline/05_hlm_nulo.py`: OLS nulo → HLM2 → HLM3 (Lula e Flávio), ICC e BLUPs; validado contra o statsmodels.
+6b. ✅ `pipeline/09_totalizacao_oficial.py`: resultado oficial de Presidente por seção; o `03` passou a conferir cada uma das 497.897 seções com ele (todas idênticas).
+6c. ✅ `pipeline/10_hlm_stepup.py`: modelos explicativos (perfil da seção, perfil do município, região), repartição de Shapley, Mundlak, inclinação aleatória da escolaridade, interações, quatro níveis, robustez e bootstrap.
+7. ✅ `pipeline/11_espacial.py`: Moran e LISA nos efeitos dos municípios, regiões de voto (SKATER), degrau x rampa (processo gaussiano) e São Paulo por local de votação.
+7b. ✅ `pipeline/12_tarifaco.py`: extensão registrada depois do desenho (exposição ao tarifaço dos EUA).
+7c. ✅ `pipeline/08_historia.py`: números descritivos do site (o jogo de adivinhar, vizinhos, cidades gêmeas, escolas, surpresa de cada urna).
+7d. ✅ `pipeline/07_exportar_site.py`: dados estáticos do site, com a trava das contas da ferramenta "Onde virar voto".
 8. ~~Previsão do 2º turno e pré-registro (OSF, com embargo), antes de 25/10.~~ Retirada (ver os desvios acima).
-9. 🟡 Site (`site/`, Vite + React + MapLibre): busca por zona e seção, boletim de urna, camadas, efeito dos estados, mapa nacional, mapa de locais por município, Método e Sobre. Publicação por GitHub Actions no Pages.
-10. Depois de 25/10: validação, análise longitudinal e artigo.
+9. ✅ Site (`site/`, Vite + React + MapLibre), publicado por GitHub Actions no Pages. Desde 08/10, organizado em torno da ferramenta "Onde virar voto" (`docs/plano_reorganizacao.md`).
+10. Depois de 25/10: conferência do 2º turno, comparação dos turnos urna por urna, análise longitudinal e artigo.
 
 ## Validação
 
-- **Controle:** totais por zona e município batem com o g1 e com a totalização oficial.
-- **Modelos:** validação cruzada deixando uma UF de fora por vez (não aleatória, para não vazar contexto).
-- **Previsão:** MAE por município e por seção, cobertura dos intervalos e mapa de erros após o 2º turno.
+- **Controle:** os percentuais da 1ª ZE batem com o g1, os 7 totais de SP com a totalização oficial e cada uma das 497.897 seções com o resultado oficial por seção (feito).
+- **Modelos:** a validação cruzada deixando uma UF de fora por vez não foi feita. No lugar, a estabilidade foi testada com bootstrap dos estados dentro de cada região (100 reamostragens) e com duas checagens de robustez (escala de proporção, sem o logit; só seções com 100 votos válidos ou mais).
+- ~~**Previsão:** MAE por município e por seção, cobertura dos intervalos e mapa de erros após o 2º turno.~~ Retirada com a previsão.
 
 ## Limitações declaradas
 
@@ -171,13 +180,14 @@ Os brutos ficam em `~/dados/tse` (variável `DADOS_RAW`), fora do OneDrive. No p
 
 ## Cronograma
 
+Como foi (atualizado em 09/10/2026; o plano original previa as etapas 4 a 9 entre 7 e 23/10):
+
 | Datas | Entrega |
 |---|---|
-| 7–9/out | Etapas 4–5: base nacional e variáveis de contexto |
-| 10–14/out | Etapa 6: step-up multinível |
-| 15–17/out | Etapa 7: espacial, regionalização e zoom em SP |
-| 17–20/out | ~~Etapa 8: previsão e pré-registro~~ (retirada) |
-| 18–23/out | Etapa 9: site |
-| 24/out | Publicação |
+| 7/out | Etapas 4 a 7: base nacional, contexto, conferência, step-up, espacial e a primeira versão do site |
+| 8–9/out | Ferramenta "Onde virar voto" no centro e reorganização do site (`docs/plano_reorganizacao.md`, R0 a R2) |
+| ~~17–20/out~~ | ~~Etapa 8: previsão e pré-registro~~ (retirada) |
+| 18–22/out | R3: teste com pessoas e correções |
+| 24/out | Último deploy |
 | 25/out | Site congelado |
 | nov/2026 → | Etapa 10 |

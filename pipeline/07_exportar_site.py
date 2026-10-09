@@ -5,7 +5,7 @@ GitHub Actions antes do build, sem os brutos do TSE. Os JSON gerados não vão p
 
 Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   resumo.json                  totais nacionais, candidatos, modelos nulos e UFs
-  historia.json                números da história da página inicial (cópia de resultados/08_historia.json)
+  historia.json                números do Entenda e de Método e dados (cópia de resultados/08_historia.json)
   conferencia.json             soma dos boletins x resultado oficial do TSE, por UF e no Brasil
   explicacao.json              modelos explicativos (10), análise espacial (11) e tarifaço (12): capítulo 4
   municipios.json              índice dos 5.571 municípios (busca, mapa, zonas de cada município)

@@ -1,6 +1,6 @@
 # Urna em Camadas
 
-> Onde virar voto no 2º turno, bairro a bairro. Com o resultado oficial do 1º turno presidencial de 2026, urna por urna, o site mostra em que bairros e escolas há mais gente para conversar, para o candidato que a pessoa escolher: a mesma conta para Lula e para Flávio Bolsonaro, sem pedir voto. Por trás, uma análise multinível e espacial por seção eleitoral (urna): cada urna é conferida com o resultado oficial do TSE e decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município, o perfil do eleitorado da seção e o que nenhum dado explica. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE e MDS. Não é pesquisa eleitoral. Os resultados descrevem lugares, não pessoas.
+> Onde virar voto no 2º turno, bairro a bairro. Com o resultado oficial do 1º turno presidencial de 2026, urna por urna, o site mostra em que bairros e escolas há mais gente para conversar, para o candidato que a pessoa escolher: a mesma conta para Lula e para Flávio Bolsonaro, sem pedir voto. Por trás, uma análise multinível e espacial por seção eleitoral (urna): cada urna é conferida com o resultado oficial do TSE e decomposta em camadas: a urna típica do Brasil, o efeito do estado, o efeito do município, o perfil do eleitorado da seção e o que nenhum dado explica. Projeto independente de Eduardo Ben Hur, feito com Claude Code, com dados públicos do TSE, IBGE, MDS e MDIC. Não é pesquisa eleitoral. Os resultados descrevem lugares, não pessoas.
 
 ## Principais resultados
 

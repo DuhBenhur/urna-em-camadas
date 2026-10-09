@@ -1,5 +1,7 @@
 # Plano: "Onde virar voto" no centro do projeto
 
+> **Superado em 08/10/2026** pelo [`plano_reorganizacao.md`](plano_reorganizacao.md) (R0, R1 e R2 publicados). Fica como registro do que foi feito até o P2.2. A decisão sobre a 3ª ação, deixada em aberto abaixo, foi tomada na D9 daquele plano: opção avançada, só dentro da ferramenta, com aviso. O teste com pessoas (P2.3) virou o R3.
+
 Escrito em 08/10/2026 para a sessão que vai implementar (e para o Eduardo revisar). Decisão do usuário: **"Onde virar voto" passa a ser a história central do Urna em Camadas, amarrada a tudo o que já existe.** Prazo duro: o 2º turno é em **25/10/2026**. Último deploy até **24/10**; nenhum push no dia 25.
 
 Antes de começar, leia o `HANDOFF.md` (estado do projeto) e o `CLAUDE.md` (convenções). Este arquivo diz **o que mudar, em que ordem e como saber que ficou pronto**.
