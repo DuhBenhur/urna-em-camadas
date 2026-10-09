@@ -2,7 +2,7 @@
 
 Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `CLAUDE.md`). Ao terminar uma sessão de trabalho, atualizar este arquivo.
 
-> **Próxima sessão.** O plano [`docs/plano_virar_voto.md`](docs/plano_virar_voto.md) ("Onde virar voto" no centro do site) foi executado em 08/10 até o P2.2: P0, P1, P2.1 e P2.2 estão no ar, cada item com commit, deploy e conferência no site ao vivo. Falta: **o teste com 5–8 pessoas (P2.3)**, que precisa do usuário (corrigir o que travar até 22/10); **uma decisão do usuário sobre a 3ª ação** (ver "Onde virar voto" abaixo); e, só depois de 25/10, os itens do fim do plano. Prazo duro: 2º turno em 25/10; último deploy em 24/10; nada novo no dia 25.
+> **Próxima sessão: comece por [`docs/plano_reorganizacao.md`](docs/plano_reorganizacao.md).** Em 08/10 o usuário pediu para reorganizar o site em torno da ferramenta: "virar voto" como o principal, o técnico concentrado num lugar só e explicado para técnicos e leigos, tudo coerente, fácil de pesquisar e de entender como usar. O plano traz o diagnóstico medido, a estrutura nova, o que muda em cada página, para onde vai cada conteúdo, os endereços antigos a manter, o vocabulário, o padrão de explicação em camadas, o calendário (R0 a R3) e a verificação. **Antes de mexer, confirme com o usuário as decisões D1 a D10** (seção 3; cada uma tem recomendação). O plano anterior ([`docs/plano_virar_voto.md`](docs/plano_virar_voto.md)) está executado até o P2.2; o teste com 5 a 8 pessoas (P2.3) e a decisão sobre a 3ª ação passaram para o novo plano (R3 e D9). Testes: `python site/scripts/testes.py` (local e ao vivo) e `python site/scripts/inventario.py` (palavras e jargão por página). Prazo duro: último deploy em 24/10; nada novo no dia 25.
 
 ## Onde paramos
 
@@ -42,6 +42,9 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 - Análise: cada capítulo tem "Para quem vai conversar"; o capítulo 4 ganhou os quatro níveis (a escola pesa mais que a urna); o 7 virou "Do mapa à conversa". Método seção 8 (`components/MetodoVirar.tsx`), três decisões novas em `lib/decisoes.ts`, colunas novas no dicionário de Dados. Vitrine: título, og:*, `og.png` (os dois candidatos com o mesmo peso), llms.txt, README, Sobre.
 - **A 3ª ação precisa de uma decisão do usuário.** Os dados mostram que ela aponta, em boa parte, para bairros onde o adversário é forte por motivos que o modelo não vê (renda do bairro, história política): em São Paulo, as escolas mais abaixo do esperado para Lula ficam em bairros ricos (Campo Belo, Cidade Jardim); para Flávio, no centro expandido (Consolação, Perdizes). O site diz isso no aviso, no "Como calculamos" e no Método. Opções: manter como está (experimental, com o aviso), tirar da inicial ou retirar.
 - Depois de 25/10: decidir o que fazer com a página (registro ou comparação dos turnos). Nenhum conteúdo novo no dia 25.
+- Referência metodológica (08/10): o artigo de Gomes e Tarantin Junior (Quaestum, 2025) é **inspiração metodológica**, não origem nem continuação (correção do usuário). A citação em ABNT, passada por ele, está no Método ("Inspiração metodológica"), no README e no plano de análise.
+- O site só fala do que foi entregue (08/10): a decisão "sem previsão do 2º turno" saiu do site e do README; o registro fica no plano de análise e no histórico.
+- Verificação no repositório (08/10): `site/scripts/testes.py` (4 baterias no navegador: candidato, ação, perfil e conteúdo público; local ou ao vivo) e `site/scripts/inventario.py` (palavras e jargão visíveis por página: a linha de base da reorganização).
 
 **Conferência cidadã (07/10)**
 - `pipeline/09_totalizacao_oficial.py` → `data/processed/totalizacao_secao_2026.parquet` (versionado, 4,8 MB): resultado oficial de Presidente por seção, de `detalhe_votacao_secao_2026` (arquivo `_BR`) e `votacao_secao_2026_BR`. O conjunto por município e zona (`votacao_candidato_munzona_2026`) ainda não tem Presidente.
@@ -82,7 +85,7 @@ Atualizado em 08/10/2026. Lido automaticamente pelo Claude Code (importado no `C
 
 ## Pendências, em ordem de prioridade
 
-1. **Teste com 5–8 pessoas (P2.3):** idades e escolaridades diferentes, tarefa "ache a sua urna e diga onde você conversaria". Anotar onde travam e corrigir até 22/10. Depois, **decidir a 3ª ação** (acima). O resto do plano (P0, P1, P2.1, P2.2) está no ar desde 08/10.
+1. **Reorganizar o site em torno da ferramenta** ([`docs/plano_reorganizacao.md`](docs/plano_reorganizacao.md)): confirmar D1 a D10 com o usuário; depois R0 (09–11/10), R1 (12–14/10), R2 (15–17/10) e R3 (18–22/10), que inclui o teste com 5 a 8 pessoas (antigo P2.3) na estrutura nova. A decisão sobre a 3ª ação é a D9.
    - Depois de 25/10: baixar o 2º turno, repetir a conferência e a decomposição, comparar os turnos. Nenhum conteúdo novo no dia 25/10.
    - Previsão do 2º turno: **não será feita** (decisão de 07/10; plano de 08/10). Se o usuário mudar de ideia, a receita era: boletins de 2022 (1º e 2º turnos), compatibilizar seções 2022 → 2026 por local e coordenadas, transição 1T → 2T por seção, registro no OSF com embargo antes de 25/10.
 2. **Próximos passos de alcance** (análise de 07/10): vídeo de 60–90 s com legenda (roteiro com o Claude, produção do usuário); CSV, DOI no Zenodo e resumo em inglês; gráficos para embutir; teste com 5–8 pessoas de idades e escolaridades diferentes ("ache sua urna", "explique o 63%").

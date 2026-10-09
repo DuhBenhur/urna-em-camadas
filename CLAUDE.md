@@ -2,7 +2,7 @@
 
 Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com Claude Code. Análise multinível e espacial do 1º turno presidencial de 2026 por seção eleitoral, publicada em site estático (GitHub Pages). Conversa e textos em português.
 
-**Centro do projeto desde 08/10/2026: "Onde virar voto"** (`#/virar`): para o candidato escolhido, em que bairros e escolas uma conversa pode render mais no 2º turno (25/10). O resto do site (urna, camadas, análise, conferência, método) serve a essa história. Plano de implementação em `docs/plano_virar_voto.md`.
+**Centro do projeto desde 08/10/2026: "Onde virar voto"** (`#/virar`): para o candidato escolhido, em que bairros e escolas uma conversa pode render mais no 2º turno (25/10). O resto do site (urna, camadas, análise, conferência, método) serve a essa história. `docs/plano_virar_voto.md` foi executado até o P2.2; o plano em curso é `docs/plano_reorganizacao.md` (a ferramenta como o site, o técnico num lugar só e explicado em camadas; as decisões D1 a D10 precisam da confirmação do usuário antes de implementar).
 
 ## Convenções
 
@@ -34,7 +34,7 @@ Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com
 ## Verificação
 
 - Mudou dado ou modelo: rodar `pipeline/03_validar_controle.py`, recalcular o que depende dele (`05` → `10` → `11` → `08`) e reexportar com `pipeline/07_exportar_site.py`. Os JSON de `resultados/` são versionados: o CI só copia, sem rodar modelos.
-- Mudou o site: `npm run build` (inclui checagem de tipos) e olhar as telas com `site/scripts/telas.py` antes de dar por pronto. Gráficos seguem a skill de dataviz (paleta validada, sem eixo duplo, tabela equivalente).
+- Mudou o site: `npm run build` (inclui checagem de tipos), `site/scripts/testes.py` (testes no navegador, local e ao vivo; atualizar junto com a mudança) e olhar as telas com `site/scripts/telas.py` antes de dar por pronto. `site/scripts/inventario.py` mede palavras e jargão visíveis por página. Gráficos seguem a skill de dataviz (paleta validada, sem eixo duplo, tabela equivalente).
 
 ## Estado atual e próximos passos
 
