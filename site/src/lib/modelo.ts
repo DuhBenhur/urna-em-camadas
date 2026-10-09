@@ -43,12 +43,12 @@ export function camadas(
   const lista: Camada[] = [
     { chave: 'brasil', rotulo: 'Urna típica do Brasil', detalhe: 'ponto de partida do modelo', valor: brasil, delta: null },
     { chave: 'estado', rotulo: `+ efeito do estado`, detalhe: uf.nome, valor: estado, delta: estado - brasil },
-    { chave: 'municipio', rotulo: `+ efeito do município`, detalhe: municipio.nome, valor: mun, delta: mun - estado },
+    { chave: 'municipio', rotulo: `+ efeito da cidade`, detalhe: municipio.nome, valor: mun, delta: mun - estado },
   ]
   let anterior = mun
   if (perfil !== undefined && perfil !== null && Number.isFinite(perfil)) {
     const comPerfil = expit(g00 + uUf + uMun + perfil)
-    lista.push({ chave: 'perfil', rotulo: '+ perfil do eleitorado', detalhe: 'idade, sexo e escolaridade da seção', valor: comPerfil, delta: comPerfil - mun })
+    lista.push({ chave: 'perfil', rotulo: '+ perfil do eleitorado', detalhe: 'idade, sexo e escolaridade de quem vota nesta urna', valor: comPerfil, delta: comPerfil - mun })
     anterior = comPerfil
   }
   lista.push({ chave: 'secao', rotulo: '= sua urna', detalhe: 'resultado real da seção', valor: secao, delta: secao - anterior })

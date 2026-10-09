@@ -225,7 +225,7 @@ Regra: jargão só dentro do "Detalhe técnico". Fora de Método e dados, nenhum
 
 Se atrasar, cortar nesta ordem: busca fase 2 → cidade numa página (D7) → mapa do Brasil dentro da ferramenta → gráficos do Entenda (fica o texto).
 
-**Andamento:** R0 publicado em 08/10 (commit 32f1f0a). R1 publicado em 08/10 (commit 65d68fe): Entenda com 1.109 palavras, 0 termos técnicos e 5.744 px; Método e dados com 2 termos técnicos visíveis sem abrir os detalhes. R2 publicado em 09/10: busca única fase 1, cidade numa página (D7), mapa do Brasil dentro da ferramenta (sob pedido, para a inicial não carregar o MapLibre), mapa em dois grupos, Sobre e rodapé; a busca fase 2, opcional, ficou de fora. Próximo: R3 (depende do usuário para o teste com pessoas).
+**Andamento:** R0 publicado em 08/10 (commit 32f1f0a). R1 publicado em 08/10 (commit 65d68fe): Entenda com 1.109 palavras, 0 termos técnicos e 5.744 px; Método e dados com 2 termos técnicos visíveis sem abrir os detalhes. R2 publicado em 09/10: busca única fase 1, cidade numa página (D7), mapa do Brasil dentro da ferramenta (sob pedido, para a inicial não carregar o MapLibre), mapa em dois grupos, Sobre e rodapé; a busca fase 2, opcional, ficou de fora. Próximo: R3 (depende do usuário para o teste com pessoas; roteiro em `docs/roteiro_teste_pessoas.md`).
 
 ## 11. Verificação (antes de cada push)
 
