@@ -55,8 +55,10 @@ export function Sobre() {
           aponta lugares (escolas e bairros), nunca pessoas, e traz as regras da lei eleitoral para conversar.
         </li>
         <li>
-          Não faz enquetes nem coleta dados de quem visita. A busca pela sua zona e seção acontece só no seu navegador, e o
-          candidato que você escolhe fica guardado só nesta aba, até ela ser fechada.
+          Não faz enquetes. Conta as visitas de forma anônima, com o <a href="https://www.goatcounter.com/">GoatCounter</a>:
+          sem cookies, sem guardar dados pessoais e sem enviar o candidato que você escolhe, a zona, a seção ou a escola (só o
+          tipo de página, a cidade e ações como imprimir a folha). A busca pela sua zona e seção acontece no seu navegador, e
+          o candidato escolhido fica guardado só nesta aba, até ela ser fechada.
         </li>
         <li>Não publica conteúdo novo no dia da eleição (25 de outubro de 2026).</li>
       </ul>

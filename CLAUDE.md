@@ -24,6 +24,7 @@ Projeto público de ciência de dados (portfólio de Eduardo Ben Hur), feito com
 - Sem enquetes no site durante a campanha (Lei 9.504/97, art. 33, §5º). Sem impulsionamento pago. Sem deepfake; conteúdo gerado com IA é rotulado.
 - Sem previsão do 2º turno (decisão de 07/10), e o site não fala dela (08/10): o que não foi entregue ao público não aparece para o público. Último deploy até 24/10; nenhum conteúdo novo no dia 25/10.
 - Só dados agregados (LGPD).
+- Visitas contadas de forma anônima com o GoatCounter (`site/src/lib/contagem.ts`, `components/ContarVisitas.tsx`): só o tipo de página, a cidade e eventos de uso. Nunca enviar o candidato escolhido (opinião política é dado sensível), a zona, a seção, a escola ou o texto da busca. Testes automatizados não enviam nada (`window.__contagens`).
 
 ## Estrutura
 

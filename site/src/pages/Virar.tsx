@@ -11,6 +11,7 @@ import { Passo } from '../components/Passo'
 import { SeloExperimental } from '../components/SeloExperimental'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { comCandidato, useCandidato } from '../lib/candidato'
+import { contarEvento } from '../lib/contagem'
 import { useLocais, useMunicipios, useResumo, type IndiceMunicipios, type Local, type Resumo, type UF } from '../lib/dados'
 import { inteiro, milhoes, pct, pp } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
@@ -123,6 +124,8 @@ export function Virar() {
    * bairro abre as escolas do bairro.
    */
   const escolherLugar = (e: Escolha) => {
+    // só o tipo do que foi escolhido, nunca o texto digitado nem o lugar
+    contarEvento(`busca-${e.tipo}`, `Busca: escolheu ${e.tipo}`)
     if (e.tipo === 'cidade') {
       mudar({ uf: e.uf, m: String(e.cd) }, true)
     } else if (e.tipo === 'escola' && aba === 'secao') {
@@ -439,7 +442,14 @@ function NivelLista({ resumo, indice, aoAbrirCidade, titulo, itens, candidato, l
             </p>
           </div>
         ) : (
-          <button className="botao botao-secundario" style={{ marginTop: 16 }} onClick={() => setVerMapa(true)}>
+          <button
+            className="botao botao-secundario"
+            style={{ marginTop: 16 }}
+            onClick={() => {
+              contarEvento('mapa-brasil', 'Ver no mapa do Brasil')
+              setVerMapa(true)
+            }}
+          >
             Ver no mapa do Brasil
           </button>
         ))}

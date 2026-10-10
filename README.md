@@ -88,6 +88,8 @@ python pipeline/07_exportar_site.py
 cd site && npm install && npm run dev
 ```
 
+As visitas são contadas de forma anônima com o [GoatCounter](https://www.goatcounter.com/), sem cookies: só o tipo de página, a cidade e ações como imprimir a folha; nunca o candidato escolhido, a zona, a seção ou a escola ([`site/src/lib/contagem.ts`](site/src/lib/contagem.ts)).
+
 Verificação (com `pip install playwright`; usa o Chrome instalado): `python site/scripts/testes.py` roda os testes no navegador, no preview local ou, com o endereço do site, ao vivo; `site/scripts/inventario.py` mede palavras e jargão visíveis por página; `site/scripts/telas.py` tira as telas para conferir.
 
 ## Estrutura

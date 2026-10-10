@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { TabelaRolagem } from '../components/TabelaRolagem'
+import { contarEvento } from '../lib/contagem'
 import { useLocais, useMunicipios } from '../lib/dados'
 import { inteiro, pontos } from '../lib/formato'
 import { linhaFolha, textoFolha, type LinhaFolha } from '../lib/folha'
@@ -91,6 +92,7 @@ export function Folha() {
   const lula = linhas.filter((l) => l.frente === 13)
   const flavio = linhas.filter((l) => l.frente === 22)
   const mandar = async () => {
+    contarEvento('folha-texto', 'Folha do bairro: mandar como texto')
     try {
       if (navigator.share) {
         await navigator.share({ title: 'Folha do bairro', text: texto })
@@ -112,7 +114,13 @@ export function Folha() {
           limites. Sem lado: serve a quem apoia qualquer um dos dois candidatos.
         </p>
         <div className="acoes">
-          <button className="botao" onClick={() => window.print()}>
+          <button
+            className="botao"
+            onClick={() => {
+              contarEvento('folha-imprimir', 'Folha do bairro: imprimir ou salvar em PDF')
+              window.print()
+            }}
+          >
             Imprimir ou salvar em PDF
           </button>
           <button className="botao botao-secundario" onClick={mandar}>

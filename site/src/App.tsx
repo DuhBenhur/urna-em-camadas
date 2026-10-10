@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
+import { ContarVisitas } from './components/ContarVisitas'
 import { Cabecalho, Rodape } from './components/Estrutura'
 import { ComoUsar } from './pages/ComoUsar'
 import { Conferencia } from './pages/Conferencia'
@@ -109,6 +110,7 @@ export function App() {
         </Suspense>
       </main>
       <Rodape />
+      <ContarVisitas />
     </HashRouter>
   )
 }

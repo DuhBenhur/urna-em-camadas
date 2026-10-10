@@ -7,13 +7,14 @@ Uso:  python site/scripts/testes.py                                             
       python site/scripts/testes.py --so candidato,acao                           # só algumas baterias
 
 Baterias: candidato (P0.2), acao (P0.3 a P0.5), perfil (P1.1), publico (P1.2 a P2.2, regras do conteúdo público e a
-estrutura da reorganização, docs/plano_reorganizacao.md).
+estrutura da reorganização, docs/plano_reorganizacao.md), contagem (visitas anônimas: o que seria enviado ao GoatCounter).
 Cada bateria abre o navegador do zero (a escolha do candidato fica na sessionStorage da aba e vazaria de uma para outra).
 Sai com código 1 se algum critério falhar. Quando a estrutura do site mudar, estes testes mudam junto.
 Requer: pip install playwright (usa o Chrome instalado; sem ele, o Chromium do Playwright).
 """
 import argparse
 import hashlib
+import json
 import re
 import sys
 import time
@@ -536,7 +537,65 @@ def bateria_publico(nav, b: str) -> None:
         conferir("og.png publicada = a do repositório", publicada == local)
 
 
-BATERIAS = {"candidato": bateria_candidato, "acao": bateria_acao, "perfil": bateria_perfil, "publico": bateria_publico}
+def bateria_contagem(nav, b: str) -> None:
+    """Contagem anônima (GoatCounter): só o tipo de página, a cidade e as ações; nunca o candidato, a zona, a seção nem a
+    escola. Em navegador automatizado nada é enviado: o que seria contado fica em window.__contagens."""
+    erros: list[str] = []
+    ctx = nav.new_context(viewport={"width": 1280, "height": 1000})
+    pg = ctx.new_page()
+    vigiar(pg, erros)
+    contagens = lambda: pg.evaluate("window.__contagens || []")  # noqa: E731
+    abrir(pg, b + "#/", 2)
+    script = pg.evaluate("""() => { const s = document.querySelector('script[data-goatcounter]');
+        return s ? [s.getAttribute('data-goatcounter'), s.getAttribute('data-goatcounter-settings')] : null }""")
+    conferir("contagem: o script do GoatCounter, sem contar sozinho", script is not None
+             and script[0] == "https://urna-em-camadas.goatcounter.com/count" and json.loads(script[1]) == {"no_onload": True}, str(script))
+    abrir(pg, b + "#/urna/SP/403/411?c=13", 3)
+    c = contagens()
+    enviado = json.dumps(c, ensure_ascii=False)
+    conferir("contagem: a urna vira só '/urna/sp', sem zona, seção nem candidato",
+             c[-1] == {"path": "/urna/sp", "title": "Urna: SP"} and "403" not in enviado and "411" not in enviado and "c=" not in enviado, enviado)
+    abrir(pg, b + "#/?c=22&uf=SP&m=71072&perto=403-1554", 3)
+    c = contagens()
+    conferir("contagem: a cidade com o nome, sem a escola nem o candidato",
+             c[-1] == {"path": "/cidade/sao-paulo-sp/perto", "title": "Virar voto: São Paulo (SP)"}, str(c[-1]))
+    n = len(c)
+    pg.locator(".escolha-candidato button", has_text="Lula").click()
+    time.sleep(0.8)
+    conferir("contagem: trocar o candidato não conta de novo nem manda o candidato", len(contagens()) == n, str(contagens()[n:]))
+    pg.fill("#v-busca", "Bela Vista")
+    time.sleep(0.5)
+    pg.locator("#v-busca-lista [role=option]", has_text="BELA VISTA · bairro").first.click()
+    esperar(pg, 2)
+    c = contagens()
+    conferir("contagem: a busca vira evento só com o tipo, e o bairro só como '/bairro'",
+             {"path": "busca-bairro", "title": "Busca: escolheu bairro", "event": True} in c
+             and c[-1] == {"path": "/cidade/sao-paulo-sp/bairro", "title": "Virar voto: São Paulo (SP)"}
+             and "BELA" not in json.dumps(c, ensure_ascii=False), str(c[-2:]))
+    abrir(pg, b + "#/?c=13", 2)
+    pg.get_by_role("button", name="Ver no mapa do Brasil").click()
+    time.sleep(1)
+    conferir("contagem: 'Ver no mapa do Brasil' vira evento", contagens()[-1] == {"path": "mapa-brasil", "title": "Ver no mapa do Brasil", "event": True})
+    abrir(pg, b + "#/folha?m=71072&perto=403-1554", 2)
+    c = contagens()
+    conferir("contagem: a folha com a cidade, sem a escola", c[-1] == {"path": "/folha/sao-paulo-sp", "title": "Folha do bairro: São Paulo (SP)"}, str(c[-1]))
+    pg.get_by_role("button", name="Mandar como texto").click()
+    time.sleep(0.8)
+    conferir("contagem: mandar a folha como texto vira evento",
+             {"path": "folha-texto", "title": "Folha do bairro: mandar como texto", "event": True} in contagens())
+    abrir(pg, b + "#/metodo?sec=dados", 2)
+    abrir(pg, b + "#/analise?cap=c-estado", 2)
+    caminhos = [x["path"] for x in contagens() if not x.get("event")]
+    conferir("contagem: endereço antigo conta só o destino", caminhos[-2:] == ["/metodo/dados", "/entenda"], str(caminhos[-3:]))
+    abrir(pg, b + "#/sobre", 1.5)
+    conferir("sobre: diz como as visitas são contadas", "GoatCounter" in pg.locator("main").inner_text()
+             and "sem enviar o candidato" in pg.locator("main").inner_text())
+    conferir("contagem: sem erros de console", not erros, str(erros[:3]))
+    ctx.close()
+
+
+BATERIAS = {"candidato": bateria_candidato, "acao": bateria_acao, "perfil": bateria_perfil, "publico": bateria_publico,
+            "contagem": bateria_contagem}
 
 
 def main() -> None:

@@ -242,6 +242,9 @@ export function carregar<T>(caminho: string): Promise<T> {
   return promessa as Promise<T>
 }
 
+/** A promessa de um arquivo que alguma página já pediu, sem pedir de novo (a contagem de visitas usa para o nome da cidade). */
+export const jaPedido = (caminho: string): Promise<unknown> | undefined => cache.get(caminho)
+
 export function registros<T>(t: Tabela): T[] {
   return t.linhas.map((linha) => Object.fromEntries(t.colunas.map((c, i) => [c, linha[i]])) as T)
 }

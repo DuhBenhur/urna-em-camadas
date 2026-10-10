@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { baixarImagem, compartilharImagem, gerarCartaoPerto } from '../lib/cartao'
 import { useCandidato } from '../lib/candidato'
+import { contarEvento } from '../lib/contagem'
 import { useLocais, type Local } from '../lib/dados'
 import { inteiro } from '../lib/formato'
 import { CANDIDATOS, type NumeroCandidato } from '../lib/modelo'
@@ -260,12 +261,19 @@ function CompartilharPerto({ escola, lugar, escolas, faltaram, abertos, url, cop
         <button
           className="botao botao-secundario"
           onClick={async () => {
+            contarEvento('cartao-compartilhar', 'Cartão "perto de mim": compartilhar')
             if (await compartilharImagem(imagem(), texto, url)) aoCopiar()
           }}
         >
           {copiado ? 'Link copiado' : 'Compartilhar “perto de mim”'}
         </button>
-        <button className="botao botao-secundario" onClick={async () => baixarImagem(await imagem())}>
+        <button
+          className="botao botao-secundario"
+          onClick={async () => {
+            contarEvento('cartao-baixar', 'Cartão "perto de mim": baixar a imagem')
+            baixarImagem(await imagem())
+          }}
+        >
           Baixar imagem
         </button>
       </div>
