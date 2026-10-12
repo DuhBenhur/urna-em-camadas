@@ -11,6 +11,7 @@ import { Passo } from '../components/Passo'
 import { SeloExperimental } from '../components/SeloExperimental'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { comCandidato, useCandidato } from '../lib/candidato'
+import { useVisivel } from '../lib/useVisivel'
 import { contarEvento } from '../lib/contagem'
 import { useLocais, useMunicipios, useResumo, type IndiceMunicipios, type Local, type Resumo, type UF } from '../lib/dados'
 import { inteiro, milhoes, pct, pp } from '../lib/formato'
@@ -119,6 +120,12 @@ export function Virar() {
     setParams(p, { replace: !historico })
   }
 
+  /** Troca de lugar (estado ou cidade) e rola até o resultado, que começa pelo mapa. */
+  const irPara = (novos: { uf?: string | null; m?: string | null }) => {
+    mudar(novos, true)
+    rolarQuandoAparecer(novos.m ? 'cidade' : 'resultado')
+  }
+
   /**
    * A busca única: cidade desce de nível; escola abre "Perto de você" (ou, na aba "Ache a sua seção", as seções dela);
    * bairro abre as escolas do bairro.
@@ -127,7 +134,7 @@ export function Virar() {
     // só o tipo do que foi escolhido, nunca o texto digitado nem o lugar
     contarEvento(`busca-${e.tipo}`, `Busca: escolheu ${e.tipo}`)
     if (e.tipo === 'cidade') {
-      mudar({ uf: e.uf, m: String(e.cd) }, true)
+      irPara({ uf: e.uf, m: String(e.cd) })
     } else if (e.tipo === 'escola' && aba === 'secao') {
       verSecoes(chaveLocal(e.local))
     } else if (e.tipo === 'escola') {
@@ -152,8 +159,8 @@ export function Virar() {
         <div className="rotulo-pequeno">2º turno · 25 de outubro</div>
         <h1>Onde a sua conversa pode virar voto</h1>
         <p className="secundario">
-          Com o resultado oficial do 1º turno, urna por urna, o site mostra em que bairros e escolas há mais gente para
-          conversar, para o candidato que você escolher.
+          Com o resultado oficial do 1º turno, urna por urna, o mapa mostra onde há mais gente para conversar, para o
+          candidato que você escolher.
         </p>
       </section>
 
@@ -164,9 +171,9 @@ export function Virar() {
       <Passo numero={2} titulo="Onde?">
         {ufAtual && resumo && (
           <nav className="migalhas" aria-label="Nível" style={{ marginTop: 0, marginBottom: 8 }}>
-            <button className="link-botao" onClick={() => mudar({ uf: null, m: null }, true)}>Brasil</button>
+            <button className="link-botao" onClick={() => irPara({ uf: null, m: null })}>Brasil</button>
             {' › '}
-            <button className="link-botao" onClick={() => mudar({ uf: ufAtual, m: null }, true)}>
+            <button className="link-botao" onClick={() => irPara({ uf: ufAtual, m: null })}>
               {resumo.ufs.find((u) => u.uf === ufAtual)?.nome}
             </button>
             {municipio && <> › {municipio.nome}</>}
@@ -175,7 +182,7 @@ export function Virar() {
         <div className="campos campos-onde">
           <div>
             <label htmlFor="v-uf">Estado</label>
-            <select id="v-uf" value={ufAtual} onChange={(e) => mudar({ uf: e.target.value || null, m: null }, true)}>
+            <select id="v-uf" value={ufAtual} onChange={(e) => irPara({ uf: e.target.value || null, m: null })}>
               <option value="">Brasil inteiro</option>
               {resumo?.ufs.map((u) => (
                 <option key={u.uf} value={u.uf}>
@@ -200,8 +207,6 @@ export function Virar() {
       <Passo numero={3} titulo="Que tipo de conversa?">
         <Conversas lente={lente} candidato={candidato} ufs={resumo?.ufs ?? null} aoEscolher={(l) => mudar({ a: l })} />
       </Passo>
-
-      <LimitesNumeros />
 
       {resumo && indice && municipio ? (
         <section className="cidade" id="cidade" aria-labelledby="t-cidade">
@@ -251,32 +256,33 @@ export function Virar() {
           <NivelLista
             resumo={resumo}
             indice={indice}
-            aoAbrirCidade={(uf, cd) => mudar({ uf, m: String(cd) }, true)}
+            foco={ufAtual}
+            aoAbrirCidade={(uf, cd) => irPara({ uf, m: String(cd) })}
             titulo={`Cidades ${comPreposicao('de', ufAtual, resumo.ufs.find((u) => u.uf === ufAtual)!.nome)}`}
             itens={indice.lista.filter((m) => m.uf === ufAtual).map((m) => ({ ...m, chave: String(m.cd), rotulo: m.nome }))}
             candidato={candidato}
             lente={lente}
-            aoEscolher={(chave) => mudar({ m: chave }, true)}
+            aoEscolher={(chave) => irPara({ m: chave })}
             rotuloLugar="Cidade"
           />
         ) : (
           <NivelLista
             resumo={resumo}
             indice={indice}
-            aoAbrirCidade={(uf, cd) => mudar({ uf, m: String(cd) }, true)}
+            aoAbrirCidade={(uf, cd) => irPara({ uf, m: String(cd) })}
             titulo="Estados"
             itens={resumo.ufs.map((u) => ({ ...u, chave: u.uf, rotulo: u.nome }))}
             candidato={candidato}
             lente={lente}
-            aoEscolher={(chave) => mudar({ uf: chave, m: null }, true)}
+            aoEscolher={(chave) => irPara({ uf: chave, m: null })}
             rotuloLugar="Estado"
           />
         )
       ) : candidato ? (
         <p className="carregando">Carregando…</p>
       ) : (
-        <p className="aviso" style={{ marginTop: 24 }}>
-          Escolha um candidato, no passo 1, para ver os lugares com mais gente para conversar.
+        <p className="aviso" id="resultado" style={{ marginTop: 24 }}>
+          Escolha um candidato, no passo 1, para ver no mapa os lugares com mais gente para conversar.
         </p>
       )}
 
@@ -396,9 +402,11 @@ function Totais({ total, saldo, candidato, lente, onde }: { total: Lugar; saldo:
 type ItemLista = Lugar & { chave: string; rotulo: string }
 
 /** Brasil (lista de estados) ou estado (lista de cidades): o mapa do Brasil, se a pessoa pedir, e o ranking clicável. */
-function NivelLista({ resumo, indice, aoAbrirCidade, titulo, itens, candidato, lente, aoEscolher, rotuloLugar }: {
+function NivelLista({ resumo, indice, foco, aoAbrirCidade, titulo, itens, candidato, lente, aoEscolher, rotuloLugar }: {
   resumo: Resumo
   indice: IndiceMunicipios
+  /** no nível do estado, a sigla: o mapa abre no estado */
+  foco?: string
   aoAbrirCidade: (uf: string, cd: number) => void
   titulo: string
   itens: ItemLista[]
@@ -408,7 +416,7 @@ function NivelLista({ resumo, indice, aoAbrirCidade, titulo, itens, candidato, l
   rotuloLugar: string
 }) {
   const [quantos, setQuantos] = useState(20)
-  const [verMapa, setVerMapa] = useState(false)
+  const [refMapa, mapaPerto] = useVisivel<HTMLDivElement>()
   const total = somar(itens)
   // estados e cidades já trazem o saldo somado escola por escola
   const saldo = potencialSomado(itens, candidato, lente)
@@ -416,43 +424,44 @@ function NivelLista({ resumo, indice, aoAbrirCidade, titulo, itens, candidato, l
   const nItens = itens.filter((i) => potencial(i, candidato, lente) > 0).length
   const onde = rotuloLugar === 'Estado' ? 'no Brasil' : ''
   return (
-    <section style={{ marginTop: 24 }}>
-      <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={onde} />
+    <section className="resultado" id="resultado" aria-labelledby="t-mapa-brasil">
       {/* a conversa do perfil, experimental, não vai para o mapa do Brasil (D9) */}
-      {LENTES_PRINCIPAIS.includes(lente) &&
-        (verMapa ? (
-          <div style={{ marginTop: 16 }}>
-            <Suspense fallback={<p className="carregando">Carregando o mapa…</p>}>
-              <MapaBrasil
-                resumo={resumo}
-                indice={indice}
-                variavel="virar"
-                candidato={candidato}
-                lente={lente}
-                aoClicar={(cd) => {
-                  const uf = indice.porCodigo.get(cd)?.uf
-                  if (uf) aoAbrirCidade(uf, cd)
-                }}
-              />
-            </Suspense>
-            <LegendaSequencial lente={lente} candidato={candidato} />
-            <p className="discreto" style={{ marginTop: 8 }}>
-              Em cada cidade, de cada 100 eleitores aptos, para as cidades grandes não dominarem o mapa. Toque numa cidade para
-              ver os bairros e as escolas dela.
-            </p>
+      {LENTES_PRINCIPAIS.includes(lente) && (
+        <>
+          <h2 id="t-mapa-brasil">
+            {foco ? `No mapa: ${resumo.ufs.find((u) => u.uf === foco)?.nome ?? foco}` : 'No mapa: o Brasil'}
+          </h2>
+          <p className="secundario">
+            Quanto mais escura a cidade, mais {lente === 'faltosos' ? `saldo possível para ${CANDIDATOS[candidato].nome}` : 'votos em aberto'}{' '}
+            de cada 100 eleitores. Toque numa cidade para ver os bairros e as escolas dela.
+          </p>
+          <div className="mapa-brasil" id="mapa-brasil" ref={refMapa}>
+            {mapaPerto ? (
+              <Suspense fallback={<div className="mapa mapa-espera"><p className="carregando">Carregando o mapa…</p></div>}>
+                <MapaBrasil
+                  resumo={resumo}
+                  indice={indice}
+                  variavel="virar"
+                  candidato={candidato}
+                  lente={lente}
+                  foco={foco}
+                  aoClicar={(cd) => {
+                    const uf = indice.porCodigo.get(cd)?.uf
+                    if (!uf) return
+                    contarEvento('mapa-cidade', 'Mapa: abriu uma cidade')
+                    aoAbrirCidade(uf, cd)
+                  }}
+                />
+              </Suspense>
+            ) : (
+              <div className="mapa mapa-espera" aria-hidden="true" />
+            )}
           </div>
-        ) : (
-          <button
-            className="botao botao-secundario"
-            style={{ marginTop: 16 }}
-            onClick={() => {
-              contarEvento('mapa-brasil', 'Ver no mapa do Brasil')
-              setVerMapa(true)
-            }}
-          >
-            Ver no mapa do Brasil
-          </button>
-        ))}
+          <LegendaSequencial lente={lente} candidato={candidato} />
+        </>
+      )}
+      <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={onde} />
+      <LimitesNumeros />
       <h2>{titulo}</h2>
       <p className="secundario">
         Ordenados {LENTES[lente].pelo}
@@ -627,8 +636,6 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto, bairro, 
 
   return (
     <>
-      <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={`em ${nome}`} />
-
       <h3>No mapa</h3>
       <p className="secundario">
         Cada círculo é uma escola (local de votação). O tamanho mostra {lente === 'faltosos' ? 'o' : 'os'}{' '}
@@ -659,6 +666,9 @@ function NivelMunicipio({ cd, nome, uf, total, candidato, lente, perto, bairro, 
           </span>
         </p>
       )}
+
+      <Totais total={total} saldo={saldo} candidato={candidato} lente={lente} onde={`em ${nome}`} />
+      <LimitesNumeros />
 
       {escolhida && !partida && (
         <p className="aviso" id="perto-de-voce" style={{ marginTop: 24 }}>

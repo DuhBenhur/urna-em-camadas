@@ -74,7 +74,7 @@ Os passos 01, 06 e 12 baixam dados da internet; 02, 04 e 09 leem os brutos do TS
 
 | Página | O que tem |
 |---|---|
-| [Virar voto](https://duhbenhur.github.io/urna-em-camadas/) (a inicial) | a ferramenta: para quem → onde (uma busca para cidade, escola ou bairro) → que conversa → estados, cidades, bairros e escolas; na cidade, as abas "Onde conversar", "Resultado do 1º turno" e "Ache a sua seção" |
+| [Virar voto](https://duhbenhur.github.io/urna-em-camadas/) (a inicial) | a ferramenta: para quem (com a miniatura do mapa de cada candidato) → onde (uma busca para cidade, escola ou bairro) → que conversa → o mapa e a lista de estados, cidades, bairros e escolas; na cidade, as abas "Onde conversar", "Resultado do 1º turno" e "Ache a sua seção" |
 | [Como usar](https://duhbenhur.github.io/urna-em-camadas/#/como-usar) | o guia: as três conversas, um exemplo real, o que fazer com a lista, os limites dos números, a lei completa, glossário e perguntas |
 | Folha do bairro | uma página A4 (ou texto para o grupo) com as escolas perto de uma escola ou de um bairro, sem candidato; sai da ferramenta e da página de cada urna |
 | [Confira sua urna](https://duhbenhur.github.io/urna-em-camadas/#/conferencia) | como conferir a sua urna com o boletim impresso e a soma por estado |

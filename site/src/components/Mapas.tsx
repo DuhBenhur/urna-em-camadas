@@ -35,6 +35,38 @@ function margensRegioes(indice: IndiceMunicipios): Map<number, Regiao> {
   return r
 }
 
+const BRASIL: [[number, number], [number, number]] = [[-74.5, -34], [-34.5, 5.5]]
+
+// mapas no meio da página: no celular, um dedo rola a página e dois mexem no mapa; no computador, Ctrl + rolagem dá zoom
+const GESTOS = {
+  'CooperativeGesturesHandler.WindowsHelpText': 'Use Ctrl + rolagem para dar zoom no mapa',
+  'CooperativeGesturesHandler.MacHelpText': 'Use ⌘ + rolagem para dar zoom no mapa',
+  'CooperativeGesturesHandler.MobileHelpText': 'Use dois dedos para mover o mapa',
+}
+
+/** O retângulo que contém os municípios de uma UF (pela sigla), para o mapa abrir no estado. */
+function limitesDaUf(mun: FeatureCollection, indice: IndiceMunicipios, uf: string): [[number, number], [number, number]] | null {
+  const ibge = indice.lista.find((m) => m.uf === uf)?.ibge
+  if (!ibge) return null
+  const prefixo = String(ibge).slice(0, 2)
+  let [x0, y0, x1, y1] = [180, 90, -180, -90]
+  const visitar = (c: unknown): void => {
+    if (typeof (c as number[])[0] === 'number') {
+      const [x, y] = c as number[]
+      x0 = Math.min(x0, x)
+      y0 = Math.min(y0, y)
+      x1 = Math.max(x1, x)
+      y1 = Math.max(y1, y)
+    } else {
+      for (const d of c as unknown[]) visitar(d)
+    }
+  }
+  for (const f of mun.features) {
+    if (String(f.properties?.codarea).startsWith(prefixo) && f.geometry && 'coordinates' in f.geometry) visitar(f.geometry.coordinates)
+  }
+  return x0 <= x1 ? [[x0, y0], [x1, y1]] : null
+}
+
 function corPorClasse(): ExpressionSpecification {
   const e = escalaAtual()
   return ['match', ['get', 'c'], 0, e[0], 1, e[1], 2, e[2], 3, e[3], 4, e[4], 5, e[5], 6, e[6], '#8a8a8a']
@@ -74,12 +106,16 @@ type PropsBrasil = {
   variavel: VariavelMapa
   candidato: NumeroCandidato
   aoClicar: (cd: number) => void
+  /** sigla da UF: o mapa abre enquadrando o estado (nível do estado da ferramenta) */
+  foco?: string
+  /** gestos cooperativos (padrão): no meio da página, um dedo rola a página; a página só do mapa desliga */
+  cooperativo?: boolean
   /** ação do "Onde virar voto" (vista "virar") */
   lente?: Lente
 }
 
 /** Coroplético dos municípios. A geometria é a malha mínima do IBGE (TopoJSON). */
-export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lente = 'faltosos' }: PropsBrasil) {
+export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lente = 'faltosos', foco, cooperativo = true }: PropsBrasil) {
   const container = useRef<HTMLDivElement>(null)
   const mapa = useRef<maplibregl.Map | null>(null)
   const [geo, setGeo] = useState<{ mun: FeatureCollection; ufs: FeatureCollection; regioes: FeatureCollection | null } | null>(null)
@@ -155,10 +191,12 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lent
     const m = new maplibregl.Map({
       container: container.current,
       style: { version: 8, sources: {}, layers: [{ id: 'fundo', type: 'background', paint: { 'background-color': cssVar('--superficie') } }] },
-      bounds: [[-74.5, -34], [-34.5, 5.5]],
+      bounds: BRASIL,
       fitBoundsOptions: { padding: 12 },
       dragRotate: false,
       pitchWithRotate: false,
+      cooperativeGestures: cooperativo,
+      locale: GESTOS,
       attributionControl: { compact: true, customAttribution: 'Malha municipal: IBGE' },
     })
     m.touchZoomRotate.disableRotation()
@@ -257,6 +295,15 @@ export function MapaBrasil({ resumo, indice, variavel, candidato, aoClicar, lent
     }
     // o mapa é criado uma vez por geometria; dados e cores são atualizados nos outros efeitos
   }, [geo])
+
+  // no nível do estado, o mapa abre enquadrando o estado; sem foco, o Brasil inteiro
+  useEffect(() => {
+    const m = mapa.current
+    if (!m || !geo) return
+    const enquadrar = () => m.fitBounds((foco && limitesDaUf(geo.mun, indice, foco)) || BRASIL, { padding: 16, duration: 0 })
+    if (m.loaded()) enquadrar()
+    else m.once('load', enquadrar)
+  }, [geo, foco, indice])
 
   // cores: escala divergente do tema atual
   useEffect(() => {
@@ -427,6 +474,8 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
       fitBoundsOptions: { padding: 40, maxZoom: 15 },
       dragRotate: false,
       pitchWithRotate: false,
+      cooperativeGestures: true,
+      locale: GESTOS,
     })
     m.touchZoomRotate.disableRotation()
     m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')

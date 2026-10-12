@@ -91,6 +91,11 @@ def nota_da_tabela(pg, titulo: str) -> str:
         return n ? n.textContent.trim() : '' }""", titulo)
 
 
+def recursos(pg) -> list[str]:
+    """Arquivos que a página já carregou, pela lista de recursos do navegador."""
+    return pg.evaluate("performance.getEntriesByType('resource').map(e => e.name)")
+
+
 def bateria_candidato(nav, b: str) -> None:
     """P0.2: o candidato escolhido viaja pelo site e sobrevive ao recarregar."""
     erros: list[str] = []
@@ -175,9 +180,29 @@ def bateria_acao(nav, b: str) -> None:
     botoes = pg.locator(".escolha-candidato button").all()
     medidas = [(x.bounding_box()["width"], x.bounding_box()["height"]) for x in botoes]
     conferir("os dois candidatos com o mesmo tamanho", abs(medidas[0][0] - medidas[1][0]) < 1 and abs(medidas[0][1] - medidas[1][1]) < 1, str(medidas))
+    miniaturas = pg.evaluate("""() => [...document.querySelectorAll('.escolha-candidato img.miniatura-mapa')]
+        .map(i => [i.getAttribute('src').split('/').pop(), i.naturalWidth])""")
+    conferir("passo 1: a miniatura do mapa de cada candidato, no tema escuro",
+             miniaturas == [["saldo-13-escuro.png", 360], ["saldo-22-escuro.png", 360]], str(miniaturas))
+    conferir("passo 1: as miniaturas não carregam o mapa interativo", not any("Mapas-" in u for u in recursos(pg)))
     pequenas = pg.evaluate(FONTES_PEQUENAS)
     conferir("inicial: nenhuma prosa abaixo de 16px", not pequenas, str(pequenas[:4]))
     conferir("celular: sem rolagem lateral", pg.evaluate("document.documentElement.scrollWidth") <= 390)
+    pg.locator(".escolha-candidato button", has_text="Lula").click()
+    pg.wait_for_timeout(500)
+    pg.get_by_role("button", name="Ver o mapa de Lula").click()
+    pg.wait_for_timeout(1500)
+    topo = pg.evaluate("() => document.getElementById('resultado').getBoundingClientRect().top")
+    conferir("celular: 'Ver o mapa de Lula' leva ao mapa", 0 <= topo < 220, f"(topo a {topo:.0f}px)")
+    abrir(pg, b + "#/?c=13", 1.5)
+    pg.fill("#v-busca", "Curitiba")
+    pg.wait_for_timeout(600)
+    pg.keyboard.press("Enter")
+    pg.wait_for_timeout(3000)
+    topo = pg.evaluate("() => document.getElementById('cidade').getBoundingClientRect().top")
+    primeiro = pg.evaluate("() => document.querySelector('#cidade h3').textContent")
+    conferir("celular: escolher a cidade rola até ela, e o mapa vem primeiro", 0 <= topo < 220 and primeiro == "No mapa",
+             f"(topo a {topo:.0f}px; primeiro título: {primeiro})")
     abrir(pg, b + "#/urna/SP/403/411", 2.5)
     topo = pg.evaluate("() => document.getElementById('t-agir').getBoundingClientRect().top")
     conferir("celular: na urna, 'Daqui até o dia 25' na primeira tela", 0 < topo < 844, f"(topo a {topo:.0f}px)")
@@ -419,7 +444,7 @@ def bateria_publico(nav, b: str) -> None:
     # limites em destaque na ferramenta, antes dos resultados (pedido de 09/10)
     abrir(pg, b + "#/?c=13", 2)
     limites = pg.locator("section.limites")
-    conferir("ferramenta: os limites em destaque, antes dos resultados",
+    conferir("ferramenta: os limites em destaque, depois do mapa e dos totais, antes da lista",
              limites.count() == 1 and limites.locator("li").count() == 5
              and limites.locator("a[href='#/como-usar?ir=limites']").count() == 1
              and pg.evaluate("""() => { const l = document.querySelector('section.limites'), r = [...document.querySelectorAll('main h2')].find(h => h.textContent === 'Estados');
@@ -500,15 +525,17 @@ def bateria_publico(nav, b: str) -> None:
     ctx_rede = nav.new_context(viewport={"width": 1280, "height": 1000})
     pg_rede = ctx_rede.new_page()
     vigiar(pg_rede, erros)
-    pedidos: list[str] = []
-    pg_rede.on("request", lambda r: pedidos.append(r.url))
     abrir(pg_rede, b + "#/?c=13", 2)
-    conferir("ferramenta, nível Brasil: o mapa não carrega antes de pedir", not any("Mapas-" in u for u in pedidos))
-    pg_rede.get_by_role("button", name="Ver no mapa do Brasil").click()
-    esperar(pg_rede, 4)
-    conferir("ferramenta: 'Ver no mapa do Brasil' abre o mapa com a legenda",
-             any("Mapas-" in u for u in pedidos) and pg_rede.locator(".maplibregl-map").count() == 1
-             and pg_rede.locator(".legenda-sequencial").count() == 1)
+    conferir("ferramenta, nível Brasil: o mapa não pesa na abertura", not any("Mapas-" in u for u in recursos(pg_rede)))
+    pg_rede.evaluate("document.getElementById('mapa-brasil').scrollIntoView()")
+    pg_rede.wait_for_timeout(5000)
+    conferir("ferramenta: ao chegar no resultado, o mapa do Brasil aparece sozinho, com a legenda",
+             any("Mapas-" in u for u in recursos(pg_rede)) and pg_rede.locator("#mapa-brasil .maplibregl-map").count() == 1
+             and pg_rede.locator("#resultado .legenda-sequencial").count() == 1)
+    conferir("ferramenta: o mapa no meio da página não prende a rolagem (gestos cooperativos)",
+             pg_rede.locator("#mapa-brasil .maplibregl-cooperative-gestures").count() == 1)
+    abrir(pg_rede, b + "#/?c=13&uf=BA", 2)
+    conferir("ferramenta, nível do estado: o mapa é do estado", pg_rede.locator("#t-mapa-brasil").inner_text() == "No mapa: Bahia")
     ctx_rede.close()
     rodape = pg.locator("footer.rodape")
     conferir("rodapé: links e a frase da neutralidade",
@@ -573,9 +600,13 @@ def bateria_contagem(nav, b: str) -> None:
              and c[-1] == {"path": "/cidade/sao-paulo-sp/bairro", "title": "Virar voto: São Paulo (SP)"}
              and "BELA" not in json.dumps(c, ensure_ascii=False), str(c[-2:]))
     abrir(pg, b + "#/?c=13", 2)
-    pg.get_by_role("button", name="Ver no mapa do Brasil").click()
-    time.sleep(1)
-    conferir("contagem: 'Ver no mapa do Brasil' vira evento", contagens()[-1] == {"path": "mapa-brasil", "title": "Ver no mapa do Brasil", "event": True})
+    pg.evaluate("document.getElementById('mapa-brasil').scrollIntoView()")
+    pg.wait_for_timeout(6000)
+    caixa = pg.locator("#mapa-brasil .maplibregl-map").bounding_box()
+    pg.mouse.click(caixa["x"] + caixa["width"] * 0.66, caixa["y"] + caixa["height"] * 0.45)
+    pg.wait_for_timeout(2500)
+    conferir("contagem: tocar numa cidade do mapa do Brasil vira evento e abre a cidade",
+             {"path": "mapa-cidade", "title": "Mapa: abriu uma cidade", "event": True} in contagens() and "m=" in endereco(pg), endereco(pg))
     abrir(pg, b + "#/folha?m=71072&perto=403-1554", 2)
     c = contagens()
     conferir("contagem: a folha com a cidade, sem a escola", c[-1] == {"path": "/folha/sao-paulo-sp", "title": "Folha do bairro: São Paulo (SP)"}, str(c[-1]))

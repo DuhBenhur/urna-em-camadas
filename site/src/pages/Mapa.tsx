@@ -110,7 +110,7 @@ export function Mapa() {
         </div>
       )}
       {resumo && indice ? (
-        <MapaBrasil resumo={resumo} indice={indice} variavel={variavel} candidato={candidato} lente={lente} aoClicar={aoClicar} />
+        <MapaBrasil resumo={resumo} indice={indice} variavel={variavel} candidato={candidato} lente={lente} aoClicar={aoClicar} cooperativo={false} />
       ) : (
         <p className="carregando">Carregando…</p>
       )}
