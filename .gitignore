@@ -8,6 +8,8 @@ __pycache__/
 node_modules/
 site/dist/
 site/.vite/
+# gerado pela checagem de tipos (tsc -b)
+*.tsbuildinfo
 # gerado por pipeline/07_exportar_site.py (no CI, a cada publicação)
 site/public/dados/
 site/scripts/telas/
