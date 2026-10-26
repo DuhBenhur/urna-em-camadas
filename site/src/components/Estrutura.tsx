@@ -51,9 +51,9 @@ export function Cabecalho() {
           Urna em Camadas
         </Link>
         <nav className="navegacao" aria-label="Principal">
-          {/* a ferramenta primeiro; o técnico num lugar só (decisão D2 do docs/plano_reorganizacao.md) */}
-          <NavLink to="/" end className="nav-destaque">Virar voto</NavLink>
-          <NavLink to="/como-usar">Como usar</NavLink>
+          {/* o 2º turno primeiro; a ferramenta da campanha fica como registro (docs/plano_segundo_turno.md) */}
+          <NavLink to="/" end className="nav-destaque">2º turno</NavLink>
+          <NavLink to="/ferramenta">Ferramenta</NavLink>
           <NavLink to="/conferencia">Confira sua urna</NavLink>
           <NavLink to="/entenda">Entenda</NavLink>
           <NavLink to="/metodo">Método e dados</NavLink>
@@ -81,15 +81,16 @@ export function Rodape() {
     <footer className="rodape">
       <div className="conteudo">
         <nav className="rodape-links" aria-label="Rodapé">
-          <Link to="/como-usar">Como usar</Link>
+          <Link to="/ferramenta">Ferramenta da campanha</Link>
+          <Link to="/como-usar">Como usar a ferramenta</Link>
           <Link to="/conferencia">Confira sua urna</Link>
           <Link to="/metodo">Método e dados</Link>
           <Link to="/sobre">Sobre</Link>
         </nav>
         <p>
-          <strong>A mesma conta para os dois candidatos. O site não pede voto para ninguém.</strong> Projeto independente, sem
-          vínculo com partidos ou candidaturas. <strong>Não é pesquisa eleitoral</strong>: não entrevista eleitores nem estima
-          intenção de voto; analisa resultados oficiais já apurados.
+          Durante a campanha, o site foi neutro: a mesma conta para os dois candidatos, sem pedir voto. Depois do resultado, o
+          autor tomou lado (<Link to="/sobre">saiba mais</Link>). Projeto independente, sem vínculo com partidos ou candidaturas.{' '}
+          <strong>Não é pesquisa eleitoral</strong>: analisa resultados oficiais já apurados.
         </p>
         <p>
           Feito por <strong>Eduardo Ben Hur</strong> com <a href="https://claude.com/claude-code">Claude Code</a>, com dados

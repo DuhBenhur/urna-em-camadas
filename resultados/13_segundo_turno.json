@@ -1,0 +1,72 @@
+{
+  "fonte": "TSE, resultados.tse.jus.br (divulgação oficial), eleição 6258: Presidente, 2º turno, 25/10/2026",
+  "gerado_tse": "25/10/2026 23:27:02",
+  "brasil": {
+    "aptos": 158745079,
+    "aptos_cadastro": 158745502,
+    "comparecimento": 128236074,
+    "abstencoes": 30509005,
+    "validos": 124082273,
+    "brancos": 1430496,
+    "nulos": 2723305,
+    "anulados": 0,
+    "V_13": 64256232,
+    "V_22": 59826041,
+    "secoes": 499248,
+    "secoes_totalizadas": 499248,
+    "secoes_instaladas": 499207
+  },
+  "brasil_1t": {
+    "aptos": 158745079,
+    "aptos_cadastro": 158745502,
+    "comparecimento": 125275835,
+    "abstencoes": 33469244,
+    "validos": 119300788,
+    "brancos": 2300798,
+    "nulos": 3674249,
+    "anulados": 0,
+    "V_13": 53879538,
+    "V_22": 56104503,
+    "secoes": 499248,
+    "secoes_totalizadas": 499248,
+    "secoes_instaladas": 499207
+  },
+  "exterior": {
+    "aptos": 916260,
+    "aptos_cadastro": 916683,
+    "comparecimento": 381443,
+    "abstencoes": 534817,
+    "validos": 371651,
+    "brancos": 4675,
+    "nulos": 5117,
+    "anulados": 0,
+    "V_13": 200154,
+    "V_22": 171497,
+    "secoes": 1351,
+    "secoes_totalizadas": 1351,
+    "secoes_instaladas": 1310
+  },
+  "conferencia": {
+    "municipios": 5571,
+    "com_exterior": 5757,
+    "abrangencias": 28,
+    "soma_igual_ao_brasil": true,
+    "soma_igual_a_cada_uf": true,
+    "abrangencia_confere": true,
+    "campos": [
+      "aptos",
+      "aptos_cadastro",
+      "comparecimento",
+      "abstencoes",
+      "validos",
+      "brancos",
+      "nulos",
+      "anulados",
+      "V_13",
+      "V_22",
+      "secoes",
+      "secoes_totalizadas",
+      "secoes_instaladas"
+    ]
+  }
+}

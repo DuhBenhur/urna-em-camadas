@@ -16,9 +16,11 @@ from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:4173/"
 SAIDA = Path(__file__).parent / "telas"
-PADRAO = ["#/", "#/?c=13", "#/?c=22&a=abertos&uf=SP&m=71072", "#/?c=13&uf=SP&m=71072&perto=403-1554", "#/folha?m=71072&perto=403-1554", "#/como-usar",
+PADRAO = ["#/", "#/?e=MG&v=avanco", "#/?v=votar&cidade=60011", "#/ferramenta", "#/ferramenta?c=13", "#/ferramenta?c=22&a=abertos&uf=SP&m=71072",
+          "#/ferramenta?c=13&uf=SP&m=71072&perto=403-1554", "#/folha?m=71072&perto=403-1554", "#/como-usar",
           "#/urna/SP/403/411?c=13", "#/urna/SP/1/240", "#/conferencia", "#/entenda", "#/metodo", "#/metodo?sec=dados", "#/sobre",
-          "#/?m=71072&aba=resultado", "#/?m=71072&aba=secao&local=403-1554", "#/mapa?v=virar&a=faltosos&c=13", "#/mapa", "#/mapa?v=bolsoes", "#/mapa?v=regioes"]
+          "#/ferramenta?m=71072&aba=resultado", "#/ferramenta?m=71072&aba=secao&local=403-1554", "#/mapa?v=virar&a=faltosos&c=13", "#/mapa",
+          "#/mapa?v=bolsoes", "#/mapa?v=regioes"]
 MODOS = [("desktop", 1280, "light"), ("celular", 390, "dark")]
 ESPERA_MAPAS = 8  # os mapas carregam malha e tiles depois do networkidle
 
@@ -51,7 +53,8 @@ def main() -> None:
                 erros.clear()
                 pagina.goto(BASE + rota)
                 pagina.wait_for_load_state("networkidle")
-                eh_mapa = any(p in rota for p in ("mapa", "municipio", "m="))  # "m=": o "Onde virar voto" de um município
+                # "m=": o "Onde virar voto" de um município; a inicial (2º turno) tem o mapa do Brasil
+                eh_mapa = any(p in rota for p in ("mapa", "municipio", "m=")) or rota == "#/" or rota.startswith("#/?")
                 time.sleep(args.espera if args.espera is not None else (ESPERA_MAPAS if eh_mapa else 1.5))
                 # "#/mapa?v=bolsoes" → "mapa_v-bolsoes" ("?" e "=" não valem em nome de arquivo no Windows)
                 limpo = re.sub(r"[^\w-]+", "_", rota.strip("#/").replace("=", "-")).strip("_")

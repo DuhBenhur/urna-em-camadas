@@ -16,6 +16,11 @@ Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   geo/municipios.topo.json     malha municipal do IBGE (qualidade mínima)
   geo/ufs.topo.json            malha das UFs
   geo/regioes.json             contorno das regiões de voto (11, SKATER)
+  segundo_turno.json           2º turno (13): Brasil oficial (com o exterior) nos dois turnos, o país sem o exterior,
+                               estados com os dois turnos e o 2º turno de cada município (o 1º está em municipios.json)
+
+2º turno por escola (14, quando o TSE publica os boletins do 2º turno): os arquivos de locais ganham aptos_2, faltosos_2,
+validos_2, v13_2 e v22_2; a trava `conferir_escolas_2t` exige que as escolas de cada município somem o resultado oficial dele.
 
 Colunas novas vindas dos modelos (10, 11): no índice de municípios, "sp" = o que o perfil não explica (p.p.),
 "lisa" = bolsão espacial e "regiao" = região de voto; nas zonas, "d" = desvio do perfil da seção em relação ao
@@ -295,8 +300,65 @@ def tabela_locais(base: pd.DataFrame, locais: pd.DataFrame, municipios: pd.DataF
     return por_local
 
 
+COLUNAS_2T = ["aptos_2", "faltosos_2", "validos_2", "v13_2", "v22_2"]
+CHAVE_LOCAL = ["SG_UF", "CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"]
+
+
+def escolas_2t(caminho=None) -> pd.DataFrame | None:
+    """O 2º turno somado por escola, a partir da base por seção do 2º turno (14); None enquanto ela não existe."""
+    caminho = caminho or PROCESSED_DIR / "base_secao_2t_2026.parquet"
+    if not caminho.exists():
+        return None
+    b = pd.read_parquet(caminho)
+    g = b.groupby(CHAVE_LOCAL).agg(aptos_2=("QT_APTOS", "sum"), comparecimento_2=("QT_COMPARECIMENTO", "sum"),
+                                   validos_2=("QT_VALIDOS", "sum"), v13_2=("V_13", "sum"), v22_2=("V_22", "sum")).reset_index()
+    g["faltosos_2"] = g.aptos_2 - g.comparecimento_2
+    return g.drop(columns="comparecimento_2")
+
+
+def acrescentar_2t(por_local: pd.DataFrame, locais: pd.DataFrame, e2: pd.DataFrame | None) -> pd.DataFrame:
+    """Junta o 2º turno às escolas. Uma escola que só aparece no 2º turno entra com o 1º turno zerado (nome e coordenadas
+    vêm do cadastro); assim a soma das escolas de cada município continua igual à do município nos dois turnos."""
+    if e2 is None:
+        return por_local
+    j = por_local.merge(e2, on=CHAVE_LOCAL, how="outer", indicator=True)
+    so_2t = j._merge == "right_only"
+    if so_2t.any():
+        cad = locais.set_index(["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"])
+        idx = pd.MultiIndex.from_frame(j.loc[so_2t, ["CD_MUNICIPIO", "NR_ZONA", "NR_LOCAL_VOTACAO"]])
+        for c in ["NM_LOCAL", "NM_BAIRRO", "LAT", "LON"]:
+            j.loc[so_2t, c] = cad[c].reindex(idx).to_numpy()
+        for c in ["secoes", "validos", "v13", "v22", *COLUNAS_VIRAR]:
+            j.loc[so_2t, c] = 0
+        print(f"     {int(so_2t.sum())} escolas só no 2º turno (entram com o 1º turno zerado)")
+    for c in ["secoes", "validos", "v13", "v22", *COLUNAS_VIRAR]:
+        j[c] = j[c].astype(int)
+    for c in COLUNAS_2T:
+        j[c] = j[c].astype("Int64")  # escola sem urna no 2º turno: null
+    return j.drop(columns="_merge")
+
+
+def conferir_escolas_2t(por_local: pd.DataFrame, t2: dict | None) -> None:
+    """Trava: as escolas de cada município somam o 2º turno oficial dele (aptos das seções instaladas, comparecimento,
+    válidos, Lula e Flávio). Se não fecharem, a exportação para antes de gravar."""
+    if "v13_2" not in por_local.columns or t2 is None:
+        return
+    mun = pd.DataFrame(t2["municipios"]["linhas"], columns=t2["municipios"]["colunas"]).set_index("cd")
+    e = por_local.groupby("CD_MUNICIPIO")[COLUNAS_2T].sum()
+    e["comparecimento"] = e.aptos_2 - e.faltosos_2
+    pares = {"aptos": "aptos_2", "comparecimento": "comparecimento", "validos": "validos_2", "v13": "v13_2", "v22": "v22_2"}
+    falhas = []
+    for oficial, escola in pares.items():
+        dif = (mun[oficial] - e[escola].reindex(mun.index).fillna(0)).abs()
+        if (dif > 0).any():
+            falhas.append(f"{oficial}: {int((dif > 0).sum())} municípios não fecham")
+    if falhas:
+        raise ErroConferencia("o 2º turno por escola não fecha com o dos municípios; nada foi gravado:\n  " + "\n  ".join(falhas))
+    print(f"[ok] 2º turno por escola fecha com o oficial dos {len(mun):,} municípios ({len(por_local):,} escolas)")
+
+
 def gravar_locais(por_local: pd.DataFrame) -> int:
-    extras = [c for c in ["s13", "s22"] if c in por_local.columns]
+    extras = [c for c in ["s13", "s22"] if c in por_local.columns] + [c for c in COLUNAS_2T if c in por_local.columns]
     colunas = ["NR_ZONA", "NR_LOCAL_VOTACAO", "NM_LOCAL", "NM_BAIRRO", "LAT", "LON", "secoes", "validos", "v13", "v22",
                *COLUNAS_VIRAR, *extras]
     for cd, grupo in por_local.groupby("CD_MUNICIPIO"):
@@ -383,6 +445,55 @@ def conferir_virar(res: dict, indice: dict, por_local: pd.DataFrame) -> None:
           + ", ".join(f"{c} {int(ufs[c].sum()):,}" for c in somados if c in ufs.columns))
 
 
+CAMPOS_TURNO = {"aptos": "QT_APTOS", "comparecimento": "QT_COMPARECIMENTO", "validos": "QT_VALIDOS",
+                "v13": "V_13", "v22": "V_22"}
+
+
+def segundo_turno(base: pd.DataFrame) -> dict | None:
+    """O 2º turno por município (pipeline/13) ao lado do 1º (boletins de urna conferidos), por estado e no país.
+
+    Trava: todo município do 1º turno tem o 2º; a soma dos municípios de cada estado é o estado; o país sem o exterior
+    mais o exterior é o resultado oficial do Brasil. Se não fechar, a exportação para antes de gravar."""
+    caminho = PROCESSED_DIR / "resultado_2t_municipio_2026.parquet"
+    if not caminho.exists():
+        return None
+    oficial = json.loads((RESULTADOS / "13_segundo_turno.json").read_text(encoding="utf-8"))
+    t2 = (pd.read_parquet(caminho)
+          .rename(columns={"V_13": "v13", "V_22": "v22"})[["SG_UF", "CD_MUNICIPIO", *CAMPOS_TURNO]])
+    t1 = (base.groupby(["SG_UF", "CD_MUNICIPIO"])[list(CAMPOS_TURNO.values())].sum()
+          .rename(columns={v: k for k, v in CAMPOS_TURNO.items()}).reset_index())
+    falhas = []
+    if set(t1.CD_MUNICIPIO) != set(t2.CD_MUNICIPIO):
+        falhas.append(f"municípios sem par entre os turnos: {len(set(t1.CD_MUNICIPIO) ^ set(t2.CD_MUNICIPIO))}")
+    ufs = (t1.groupby("SG_UF")[list(CAMPOS_TURNO)].sum().add_suffix("_1")
+           .join(t2.groupby("SG_UF")[list(CAMPOS_TURNO)].sum().add_suffix("_2")))
+    pais = {f"t{t}": {c: int(ufs[f"{c}_{t}"].sum()) for c in CAMPOS_TURNO} for t in (1, 2)}
+    for c in CAMPOS_TURNO:
+        com_exterior = pais["t2"][c] + oficial["exterior"]["V_13" if c == "v13" else "V_22" if c == "v22" else c]
+        esperado = oficial["brasil"]["V_13" if c == "v13" else "V_22" if c == "v22" else c]
+        if com_exterior != esperado:
+            falhas.append(f"2º turno, {c}: país + exterior {com_exterior:,} x Brasil oficial {esperado:,}")
+    if falhas:
+        raise ErroConferencia("o 2º turno não fecha; nada foi gravado:\n  " + "\n  ".join(falhas))
+
+    def turno(d: dict) -> dict:
+        return {"aptos": d["aptos"], "comparecimento": d["comparecimento"], "abstencoes": d["abstencoes"],
+                "validos": d["validos"], "brancos": d["brancos"], "nulos": d["nulos"], "v13": d["V_13"], "v22": d["V_22"]}
+
+    ufs = ufs.reset_index()
+    ufs.insert(1, "nome", ufs.SG_UF.map(NOMES_UF))
+    print(f"[ok] 2º turno fecha: {len(t2):,} municípios, {len(ufs)} estados; país + exterior = Brasil oficial")
+    return {
+        "fonte": oficial["fonte"],
+        "gerado_tse": oficial["gerado_tse"],
+        "brasil": {"t1": turno(oficial["brasil_1t"]), "t2": turno(oficial["brasil"])},
+        "pais": pais,
+        "exterior": turno(oficial["exterior"]),
+        "ufs": tabela(ufs.rename(columns={"SG_UF": "uf"}).astype({c: int for c in ufs.columns if c[-1] in "12"})),
+        "municipios": tabela(t2.drop(columns="SG_UF").rename(columns={"CD_MUNICIPIO": "cd"}).sort_values("cd")),
+    }
+
+
 def exportar_zonas(base: pd.DataFrame, locais: pd.DataFrame) -> int:
     colunas = (["NR_SECAO", "NR_LOCAL_VOTACAO", "CD_MUNICIPIO", "QT_APTOS", "QT_COMPARECIMENTO", "QT_VALIDOS",
                 "QT_BRANCOS", "QT_NULOS"] + [f"V_{n}" for n in ORDEM_CANDIDATOS] + PERFIL + ["conf"]
@@ -415,11 +526,13 @@ def main() -> None:
     exp = explicacao()
     base, municipios = acrescentar_modelos(base, municipios, exp)
     # as escolas vêm primeiro: estados e municípios somam os "abaixo do esperado" delas
-    por_local = tabela_locais(base, locais, municipios, modelos, exp)
+    por_local = acrescentar_2t(tabela_locais(base, locais, municipios, modelos, exp), locais, escolas_2t())
     res = resumo(base, locais, municipios, modelos, por_local)
     indice = indice_municipios(base, municipios, por_local)
     # trava: se os números de "Onde virar voto" não fecharem entre os níveis, a pasta do site nem é apagada
     conferir_virar(res, indice, por_local)
+    t2 = segundo_turno(base)
+    conferir_escolas_2t(por_local, t2)
 
     if SAIDA.exists():
         shutil.rmtree(SAIDA)
@@ -430,6 +543,8 @@ def main() -> None:
     if exp is not None:
         gravar(SAIDA / "explicacao.json", exp)
     gravar(SAIDA / "municipios.json", indice)
+    if t2 is not None:
+        gravar(SAIDA / "segundo_turno.json", t2)
     n_mun = gravar_locais(por_local)
     n_zonas = exportar_zonas(base, locais)
     (SAIDA / "geo").mkdir(parents=True, exist_ok=True)

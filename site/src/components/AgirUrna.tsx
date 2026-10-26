@@ -41,7 +41,7 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
     [locais, escola],
   )
   const noVirar = (extra: Record<string, string>) =>
-    `/?${new URLSearchParams({ ...(candidato ? { c: String(candidato) } : {}), a: lente, uf, m: String(cd), ...extra })}`
+    `/ferramenta?${new URLSearchParams({ ...(candidato ? { c: String(candidato) } : {}), a: lente, uf, m: String(cd), ...extra })}`
 
   return (
     <section className="cartao agir" id="agir" aria-labelledby="t-agir">
@@ -68,7 +68,7 @@ export function AgirUrna({ uf, cd, zona, local, municipio }: Props) {
               link={noVirar({ perto: chaveLocal(escola) })} lugar={`${municipio} (${uf})`}
               linkFolha={`/folha?${new URLSearchParams({ m: String(cd), perto: chaveLocal(escola) })}`}
               // o link compartilhado não leva candidato: quem recebe escolhe o seu
-              linkCompartilhado={`${window.location.origin}${window.location.pathname}#/?${new URLSearchParams({ a: 'abertos', uf, m: String(cd), perto: chaveLocal(escola) })}`} />
+              linkCompartilhado={`${window.location.origin}${window.location.pathname}#/ferramenta?${new URLSearchParams({ a: 'abertos', uf, m: String(cd), perto: chaveLocal(escola) })}`} />
           ) : (
             <div className="agir-bloco">
               <h3>Perto de você</h3>

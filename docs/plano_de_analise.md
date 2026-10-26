@@ -163,6 +163,21 @@ Situação atualizada em 09/10/2026.
 - **Modelos:** a validação cruzada deixando uma UF de fora por vez não foi feita. No lugar, a estabilidade foi testada com bootstrap dos estados dentro de cada região (100 reamostragens) e com duas checagens de robustez (escala de proporção, sem o logit; só seções com 100 votos válidos ou mais).
 - ~~**Previsão:** MAE por município e por seção, cobertura dos intervalos e mapa de erros após o 2º turno.~~ Retirada com a previsão.
 
+## 2º turno (registrado em 26/10/2026, extensão descritiva)
+
+Depois do resultado (25/10), o 2º turno entra como comparação descritiva com o 1º, sem modelo novo (plano em
+`docs/plano_segundo_turno.md`). Fonte: resultado oficial por município do TSE (eleição 6258), conferido contra o total anunciado
+(`pipeline/13_segundo_turno.py`, `03`). Medidas, por município, estado e país sem o exterior:
+
+- **Virou:** entre os dois finalistas, Flávio à frente no 1º turno e Lula no 2º (e o contrário, "virou para Flávio"). Empates contam
+  como "não ganhou".
+- **Avançou:** margem Lula − Flávio (proporção dos válidos) no 2º turno menos a do 1º.
+- **Abstenção:** (aptos − comparecimento) ÷ aptos, em cada turno; os aptos mudam pouco entre os turnos (149 a menos no país).
+
+Limite: é comparação de lugares. Não separa quem mudou de voto, quem passou a votar e para onde foram os votos dos outros 10
+candidatos (falácia ecológica). As contas por seção (urnas encerradas depois das 17h, votos depois das 17h) e por faixa etária
+esperam os arquivos do TSE e terão o desenho registrado aqui antes de rodar.
+
 ## Limitações declaradas
 
 - O nível 1 é agregado (a seção), não o eleitor. As conclusões valem para lugares, não para pessoas (falácia ecológica).
@@ -190,4 +205,5 @@ Como foi (atualizado em 09/10/2026; o plano original previa as etapas 4 a 9 entr
 | 18–22/out | R3: teste com pessoas e correções |
 | 24/out | Último deploy |
 | 25/out | Site congelado |
+| 26/out | 2º turno por município na inicial (`docs/plano_segundo_turno.md`, onda 1) |
 | nov/2026 → | Etapa 10 |

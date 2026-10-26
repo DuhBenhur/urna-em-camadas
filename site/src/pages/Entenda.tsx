@@ -195,7 +195,7 @@ export function Entenda() {
             }
             conversa={
               <>
-                a opção avançada da ferramenta, <Link to={`/?a=perfil${comCandidato(escolhido, '&')}`}>“votos abaixo do esperado”</Link>,
+                a opção avançada da ferramenta, <Link to={`/ferramenta?a=perfil${comCandidato(escolhido, '&')}`}>“votos abaixo do esperado”</Link>,
                 parte dessa ideia. É pista, não certeza: parte do que foge do esperado é o que o modelo não vê, como a renda do
                 bairro e a história do lugar.
               </>

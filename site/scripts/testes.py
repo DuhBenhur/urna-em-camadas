@@ -6,7 +6,7 @@ Uso:  python site/scripts/testes.py                                             
       python site/scripts/testes.py https://duhbenhur.github.io/urna-em-camadas/   # ao vivo
       python site/scripts/testes.py --so candidato,acao                           # só algumas baterias
 
-Baterias: candidato (P0.2), acao (P0.3 a P0.5), perfil (P1.1), publico (P1.2 a P2.2, regras do conteúdo público e a
+Baterias: segundo (a inicial do 2º turno, docs/plano_segundo_turno.md), candidato (P0.2), acao (P0.3 a P0.5), perfil (P1.1), publico (P1.2 a P2.2, regras do conteúdo público e a
 estrutura da reorganização, docs/plano_reorganizacao.md), contagem (visitas anônimas: o que seria enviado ao GoatCounter).
 Cada bateria abre o navegador do zero (a escolha do candidato fica na sessionStorage da aba e vazaria de uma para outra).
 Sai com código 1 se algum critério falhar. Quando a estrutura do site mudar, estes testes mudam junto.
@@ -102,10 +102,10 @@ def bateria_candidato(nav, b: str) -> None:
     ctx = nav.new_context(viewport={"width": 1280, "height": 900})
     pg = ctx.new_page()
     vigiar(pg, erros)
-    abrir(pg, b + "#/", 1)
+    abrir(pg, b + "#/ferramenta", 1)
     pg.locator(".escolha-candidato button", has_text="Flávio").click()
     time.sleep(1)
-    abrir(pg, b + "#/", 1)
+    abrir(pg, b + "#/ferramenta", 1)
     abrir_zona_secao(pg)
     pg.select_option("#b-uf", "SP")
     pg.fill("#b-zona", "1")
@@ -137,7 +137,7 @@ def bateria_candidato(nav, b: str) -> None:
     p = pressionados(pg)
     conferir("método e dados: Flávio em todos os seletores", len(p) == 5 and all("Flávio" in t for t in p), f"{len(p)} seletores")
     abrir(pg, b + "#/virar", 1.5)
-    conferir("#/virar (endereço antigo) abre a ferramenta", endereco(pg).endswith("#/"), endereco(pg))
+    conferir("#/virar (endereço antigo) abre a ferramenta", endereco(pg).endswith("#/ferramenta"), endereco(pg))
     conferir("virar sem ?c: Flávio já escolhido", pressionados(pg) == ["Flávio Bolsonaro (PL)"], str(pressionados(pg)))
     abrir(pg, b + "#/urna/SP/1/240", 1.5)
     pg.get_by_role("button", name="Lula (PT)").first.click()
@@ -174,7 +174,7 @@ def bateria_acao(nav, b: str) -> None:
     ctx = nav.new_context(viewport={"width": 390, "height": 844}, color_scheme="dark")
     pg = ctx.new_page()
     vigiar(pg, erros)
-    abrir(pg, b + "#/", 1.5)
+    abrir(pg, b + "#/ferramenta", 1.5)
     caixa = pg.locator(".escolha-candidato").bounding_box()
     conferir("celular 390x844: passo 1 sem rolar", caixa["y"] + caixa["height"] <= 844, f"(termina em {caixa['y'] + caixa['height']:.0f}px)")
     botoes = pg.locator(".escolha-candidato button").all()
@@ -194,7 +194,7 @@ def bateria_acao(nav, b: str) -> None:
     pg.wait_for_timeout(1500)
     topo = pg.evaluate("() => document.getElementById('resultado').getBoundingClientRect().top")
     conferir("celular: 'Ver o mapa de Lula' leva ao mapa", 0 <= topo < 220, f"(topo a {topo:.0f}px)")
-    abrir(pg, b + "#/?c=13", 1.5)
+    abrir(pg, b + "#/ferramenta?c=13", 1.5)
     pg.fill("#v-busca", "Curitiba")
     pg.wait_for_timeout(600)
     pg.keyboard.press("Enter")
@@ -211,13 +211,13 @@ def bateria_acao(nav, b: str) -> None:
     ctx = nav.new_context(viewport={"width": 1280, "height": 900})
     pg = ctx.new_page()
     vigiar(pg, erros)
-    abrir(pg, b + "#/", 1.5)
+    abrir(pg, b + "#/ferramenta", 1.5)
     abrir_zona_secao(pg)
     altura = pg.get_by_role("button", name="Ver minha urna").bounding_box()["height"]
     conferir("botão 'Ver minha urna' numa linha só", altura < 50, f"({altura:.0f}px)")
     pg.locator(".escolha-candidato button", has_text="Flávio").click()
     time.sleep(0.5)
-    conferir("inicial: escolher Flávio põe ?c=22", pg.url.endswith("#/?c=22"), pg.url)
+    conferir("inicial: escolher Flávio põe ?c=22", pg.url.endswith("#/ferramenta?c=22"), pg.url)
     conferir("conversa 'lembrar quem faltou' mostra o saldo de Flávio (4,7 milhões)", "4,7 milhões" in pg.locator(".lentes").first.inner_text())
     abrir_zona_secao(pg)
     pg.select_option("#b-uf", "SP")
@@ -245,18 +245,18 @@ def bateria_acao(nav, b: str) -> None:
     pg.go_back()
     esperar(pg, 1.5)
     conferir("'voltar' do navegador volta à urna", "#/urna/SP/403/411" in pg.url, pg.url)
-    abrir(pg, b + "#/", 1.5)
+    abrir(pg, b + "#/ferramenta", 1.5)
     pg.select_option("#v-uf", "PR")
     esperar(pg, 1.5)
-    conferir("onde: estado", pg.url.endswith("#/?c=13&uf=PR") and pg.get_by_role("heading", name="Cidades do Paraná").count() == 1, pg.url)
-    abrir(pg, b + "#/", 1.5)
+    conferir("onde: estado", pg.url.endswith("#/ferramenta?c=13&uf=PR") and pg.get_by_role("heading", name="Cidades do Paraná").count() == 1, pg.url)
+    abrir(pg, b + "#/ferramenta", 1.5)
     pg.fill("#v-busca", "Curitiba")
     time.sleep(0.5)
     pg.locator("#v-busca-lista [role=option]").first.click()
     esperar(pg, 3)
     conferir("onde: cidade", "uf=PR" in pg.url and "m=" in pg.url and pg.get_by_role("heading", name="No mapa").count() == 1, pg.url)
     # busca única (D10, fase 1): com a cidade aberta, o mesmo campo acha escolas e bairros, também pelo teclado
-    abrir(pg, b + "#/?c=13&uf=SP&m=71072", 3)
+    abrir(pg, b + "#/ferramenta?c=13&uf=SP&m=71072", 3)
     conferir("busca: com a cidade aberta, o campo pede escola, bairro ou cidade",
              pg.locator("label[for='v-busca']").inner_text() == "Escola, bairro ou cidade" and pg.locator("#v-busca").get_attribute("role") == "combobox")
     pg.fill("#v-busca", "Elisio")
@@ -281,7 +281,7 @@ def bateria_acao(nav, b: str) -> None:
     pg.fill("#v-busca", "zzzz")
     time.sleep(0.5)
     conferir("busca: sem resultado, diz que não achou", "Nenhum lugar com esse nome nesta cidade" in pg.locator(".busca-lugar").inner_text())
-    abrir(pg, b + "#/", 1.5)
+    abrir(pg, b + "#/ferramenta", 1.5)
     pg.get_by_role("link", name="Todas as regras, com os artigos da lei").click()
     esperar(pg, 2.5)
     topo = pg.evaluate("() => document.getElementById('lei').getBoundingClientRect().top")
@@ -331,10 +331,10 @@ def bateria_perfil(nav, b: str) -> None:
     vigiar(pg, erros)
     abrir(pg, b + "#/urna/SP/403/411?a=perfil", 3)
     conferir("urna sem candidato, ação do perfil: pede para escolher", "Escolha para quem" in pg.locator("#agir").inner_text())
-    abrir(pg, b + "#/")
+    abrir(pg, b + "#/ferramenta")
     avancada = pg.locator(".lentes-avancada").inner_text().replace("\n", " ")
     conferir("ferramenta sem escolha: a opção avançada traz os dois números", "Lula 2,4 milhões" in avancada and "Flávio 2,1 milhões" in avancada)
-    abrir(pg, b + "#/?c=22")
+    abrir(pg, b + "#/ferramenta?c=22")
     avancada = pg.locator(".lentes-avancada").inner_text()
     conferir("ferramenta com Flávio: 2,1 milhões abaixo do esperado", "2,1 milhões" in avancada and "para Flávio" in avancada)
     abrir(pg, b + "#/mapa?v=virar&a=perfil&c=13", 3)
@@ -349,13 +349,13 @@ def bateria_publico(nav, b: str) -> None:
     ctx = nav.new_context(viewport={"width": 1280, "height": 1000})
     pg = ctx.new_page()
     vigiar(pg, erros)
-    abrir(pg, b + "#/", 1.5)
-    conferir("título da página", pg.title() == "Urna em Camadas: onde virar voto no 2º turno, bairro a bairro", pg.title())
+    abrir(pg, b + "#/ferramenta", 1.5)
+    conferir("título da página", pg.title() == "Urna em Camadas: Lula reeleito, cidade por cidade", pg.title())
     menu = pg.locator("nav.navegacao a").all_inner_texts()
-    conferir("menu com 6 itens, a ferramenta primeiro (D2)",
-             menu == ["Virar voto", "Como usar", "Confira sua urna", "Entenda", "Método e dados", "Sobre"], str(menu))
+    conferir("menu com 6 itens, o 2º turno primeiro e a ferramenta como registro",
+             menu == ["2º turno", "Ferramenta", "Confira sua urna", "Entenda", "Método e dados", "Sobre"], str(menu))
     abrir(pg, b + "#/virar?c=22&uf=PR", 1.5)
-    conferir("#/virar antigo redireciona para a inicial com os parâmetros", endereco(pg).endswith("#/?c=22&uf=PR"), endereco(pg))
+    conferir("#/virar antigo redireciona para a ferramenta com os parâmetros", endereco(pg).endswith("#/ferramenta?c=22&uf=PR"), endereco(pg))
     abrir(pg, b + "#/virar?ir=como-fazer", 1.5)
     conferir("#/virar?ir=como-fazer vai para a lei no guia", "#/como-usar?ir=lei" in endereco(pg), endereco(pg))
     abrir(pg, b + "#/como-usar", 1.5)
@@ -369,7 +369,7 @@ def bateria_publico(nav, b: str) -> None:
                  "Lembrar de votar rende mais", "quem conhece o bairro decide", "não organiza o grupo", "Kalla e David Broockman"]))
     conferir("guia: exemplo calculado (35 escolas)", "35 escolas" in pg.locator("#exemplo").inner_text())
     conferir("menu: 'Entenda' leva ao Entenda", pg.locator("nav.navegacao a", has_text="Entenda").get_attribute("href") == "#/entenda")
-    for rota in ["#/", "#/como-usar", "#/entenda", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
+    for rota in ["#/", "#/ferramenta", "#/como-usar", "#/entenda", "#/metodo", "#/dados", "#/conferencia", "#/sobre"]:
         abrir(pg, b + rota, 1.5)
         texto = pg.locator("main").inner_text().lower()
         conferir(f"{rota}: não cita a previsão do 2º turno", "previsão do 2" not in texto and "pré-regist" not in texto)
@@ -378,8 +378,8 @@ def bateria_publico(nav, b: str) -> None:
              pg.get_by_role("heading", name="Inspiração metodológica").count() == 1
              and pg.locator("a[href='https://doi.org/10.22167/2675-441X-2024824']").count() >= 1)
     blocos = pg.evaluate("""() => [...document.querySelectorAll('main section.bloco-tecnico')].map(s => s.id)""")
-    conferir("método e dados: os 9 blocos, na ordem, e a inspiração no fim",
-             blocos == ["m-simples", "m-fontes", "m-contas", "m-modelo", "m-explicacoes", "m-espaco", "m-numeros", "m-dados",
+    conferir("método e dados: os 10 blocos, na ordem, e a inspiração no fim",
+             blocos == ["m-simples", "m-fontes", "m-segundo", "m-contas", "m-modelo", "m-explicacoes", "m-espaco", "m-numeros", "m-dados",
                         "m-reproduzir", "m-inspiracao"], str(blocos))
     padrao = pg.evaluate("""() => [...document.querySelectorAll('main section.bloco-tecnico')].filter(s => s.id !== 'm-inspiracao')
         .every(s => s.querySelector(':scope > h2') && s.querySelector(':scope > .resposta-curta') && s.querySelector(':scope > details.detalhe-tecnico'))""")
@@ -409,19 +409,19 @@ def bateria_publico(nav, b: str) -> None:
     conferir("mapa: dica com a taxa e o total", "de cada 100 eleitores" in dica and "saldo possível para Lula" in dica, dica.replace("\n", " | ")[:100])
     abrir(pg, b + "#/municipio/71072?a=faltosos&c=13", 3)
     conferir("#/municipio com ?a= vai para a cidade na ferramenta, em 'Onde conversar'",
-             endereco(pg).endswith("#/?c=13&a=faltosos&m=71072")
+             endereco(pg).endswith("#/ferramenta?c=13&a=faltosos&m=71072")
              and pg.get_by_role("button", name="Onde conversar").get_attribute("aria-pressed") == "true", endereco(pg))
     abrir(pg, b + "#/municipio/71072", 3)
     topo = pg.evaluate("() => document.getElementById('cidade').getBoundingClientRect().top")
     conferir("#/municipio vai para a aba do resultado, já na cidade",
-             endereco(pg).endswith("#/?m=71072&aba=resultado")
+             endereco(pg).endswith("#/ferramenta?m=71072&aba=resultado")
              and pg.get_by_role("button", name="Resultado do 1º turno").get_attribute("aria-pressed") == "true" and abs(topo) < 200,
              f"(topo a {topo:.0f}px) {endereco(pg)}")
     abrir(pg, b + "#/municipio/71072?local=403-1554", 3)
     conferir("#/municipio?local= abre 'Ache a sua seção' com as seções da escola",
-             endereco(pg).endswith("#/?m=71072&aba=secao&local=403-1554") and pg.get_by_role("link", name="Seção 411").count() == 1,
+             endereco(pg).endswith("#/ferramenta?m=71072&aba=secao&local=403-1554") and pg.get_by_role("link", name="Seção 411").count() == 1,
              endereco(pg))
-    abrir(pg, b + "#/?c=13&uf=SP&m=71072", 3)
+    abrir(pg, b + "#/ferramenta?c=13&uf=SP&m=71072", 3)
     pg.locator("main button", has_text="seções").first.click()
     esperar(pg, 2)
     conferir("cidade: 'seções' na tabela de escolas abre a aba das seções",
@@ -434,7 +434,7 @@ def bateria_publico(nav, b: str) -> None:
              and pg.get_by_role("link", name="Seção 411").count() == 1, endereco(pg))
     ctx_novo = nav.new_context(viewport={"width": 1280, "height": 1000})
     pg_novo = ctx_novo.new_page()
-    abrir(pg_novo, b + "#/?m=71072&aba=resultado", 3)
+    abrir(pg_novo, b + "#/ferramenta?m=71072&aba=resultado", 3)
     pg_novo.get_by_role("button", name="Surpresa").click()
     time.sleep(1)
     conferir("cidade sem candidato: a surpresa pede a escolha, sem escolher ninguém",
@@ -442,7 +442,7 @@ def bateria_publico(nav, b: str) -> None:
              str(pressionados(pg_novo)))
     ctx_novo.close()
     # limites em destaque na ferramenta, antes dos resultados (pedido de 09/10)
-    abrir(pg, b + "#/?c=13", 2)
+    abrir(pg, b + "#/ferramenta?c=13", 2)
     limites = pg.locator("section.limites")
     conferir("ferramenta: os limites em destaque, depois do mapa e dos totais, antes da lista",
              limites.count() == 1 and limites.locator("li").count() == 5
@@ -450,10 +450,10 @@ def bateria_publico(nav, b: str) -> None:
              and pg.evaluate("""() => { const l = document.querySelector('section.limites'), r = [...document.querySelectorAll('main h2')].find(h => h.textContent === 'Estados');
                  return !!(l && r && (l.compareDocumentPosition(r) & Node.DOCUMENT_POSITION_FOLLOWING)) }"""))
     # folha do bairro: uma página, sem lado, com o texto para o grupo
-    abrir(pg, b + "#/?c=13&uf=SP&m=71072&perto=403-1554", 3)
+    abrir(pg, b + "#/ferramenta?c=13&uf=SP&m=71072&perto=403-1554", 3)
     conferir("ferramenta: 'Perto de você' leva à folha do bairro",
              pg.get_by_role("link", name="Folha do bairro: imprimir ou mandar ao grupo").get_attribute("href") == "#/folha?m=71072&perto=403-1554")
-    abrir(pg, b + "#/?c=13&uf=SP&m=71072&bairro=BELA+VISTA", 3)
+    abrir(pg, b + "#/ferramenta?c=13&uf=SP&m=71072&bairro=BELA+VISTA", 3)
     conferir("ferramenta: 'No bairro' leva à folha do bairro",
              pg.get_by_role("link", name="Folha do bairro: imprimir ou mandar ao grupo").get_attribute("href") == "#/folha?m=71072&bairro=BELA+VISTA")
     abrir(pg, b + "#/urna/SP/403/411", 3)
@@ -485,25 +485,25 @@ def bateria_publico(nav, b: str) -> None:
     conferir("folha sem escola nem bairro: pede a escolha", "Escolha uma escola ou um bairro" in pg_folha.locator("main").inner_text())
     ctx_folha.close()
     # a nota com asterisco embaixo de toda tabela com o saldo possível, com o candidato escolhido (09/10)
-    for rota in ["#/?c=13", "#/?c=22&uf=SP&m=71072", "#/?c=13&uf=SP&m=71072&perto=403-1554", "#/?c=13&uf=SP&m=71072&bairro=BELA+VISTA",
+    for rota in ["#/ferramenta?c=13", "#/ferramenta?c=22&uf=SP&m=71072", "#/ferramenta?c=13&uf=SP&m=71072&perto=403-1554", "#/ferramenta?c=13&uf=SP&m=71072&bairro=BELA+VISTA",
                  "#/como-usar", "#/metodo?sec=contas", "#/folha?m=71072&perto=403-1554"]:
         abrir(pg, b + rota, 3)
         com, sem = pg.evaluate(TABELAS_COM_SALDO), pg.evaluate(TABELAS_SEM_NOTA)
         conferir(f"{rota}: toda tabela com saldo possível tem a nota com asterisco", com > 0 and sem == 0, f"({com} tabelas, {sem} sem nota)")
-    abrir(pg, b + "#/?c=13", 2)
+    abrir(pg, b + "#/ferramenta?c=13", 2)
     nota = nota_da_tabela(pg, "Estados")
     conferir("nota dos estados: Lula, o adversário e a soma das escolas",
              nota.startswith("* Saldo possível para Lula:") and "sobre Flávio" in nota and "Cada estado soma as suas escolas" in nota, nota[:80])
-    abrir(pg, b + "#/?c=22&uf=AL&m=27855", 3)
+    abrir(pg, b + "#/ferramenta?c=22&uf=AL&m=27855", 3)
     nota = nota_da_tabela(pg, "Bairros")
     conferir("Maceió, Flávio: a nota dos bairros explica o saldo onde ele ficou atrás no total",
              nota.startswith("* Saldo possível para Flávio:") and "um bairro onde Flávio ficou atrás no total ainda pode ter saldo" in nota, nota[:80])
     nota = nota_da_tabela(pg, "Escolas")
     conferir("Maceió, Flávio: a nota das escolas, sem a frase da soma",
              nota.startswith("* Saldo possível para Flávio:") and "soma as suas escolas" not in nota, nota[:80])
-    abrir(pg, b + "#/?c=13&a=abertos&uf=SP&m=71072", 3)
+    abrir(pg, b + "#/ferramenta?c=13&a=abertos&uf=SP&m=71072", 3)
     conferir("conversa 'votos em aberto': a nota não cita candidato", nota_da_tabela(pg, "Escolas").startswith("* Votos em aberto:"))
-    abrir(pg, b + "#/?c=13&a=perfil&uf=SP&m=71072", 3)
+    abrir(pg, b + "#/ferramenta?c=13&a=perfil&uf=SP&m=71072", 3)
     conferir("conversa do perfil: a nota é do candidato e diz que é experimental",
              nota_da_tabela(pg, "Escolas").startswith("* Votos abaixo do esperado para Lula (experimental):"))
     abrir(pg, b + "#/urna/SP/403/411?c=13", 3)
@@ -525,7 +525,7 @@ def bateria_publico(nav, b: str) -> None:
     ctx_rede = nav.new_context(viewport={"width": 1280, "height": 1000})
     pg_rede = ctx_rede.new_page()
     vigiar(pg_rede, erros)
-    abrir(pg_rede, b + "#/?c=13", 2)
+    abrir(pg_rede, b + "#/ferramenta?c=13", 2)
     conferir("ferramenta, nível Brasil: o mapa não pesa na abertura", not any("Mapas-" in u for u in recursos(pg_rede)))
     pg_rede.evaluate("document.getElementById('mapa-brasil').scrollIntoView()")
     pg_rede.wait_for_timeout(5000)
@@ -534,13 +534,13 @@ def bateria_publico(nav, b: str) -> None:
              and pg_rede.locator("#resultado .legenda-sequencial").count() == 1)
     conferir("ferramenta: o mapa no meio da página não prende a rolagem (gestos cooperativos)",
              pg_rede.locator("#mapa-brasil .maplibregl-cooperative-gestures").count() == 1)
-    abrir(pg_rede, b + "#/?c=13&uf=BA", 2)
+    abrir(pg_rede, b + "#/ferramenta?c=13&uf=BA", 2)
     conferir("ferramenta, nível do estado: o mapa é do estado", pg_rede.locator("#t-mapa-brasil").inner_text() == "No mapa: Bahia")
     ctx_rede.close()
     rodape = pg.locator("footer.rodape")
-    conferir("rodapé: links e a frase da neutralidade",
-             rodape.locator(".rodape-links a").all_inner_texts() == ["Como usar", "Confira sua urna", "Método e dados", "Sobre"]
-             and "A mesma conta para os dois candidatos. O site não pede voto para ninguém." in rodape.inner_text())
+    conferir("rodapé: links e a frase sobre o lado do site (neutro na campanha, com lado depois do resultado)",
+             rodape.locator(".rodape-links a").all_inner_texts() == ["Ferramenta da campanha", "Como usar a ferramenta", "Confira sua urna", "Método e dados", "Sobre"]
+             and "Durante a campanha, o site foi neutro" in rodape.inner_text() and "o autor tomou lado" in rodape.inner_text())
     abrir(pg, b + "#/sobre", 1.5)
     conferir("sobre: como relatar erro e a inspiração metodológica",
              pg.locator("main a[href$='/issues']").count() == 1 and pg.locator("main a[href='#/metodo?sec=inspiracao']").count() == 1)
@@ -559,9 +559,9 @@ def bateria_publico(nav, b: str) -> None:
     ctx.close()
     # a imagem de compartilhamento publicada é a do repositório
     if b.startswith("http") and "localhost" not in b:
-        publicada = hashlib.sha1(urllib.request.urlopen(b + "og.png").read()).hexdigest()
-        local = hashlib.sha1((Path(__file__).resolve().parents[1] / "public" / "og.png").read_bytes()).hexdigest()
-        conferir("og.png publicada = a do repositório", publicada == local)
+        publicada = hashlib.sha1(urllib.request.urlopen(b + "og.jpg").read()).hexdigest()
+        local = hashlib.sha1((Path(__file__).resolve().parents[1] / "public" / "og.jpg").read_bytes()).hexdigest()
+        conferir("og.jpg publicada = a do repositório", publicada == local)
 
 
 def bateria_contagem(nav, b: str) -> None:
@@ -582,7 +582,7 @@ def bateria_contagem(nav, b: str) -> None:
     enviado = json.dumps(c, ensure_ascii=False)
     conferir("contagem: a urna vira só '/urna/sp', sem zona, seção nem candidato",
              c[-1] == {"path": "/urna/sp", "title": "Urna: SP"} and "403" not in enviado and "411" not in enviado and "c=" not in enviado, enviado)
-    abrir(pg, b + "#/?c=22&uf=SP&m=71072&perto=403-1554", 3)
+    abrir(pg, b + "#/ferramenta?c=22&uf=SP&m=71072&perto=403-1554", 3)
     c = contagens()
     conferir("contagem: a cidade com o nome, sem a escola nem o candidato",
              c[-1] == {"path": "/cidade/sao-paulo-sp/perto", "title": "Virar voto: São Paulo (SP)"}, str(c[-1]))
@@ -599,7 +599,7 @@ def bateria_contagem(nav, b: str) -> None:
              {"path": "busca-bairro", "title": "Busca: escolheu bairro", "event": True} in c
              and c[-1] == {"path": "/cidade/sao-paulo-sp/bairro", "title": "Virar voto: São Paulo (SP)"}
              and "BELA" not in json.dumps(c, ensure_ascii=False), str(c[-2:]))
-    abrir(pg, b + "#/?c=13", 2)
+    abrir(pg, b + "#/ferramenta?c=13", 2)
     pg.evaluate("document.getElementById('mapa-brasil').scrollIntoView()")
     pg.wait_for_timeout(6000)
     caixa = pg.locator("#mapa-brasil .maplibregl-map").bounding_box()
@@ -625,7 +625,96 @@ def bateria_contagem(nav, b: str) -> None:
     ctx.close()
 
 
-BATERIAS = {"candidato": bateria_candidato, "acao": bateria_acao, "perfil": bateria_perfil, "publico": bateria_publico,
+def bateria_segundo(nav, b: str) -> None:
+    """2º turno (inicial desde 26/10): números oficiais, o mapa só quando aparece, as vistas, a cidade e os links antigos."""
+    erros: list[str] = []
+    ctx = nav.new_context(viewport={"width": 1280, "height": 1000})
+    pg = ctx.new_page()
+    vigiar(pg, erros)
+    contagens = lambda: pg.evaluate("window.__contagens || []")  # noqa: E731
+    abrir(pg, b + "#/", 2)
+    heroi = pg.locator(".vitoria").inner_text()
+    conferir("inicial: Lula reeleito, com os números oficiais do TSE",
+             all(t in heroi for t in ["Lula reeleito", "64.256.232", "59.826.041", "51,79%", "48,21%", "19,22%", "21,08%"]), heroi[:160])
+    conferir("inicial: a virada (2,2 milhões → 4,4 milhões) e as pessoas a mais nas urnas",
+             all(t in heroi for t in ["2,2 milhões", "4,4 milhões", "2.960.239"]))
+    largura = pg.evaluate("""() => new Promise(r => { const i = new Image(); i.onload = () => r(i.naturalWidth);
+        i.onerror = () => r(0); i.src = 'foto/lula-reeleito.jpg' })""")
+    conferir("inicial: a foto carrega", largura >= 2000, str(largura))
+    credito = pg.locator(".vitoria-credito")
+    conferir("inicial: a foto tem o crédito e a licença, com os links",
+             "Ricardo Stuckert" in credito.inner_text() and "CC BY-SA 4.0" in credito.inner_text()
+             and credito.locator("a[href='https://www.flickr.com/photos/lulaoficial/55610270110/']").count() == 1
+             and credito.locator("a[href^='https://creativecommons.org/licenses/by-sa/4.0']").count() == 1)
+    pg.get_by_role("button", name="Das 17h às 19h").click()
+    pg.wait_for_timeout(1200)
+    topo = pg.evaluate("document.getElementById('horario').getBoundingClientRect().top")
+    conferir("inicial: o atalho rola até a seção sem trocar de página", endereco(pg).endswith("#/") and 0 <= topo < 200, f"{endereco(pg)} {topo:.0f}")
+    pg.evaluate("window.scrollTo(0, 0)")
+    cel = nav.new_context(viewport={"width": 390, "height": 844})
+    pg_cel = cel.new_page()
+    abrir(pg_cel, b + "#/", 2)
+    conferir("inicial no celular: o mapa não pesa na abertura", not any("Mapas-" in u for u in recursos(pg_cel)))
+    cel.close()
+    conferir("contagem: a inicial vira '/'", contagens()[-1] == {"path": "/", "title": "2º turno: Brasil"}, str(contagens()[-1:]))
+    resumo = pg.locator("#onde .resumo-capitulo").inner_text()
+    conferir("onde: Lula ganhou em 2.875 das 5.571 cidades; 211 viraram", "2.875 das 5.571" in resumo and "211 delas, virou" in resumo, resumo)
+    nota = pg.locator("#onde .nota-tabela").first.inner_text()
+    conferir("onde: a nota diz também a cidade que virou para Flávio", "Uirapuru (GO)" in nota, nota)
+    pg.evaluate("document.querySelector('#onde .mapa').scrollIntoView()")
+    pg.wait_for_timeout(5000)
+    conferir("onde: ao chegar, o mapa aparece, com gestos cooperativos",
+             pg.locator("#onde .maplibregl-map").count() == 1 and pg.locator("#onde .maplibregl-cooperative-gestures").count() == 1)
+    legenda = pg.locator(".legenda-segundo").inner_text()
+    conferir("legenda: as três classes com as contagens",
+             all(t in legenda for t in ["Virou para Lula (211 cidades)", "Lula ganhou (2.664 cidades)", "Flávio ganhou ou empatou (2.696 cidades)"]), legenda)
+    for vista, rotulo in [("avanco", "Onde Lula mais avançou"), ("votar", "Onde mais gente foi votar")]:
+        pg.get_by_role("button", name=rotulo).click()
+        time.sleep(0.8)
+        soma = sum(int(x.replace(".", "")) for x in re.findall(r"\(([\d.]+) cidades?\)", pg.locator(".legenda-segundo").inner_text()))
+        conferir(f"vista {vista}: vai para a URL e a legenda soma as 5.571 cidades", endereco(pg).endswith(f"#/?v={vista}") and soma == 5571,
+                 f"{endereco(pg)} {soma}")
+    pg.fill("#busca-2t", "Belo Hori")
+    pg.locator(".sugestoes .sugestao").first.click()
+    time.sleep(0.8)
+    cartao = pg.locator(".cidade-2t").inner_text()
+    conferir("busca: a cidade abre com os dois turnos e vai para a URL",
+             "belo horizonte (mg)" in cartao.lower() and "1º turno" in cartao and "cidade=" in endereco(pg), cartao[:120])
+    abrir(pg, b + "#/?e=MG", 2)
+    resumo = pg.locator("#onde .resumo-capitulo").inner_text()
+    conferir("estado pelo endereço: Minas Gerais virou", "em Minas Gerais" in resumo and "o estado inteiro virou" in resumo, resumo)
+    conferir("contagem: o estado do 2º turno", contagens()[-1] == {"path": "/2-turno/estado/mg", "title": "2º turno: MG"}, str(contagens()[-1:]))
+    abrir(pg, b + "#/?cidade=60011", 2)
+    conferir("cidade pelo endereço: o Rio de Janeiro virou para Lula", "Virou para Lula" in pg.locator(".cidade-2t").inner_text())
+    pg.wait_for_timeout(1500)
+    if pg.locator("#escolas-2t").count():  # depois de o TSE publicar os boletins do 2º turno (pipeline/14)
+        n = sum(int(x.replace(".", "")) for x in re.findall(r"\(([\d.]+) escolas?\)", pg.locator("#escolas-2t .legenda-segundo").inner_text()))
+        total = re.search(r"das ([\d.]+) escolas", pg.locator("#escolas-2t").inner_text())
+        conferir("escolas do 2º turno: a legenda soma todas as escolas da cidade",
+                 total is not None and n == int(total.group(1).replace(".", "")), f"{n} x {total.group(1) if total else '?'}")
+    else:  # antes: o caminho para as escolas no 1º turno
+        conferir("cidade sem o 2º turno por escola: link para as escolas no 1º turno",
+                 pg.get_by_role("link", name="Ver as escolas da cidade no 1º turno").get_attribute("href") == "#/ferramenta?m=60011&aba=resultado")
+    estados = pg.locator("#onde table").last.inner_text()
+    conferir("estados: a tabela marca Minas Gerais como 'virou'", re.search(r"Minas Gerais\s+virou", estados) is not None)
+    votar = pg.locator("#votar").inner_text()
+    conferir("mais gente: 2.960.239 pessoas a mais, e onde a abstenção subiu", "2.960.239 pessoas a mais" in votar and "subiu em" in votar)
+    horario = pg.locator("#horario").inner_text()
+    conferir("19h: as duas campanhas pediram, com a cronologia e as 6 fontes",
+             "As duas campanhas pediram mais tempo" in horario and "17h03" in horario and pg.locator("#horario details a").count() == 6)
+    linhas = pg.locator("#confere tbody tr").all_inner_texts()
+    somas = [[int(x.replace(".", "")) for x in re.findall(r"[\d.]{4,}", l)] for l in linhas]
+    conferir("a conta confere: em cada linha, cidades + exterior = total oficial",
+             len(somas) == 5 and all(len(n) == 3 and n[0] + n[1] == n[2] for n in somas), str(somas))
+    abrir(pg, b + "#/?c=13&uf=SP&m=71072&perto=403-1554", 3)
+    conferir("link antigo da ferramenta (cartão, folha) abre a ferramenta, com o aviso de registro",
+             endereco(pg).endswith("#/ferramenta?c=13&uf=SP&m=71072&perto=403-1554") and "Registro da campanha" in pg.locator("main").inner_text(),
+             endereco(pg))
+    conferir("2º turno: sem erros de console", not erros, str(erros[:3]))
+    ctx.close()
+
+
+BATERIAS = {"segundo": bateria_segundo, "candidato": bateria_candidato, "acao": bateria_acao, "perfil": bateria_perfil, "publico": bateria_publico,
             "contagem": bateria_contagem}
 
 

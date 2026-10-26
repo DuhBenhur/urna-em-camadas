@@ -155,6 +155,10 @@ export function Virar() {
 
   return (
     <div className="conteudo virar">
+      <p className="registro" role="note">
+        <strong>Registro da campanha:</strong> a inicial do site até 24/10, com os números do 1º turno.{' '}
+        <Link to="/">Veja o 2º turno</Link>.
+      </p>
       <section className="heroi heroi-inicio">
         <div className="rotulo-pequeno">2º turno · 25 de outubro</div>
         <h1>Onde a sua conversa pode virar voto</h1>

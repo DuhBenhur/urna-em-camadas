@@ -44,7 +44,7 @@ export function Urna() {
         <h1>Zona não encontrada</h1>
         <p>
           Não existe a zona {zona} em {uf.toUpperCase()} na eleição de 2026. Confira o título de eleitor ou{' '}
-          <Link to="/">procure pelo município</Link>.
+          <Link to="/ferramenta">procure pelo município</Link>.
         </p>
       </div>
     )
@@ -144,7 +144,7 @@ export function Urna() {
   return (
     <div className="conteudo">
       <nav className="migalhas" aria-label="Você está em">
-        <Link to="/">Início</Link> › <Link to={`/?m=${municipio.cd}&aba=resultado`}>{municipio.nome} ({arquivo.uf})</Link> › Zona {nZona} › Seção{' '}
+        <Link to="/">Início</Link> › <Link to={`/ferramenta?m=${municipio.cd}&aba=resultado`}>{municipio.nome} ({arquivo.uf})</Link> › Zona {nZona} › Seção{' '}
         {nSecao}
       </nav>
       <header style={{ marginTop: 16 }}>

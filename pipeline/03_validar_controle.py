@@ -5,14 +5,17 @@
 3. Conferência cidadã: cada uma das seções da base (vinda dos boletins de urna) precisa ser idêntica ao
    resultado oficial da seção (09_totalizacao_oficial.py) em aptos, comparecimento, abstenções, brancos,
    nulos (da urna + técnicos) e votos de cada candidato.
+4. 2º turno: a soma dos municípios (13_segundo_turno.py) mais o exterior precisa ser igual ao resultado oficial do Brasil
+   anunciado pelo TSE, e cada município do 1º turno precisa ter o seu resultado do 2º turno.
 
 Uso: python pipeline/03_validar_controle.py
 """
+import json
 import sys
 
 import duckdb
 
-from config import CANDIDATOS_PRESIDENTE, PROCESSED_DIR
+from config import CANDIDATOS_PRESIDENTE, PROCESSED_DIR, ROOT
 
 # % de votos válidos na 1ª ZE (Bela Vista), conforme o mapa de apuração do g1
 REFERENCIA_G1 = {
@@ -108,8 +111,45 @@ def validar_totalizacao_secoes() -> int:
     return falhas
 
 
+# Resultado oficial do 2º turno, Presidente, Brasil com o exterior (TSE, divulgação de 25/10/2026 23:27:02, 100% das seções).
+# "aptos" são os eleitores das seções instaladas (a base da abstenção e dos boletins); "aptos_cadastro" inclui as 41 seções
+# não instaladas (423 eleitores): é o total de eleitores aptos anunciado.
+REFERENCIA_2T_BRASIL = {
+    "aptos": 158_745_079,
+    "aptos_cadastro": 158_745_502,
+    "comparecimento": 128_236_074,
+    "abstencoes": 30_509_005,
+    "validos": 124_082_273,
+    "brancos": 1_430_496,
+    "nulos": 2_723_305,
+    "V_13": 64_256_232,
+    "V_22": 59_826_041,
+}
+
+
+def validar_segundo_turno() -> int:
+    mun2 = PROCESSED_DIR / "resultado_2t_municipio_2026.parquet"
+    if not mun2.exists():
+        print("[aviso] resultado do 2º turno ainda não gerado (pipeline/13_segundo_turno.py)")
+        return 0
+    exterior = json.loads((ROOT / "resultados" / "13_segundo_turno.json").read_text(encoding="utf-8"))["exterior"]
+    somas = ", ".join(f"sum({c})" for c in REFERENCIA_2T_BRASIL)
+    linha = duckdb.sql(f"SELECT {somas} FROM '{mun2.as_posix()}'").fetchone()
+    falhas = sum(not conferir(f"2º turno Brasil {c}", v + exterior[c], REFERENCIA_2T_BRASIL[c])
+                 for c, v in zip(REFERENCIA_2T_BRASIL, linha))
+    base = PROCESSED_DIR / "base_secao_2026.parquet"
+    if base.exists():
+        sem_par = duckdb.sql(f"""
+            SELECT count(*) FROM (SELECT DISTINCT CD_MUNICIPIO FROM '{base.as_posix()}') b
+            FULL JOIN '{mun2.as_posix()}' t USING (CD_MUNICIPIO)
+            WHERE b.CD_MUNICIPIO IS NULL OR t.CD_MUNICIPIO IS NULL
+        """).fetchone()[0]
+        falhas += not conferir("2º turno: municípios sem par no 1º turno", sem_par, 0)
+    return falhas
+
+
 def main() -> None:
-    falhas = validar_capital_g1() + validar_base_nacional_sp() + validar_totalizacao_secoes()
+    falhas = validar_capital_g1() + validar_base_nacional_sp() + validar_totalizacao_secoes() + validar_segundo_turno()
     sys.exit(1 if falhas else 0)
 
 

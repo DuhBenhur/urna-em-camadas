@@ -44,7 +44,7 @@ export function Conferencia() {
           <strong>Ache a sua zona e a sua seção</strong> no título de eleitor ou no app e-Título.
         </li>
         <li>
-          <strong>Abra a sua urna neste site</strong> (na <Link to="/">ferramenta</Link>, em “Tenho a zona e a seção”). O
+          <strong>Abra a sua urna neste site</strong> (na <Link to="/ferramenta">ferramenta</Link>, em “Tenho a zona e a seção”). O
           boletim aparece com os números publicados pelo TSE, e um selo diz se ele é idêntico ao resultado oficial da seção.
         </li>
         <li>

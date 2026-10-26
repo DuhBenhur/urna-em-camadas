@@ -11,6 +11,7 @@ import { classe, classeSequencial, escalaAtual, sequencialAtual, temaEscuro } fr
 import { inteiro, pct, pp } from '../lib/formato'
 import { CANDIDATOS, efeitoMunicipio, type NumeroCandidato } from '../lib/modelo'
 import { potencial, rotuloValor, type Lente } from '../lib/virar'
+import { classeSegundo, coresSegundo, escolaDoisTurnos, situacao } from '../lib/segundo'
 import { CLASSE_LISA, CORTES_VIRAR, LIMITES, ROTULOS_LISA, rampaVirar, umaCasa, type VariavelMapa } from '../lib/escalas'
 import { useTema } from '../lib/tema'
 
@@ -35,17 +36,17 @@ function margensRegioes(indice: IndiceMunicipios): Map<number, Regiao> {
   return r
 }
 
-const BRASIL: [[number, number], [number, number]] = [[-74.5, -34], [-34.5, 5.5]]
+export const BRASIL: [[number, number], [number, number]] = [[-74.5, -34], [-34.5, 5.5]]
 
 // mapas no meio da página: no celular, um dedo rola a página e dois mexem no mapa; no computador, Ctrl + rolagem dá zoom
-const GESTOS = {
+export const GESTOS = {
   'CooperativeGesturesHandler.WindowsHelpText': 'Use Ctrl + rolagem para dar zoom no mapa',
   'CooperativeGesturesHandler.MacHelpText': 'Use ⌘ + rolagem para dar zoom no mapa',
   'CooperativeGesturesHandler.MobileHelpText': 'Use dois dedos para mover o mapa',
 }
 
 /** O retângulo que contém os municípios de uma UF (pela sigla), para o mapa abrir no estado. */
-function limitesDaUf(mun: FeatureCollection, indice: IndiceMunicipios, uf: string): [[number, number], [number, number]] | null {
+export function limitesDaUf(mun: FeatureCollection, indice: IndiceMunicipios, uf: string): [[number, number], [number, number]] | null {
   const ibge = indice.lista.find((m) => m.uf === uf)?.ibge
   if (!ibge) return null
   const prefixo = String(ibge).slice(0, 2)
@@ -79,13 +80,13 @@ function corDoMapa(variavel: VariavelMapa, candidato: NumeroCandidato, lente: Le
   return ['match', ['get', 'c'], 0, r[0], 1, r[1], 2, r[2], 3, r[3], 4, r[4], '#8a8a8a']
 }
 
-function cssVar(nome: string): string {
+export function cssVar(nome: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(nome).trim()
 }
 
-type Dica = { x: number; y: number; titulo: string; valor: string; linhas: string[] } | null
+export type Dica = { x: number; y: number; titulo: string; valor: string; linhas: string[] } | null
 
-function CaixaDica({ dica }: { dica: Dica }) {
+export function CaixaDica({ dica }: { dica: Dica }) {
   if (!dica) return null
   return (
     <div className="dica" style={{ left: dica.x, top: dica.y }}>
@@ -333,8 +334,9 @@ type PropsLocais = {
   locais: Local[]
   selecionado: string | null
   aoSelecionar: (chave: string) => void
-  /** "surpresa": resultado − esperado pelo município e pelo perfil do eleitorado do local (pipeline/07) */
-  variavel?: 'margem' | 'surpresa'
+  /** "surpresa": resultado − esperado pelo município e pelo perfil do eleitorado do local (pipeline/07);
+   *  "vitoria": quem ganhou a escola no 2º turno e onde virou (página do 2º turno) */
+  variavel?: 'margem' | 'surpresa' | 'vitoria'
   candidato?: NumeroCandidato
   /** "Onde virar voto": o que define o tamanho do círculo (padrão: votos válidos), em escala relativa ao maior */
   tamanho?: (l: Local) => number
@@ -380,12 +382,25 @@ const raioLocal = (extra = 0, maxRaiz?: number): ExpressionSpecification => {
   ]
 }
 
-/** Classe de cor do local: margem Lula − Flávio, ou surpresa no voto do candidato (sem dado: cinza). */
-function corLocal(l: Local, variavel: 'margem' | 'surpresa', candidato: NumeroCandidato): number {
+/** Classe de cor do local: margem Lula − Flávio, surpresa no voto do candidato ou o 2º turno (sem dado: cinza). */
+function corLocal(l: Local, variavel: 'margem' | 'surpresa' | 'vitoria', candidato: NumeroCandidato): number {
+  if (variavel === 'vitoria') {
+    const d = escolaDoisTurnos(l)
+    return d ? classeSegundo(d, 'vitoria') : -1
+  }
   if (variavel === 'margem') return classe((l.v13 - l.v22) / l.validos, LIMITES.margem, true)
   const s = candidato === 13 ? l.s13 : l.s22
   return s === null || s === undefined ? -1 : classe(s, LIMITES.efeito, candidato === 13)
 }
+
+/** Cor dos círculos: a escala divergente (resultado, surpresa) ou as três classes do 2º turno. */
+function corCirculos(variavel: 'margem' | 'surpresa' | 'vitoria'): ExpressionSpecification {
+  if (variavel !== 'vitoria') return corPorClasse()
+  const c = coresSegundo('vitoria')
+  return ['match', ['get', 'c'], 0, c[0], 1, c[1], 2, c[2], '#8a8a8a']
+}
+
+const SITUACAO_ESCOLA = { virou: 'Virou para Lula', ganhou: 'Lula ganhou', perdeu: 'Flávio ganhou', virouFlavio: 'Virou para Flávio', empate: 'Empate' }
 
 /** O local selecionado ganha uma camada própria por cima; os demais recuam. */
 function aplicarSelecao(m: maplibregl.Map, chave: string | null) {
@@ -424,6 +439,8 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
   selecionadoRef.current = selecionado
   const surpresaRef = useRef(variavel === 'surpresa')
   surpresaRef.current = variavel === 'surpresa'
+  const variavelRef = useRef(variavel)
+  variavelRef.current = variavel
   const balao = useRef<maplibregl.Popup | null>(null)
 
   const comCoordenada = locais.filter((l) => l.lat !== null && l.lon !== null)
@@ -442,6 +459,13 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
       geometry: { type: 'Point', coordinates: [l.lon!, l.lat!] },
       properties: {
         chave: `${l.zona}-${l.local}`,
+        // 2º turno: a situação da escola e o resultado dos dois turnos, para a dica
+        segundo: (() => {
+          const d = variavel === 'vitoria' ? escolaDoisTurnos(l) : null
+          if (!d) return ''
+          const p = (t: typeof d.t1) => (t.validos ? `Lula ${pct(t.v13 / t.validos)} · Flávio ${pct(t.v22 / t.validos)}` : 'sem votos')
+          return [SITUACAO_ESCOLA[situacao(d)], `1º turno: ${p(d.t1)}`, `2º turno: ${p(d.t2)}`].join('|')
+        })(),
         nome: l.nome,
         bairro: l.bairro,
         validos: l.validos,
@@ -500,7 +524,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
         type: 'circle',
         source: 'locais',
         paint: {
-          'circle-color': corPorClasse(),
+          'circle-color': corCirculos(variavelRef.current),
           'circle-radius': raioLocal(0, maxRaizRef.current),
           'circle-stroke-color': cssVar('--superficie'),
           'circle-stroke-width': 1.5,
@@ -512,7 +536,7 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
         source: 'locais',
         filter: ['==', ['get', 'chave'], ''],
         paint: {
-          'circle-color': corPorClasse(),
+          'circle-color': corCirculos(variavelRef.current),
           'circle-radius': raioLocal(5, maxRaizRef.current),
           'circle-stroke-color': cssVar('--tinta'),
           'circle-stroke-width': 3,
@@ -527,6 +551,11 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
       if (!p) return
       m.getCanvas().style.cursor = 'pointer'
       const surpresa = p.surpresa === null || p.surpresa === undefined || p.surpresa === 'null' ? null : Number(p.surpresa)
+      if (p.segundo) {
+        const [valor, ...linhas] = String(p.segundo).split('|')
+        setDica({ x: e.point.x, y: e.point.y, titulo: p.nome, valor, linhas: [p.bairro, ...linhas].filter(Boolean) })
+        return
+      }
       setDica({
         x: e.point.x,
         y: e.point.y,
@@ -567,6 +596,8 @@ export function MapaLocais({ locais, selecionado, aoSelecionar, variavel = 'marg
     const fonte = m?.getSource('locais') as GeoJSONSource | undefined
     fonte?.setData(dados)
     if (m?.getLayer('locais')) {
+      m.setPaintProperty('locais', 'circle-color', corCirculos(variavel))
+      m.setPaintProperty('locais-sel', 'circle-color', corCirculos(variavel))
       m.setPaintProperty('locais', 'circle-radius', raioLocal(0, maxRaiz))
       m.setPaintProperty('locais-sel', 'circle-radius', raioLocal(5, maxRaiz))
     }

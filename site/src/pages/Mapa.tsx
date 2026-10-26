@@ -65,9 +65,9 @@ export function Mapa() {
   }
 
   const aoClicar = (cd: number) => {
-    if (variavel !== 'virar') return navegar(`/?m=${cd}&aba=resultado${comCandidato(escolhido, '&')}`)
+    if (variavel !== 'virar') return navegar(`/ferramenta?m=${cd}&aba=resultado${comCandidato(escolhido, '&')}`)
     const uf = indice?.porCodigo.get(cd)?.uf ?? ''
-    navegar(`/?a=${lente}&uf=${uf}&m=${cd}${comCandidato(escolhido, '&')}`)
+    navegar(`/ferramenta?a=${lente}&uf=${uf}&m=${cd}${comCandidato(escolhido, '&')}`)
   }
 
   return (
@@ -119,7 +119,7 @@ export function Mapa() {
         <>
           <p className="discreto" style={{ marginTop: 16 }}>
             Clique em uma cidade para ver os bairros e as escolas na ferramenta. Os mesmos números, em tabela, estado por
-            estado: <Link to={`/?a=${lente}${comCandidato(escolhido, '&')}`}>ver a lista</Link>. A conta é a mesma para os dois
+            estado: <Link to={`/ferramenta?a=${lente}${comCandidato(escolhido, '&')}`}>ver a lista</Link>. A conta é a mesma para os dois
             candidatos; o site não pede voto para ninguém.
           </p>
           {lente === 'faltosos' && (

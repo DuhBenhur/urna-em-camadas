@@ -14,7 +14,7 @@ import time
 
 from playwright.sync_api import sync_playwright
 
-ROTAS = ["#/", "#/?c=13", "#/?c=13&uf=SP&m=71072", "#/como-usar", "#/urna/SP/403/411?c=13", "#/?m=71072&aba=resultado",
+ROTAS = ["#/", "#/ferramenta", "#/ferramenta?c=13", "#/ferramenta?c=13&uf=SP&m=71072", "#/como-usar", "#/urna/SP/403/411?c=13", "#/ferramenta?m=71072&aba=resultado",
          "#/mapa?v=virar", "#/entenda", "#/conferencia", "#/metodo", "#/sobre",
          "#/folha?m=71072&perto=403-1554"]
 

@@ -60,7 +60,7 @@ export function Folha() {
     return { erro: 'Escolha uma escola ou um bairro na ferramenta para montar a folha.' }
   }, [locais, perto, bairro])
 
-  const naFerramenta = `/?${new URLSearchParams({ ...(cd ? { m: String(cd) } : {}), ...(perto ? { perto } : {}), ...(bairro ? { bairro } : {}) })}`
+  const naFerramenta = `/ferramenta?${new URLSearchParams({ ...(cd ? { m: String(cd) } : {}), ...(perto ? { perto } : {}), ...(bairro ? { bairro } : {}) })}`
   const problema =
     !cd || (indice && !municipio)
       ? 'Não deu para montar esta folha: a cidade não foi encontrada.'

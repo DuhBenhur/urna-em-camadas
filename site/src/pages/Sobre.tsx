@@ -7,15 +7,23 @@ export function Sobre() {
       <h1 style={{ marginTop: 32 }}>Sobre</h1>
 
       <p>
-        <strong>Urna em Camadas</strong> mostra onde virar voto no 2º turno, bairro a bairro: com o resultado oficial do 1º turno,
-        urna por urna, em que bairros e escolas há mais gente para conversar, com a mesma conta para os dois candidatos. Por
-        trás, uma análise das 497.897 urnas do país, conferidas com o resultado oficial e separadas em camadas (estado, cidade,
-        escola e urna).
+        <strong>Urna em Camadas</strong> mostra a eleição presidencial de 2026 com os números oficiais: o 2º turno cidade por
+        cidade, ao lado do 1º, onde Lula ganhou, onde virou e onde mais gente foi votar. Por trás, uma análise das 497.897 urnas
+        do 1º turno, conferidas com o resultado oficial e separadas em camadas (estado, cidade, escola e urna). Durante a
+        campanha, a página inicial foi a ferramenta <Link to="/ferramenta">“Onde virar voto”</Link>, que continua no ar como
+        registro.
       </p>
       <p>
         É um projeto de ciência de dados feito por <strong>Eduardo Ben Hur</strong> com{' '}
         <a href="https://claude.com/claude-code">Claude Code</a>, o assistente de programação da Anthropic. O código-fonte, os
         dados processados, as conferências e o histórico de cada mudança estão <a href={REPOSITORIO}>no GitHub</a>.
+      </p>
+
+      <h2>De que lado o site está</h2>
+      <p>
+        Durante a campanha, o site foi neutro: a ferramenta fazia a mesma conta para os dois candidatos e não pedia voto. Depois
+        do resultado, o autor tomou lado e celebra a reeleição de Lula. Os números continuam os oficiais do TSE, conferidos da
+        mesma forma, e quem quiser pode refazer cada conta com o código e os dados publicados.
       </p>
 
       <h2>Transparência</h2>
@@ -51,8 +59,8 @@ export function Sobre() {
         </li>
         <li>Não tem vínculo com partidos, candidaturas ou campanhas, e não recebe dinheiro de ninguém.</li>
         <li>
-          Não pede voto. A ferramenta faz a mesma conta para os dois candidatos do 2º turno; quem escolhe o lado é quem usa. Ela
-          aponta lugares (escolas e bairros), nunca pessoas, e traz as regras da lei eleitoral para conversar.
+          Não pediu voto durante a campanha. A ferramenta faz a mesma conta para os dois candidatos do 2º turno; quem escolhia o
+          lado era quem usava. Ela aponta lugares (escolas e bairros), nunca pessoas, e traz as regras da lei eleitoral.
         </li>
         <li>
           Não faz enquetes. Conta as visitas de forma anônima, com o <a href="https://www.goatcounter.com/">GoatCounter</a>:
@@ -60,13 +68,19 @@ export function Sobre() {
           tipo de página, a cidade e ações como imprimir a folha). A busca pela sua zona e seção acontece no seu navegador, e
           o candidato escolhido fica guardado só nesta aba, até ela ser fechada.
         </li>
-        <li>Não publica conteúdo novo no dia da eleição (25 de outubro de 2026).</li>
+        <li>Não publicou conteúdo novo no dia da eleição (25 de outubro de 2026).</li>
       </ul>
 
       <h2>Licença</h2>
       <p>
         Código sob licença MIT. Dados processados e textos sob Creative Commons Atribuição 4.0 (CC BY 4.0): pode usar,
         adaptar e republicar, citando a fonte.
+      </p>
+      <p>
+        A foto da página inicial é de Ricardo Stuckert / Lula Oficial (
+        <a href="https://www.flickr.com/photos/lulaoficial/55610270110/">“24.10.2026 - Lula em São Paulo: O Brasil Pronto Pra Mais”</a>),
+        sob <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br">CC BY-SA 4.0</a>. As versões redimensionadas e
+        recortadas usadas aqui, e a imagem de compartilhamento do site, que leva a foto, seguem sob a mesma licença.
       </p>
     </div>
   )

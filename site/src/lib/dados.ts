@@ -193,6 +193,12 @@ export type Local = {
   /** surpresa: resultado − esperado pelo município e pelo perfil do eleitorado do local (proporção) */
   s13?: number | null
   s22?: number | null
+  /** 2º turno (pipeline/14 e 07), quando o TSE publica os boletins: null se a escola não teve urna no 2º turno */
+  aptos_2?: number | null
+  faltosos_2?: number | null
+  validos_2?: number | null
+  v13_2?: number | null
+  v22_2?: number | null
 }
 
 export type Secao = {

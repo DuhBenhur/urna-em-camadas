@@ -69,7 +69,7 @@ export function ComoUsar() {
             escolas a até {RAIO_PERTO_KM} km da sua.
           </li>
         </ol>
-        <Link className="botao" to="/">
+        <Link className="botao" to="/ferramenta">
           Começar
         </Link>
       </section>
@@ -297,7 +297,7 @@ export function ComoUsar() {
       </section>
 
       <div className="acoes" style={{ marginTop: 32 }}>
-        <Link className="botao" to="/">
+        <Link className="botao" to="/ferramenta">
           Encontre onde conversar
         </Link>
         <Link className="botao botao-secundario" to="/conferencia">
@@ -393,7 +393,7 @@ function Exemplo() {
           <div className="acoes">
             {([13, 22] as const).map((c) => (
               <Link key={c} className="botao botao-secundario"
-                to={`/?c=${c}&a=faltosos&uf=${EXEMPLO.uf}&m=${EXEMPLO.cd}&perto=${chaveLocal(conta.escola)}`}>
+                to={`/ferramenta?c=${c}&a=faltosos&uf=${EXEMPLO.uf}&m=${EXEMPLO.cd}&perto=${chaveLocal(conta.escola)}`}>
                 Ver no mapa, para {c === 13 ? 'Lula' : 'Flávio Bolsonaro'}
               </Link>
             ))}

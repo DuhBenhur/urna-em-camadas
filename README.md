@@ -1,14 +1,16 @@
 # Urna em Camadas
 
-**Onde virar voto no 2º turno, bairro a bairro.**
+**Lula reeleito, cidade por cidade.**
 
-Com o resultado oficial do 1º turno presidencial de 2026, urna por urna, o site mostra em que bairros e escolas há mais gente para conversar, para o candidato que você escolher: quem faltou, quem votou em outro candidato, branco ou nulo e, em caráter experimental, onde o candidato ficou abaixo do que o perfil do lugar fazia esperar. A mesma conta para os dois candidatos; o site não pede voto para ninguém. Dá para começar pela cidade, pela escola ou pelo bairro (uma busca só), ou direto pela sua urna (zona e seção); a folha do bairro junta numa página as escolas perto, o que fazer, a lei e os limites dos números, para imprimir ou mandar ao grupo.
+Com o resultado oficial do TSE, o 2º turno presidencial de 2026 (25/10) em cada um dos 5.571 municípios, ao lado do 1º turno: onde Lula ganhou (2.875 cidades), onde virou (211 cidades e Minas Gerais: Flávio Bolsonaro à frente no 1º turno, Lula no 2º), onde mais avançou e onde mais gente foi votar (abstenção de 21,08% para 19,22%: 2.960.239 pessoas a mais). No 1º turno, Flávio tinha 2,2 milhões de votos a mais; no 2º, Lula venceu por 4,4 milhões. A página traz também a cronologia da votação até as 19h, com as fontes, e a conferência: a soma das cidades e do exterior é igual ao total anunciado pelo TSE.
+
+Durante a campanha, a inicial foi a ferramenta "Onde virar voto": com o 1º turno urna por urna, os bairros e as escolas onde havia mais gente para conversar, com a mesma conta para os dois candidatos e sem pedir voto. Ela continua no ar como registro. Depois do resultado, o autor tomou lado.
 
 Por trás, uma análise multinível e espacial das 497.897 urnas do Brasil, com dados públicos do TSE, IBGE, MDS e MDIC: cada urna foi conferida com o resultado oficial e decomposta em camadas (a média do país, o efeito do estado, o efeito do município, o perfil dos eleitores da seção e o que nenhum dado explica). É ela que justifica agir por lugar: urnas vizinhas votam parecido, e dentro da cidade o que pesa é a escola e o bairro, não a urna.
 
 > Site: <https://duhbenhur.github.io/urna-em-camadas/>
 
-## Onde virar voto: as contas
+## Onde virar voto: as contas (ferramenta da campanha, 1º turno)
 
 Três contas separadas, sem índice composto, calculadas escola por escola (local de votação) e somadas para cima ([método](https://duhbenhur.github.io/urna-em-camadas/#/metodo?sec=contas)):
 
@@ -65,16 +67,19 @@ python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 10
 python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
 python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço (API do Comex Stat)
 python pipeline/08_historia.py            # números do Entenda (o jogo de adivinhar, vizinhos, cidades gêmeas)
+python pipeline/13_segundo_turno.py       # 2º turno por município (resultado oficial do TSE, conferido com o total)
+python pipeline/14_secoes_segundo_turno.py # 2º turno por urna e por escola, quando o TSE publicar os boletins (--ensaio testa com o 1º turno)
 python pipeline/07_exportar_site.py       # dados estáticos do site (só grava se as contas fecharem)
 ```
 
-Os passos 01, 06 e 12 baixam dados da internet; 02, 04 e 09 leem os brutos do TSE baixados pelo 01. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 10, 11, 08 e 07 (08 e 11 precisam de geopandas, libpysal, esda e spopt). Os resultados de 10 e 11 estão em [`notebooks/10_composicao_contexto.ipynb`](notebooks/10_composicao_contexto.ipynb).
+Os passos 01, 06, 12, 13 e 14 baixam dados da internet; 02, 04 e 09 leem os brutos do TSE baixados pelo 01. A partir dos Parquets que já estão em [`data/processed/`](data/processed/), dá para rodar só 03, 05, 10, 11, 08 e 07 (08 e 11 precisam de geopandas, libpysal, esda e spopt). Os resultados de 10 e 11 estão em [`notebooks/10_composicao_contexto.ipynb`](notebooks/10_composicao_contexto.ipynb).
 
 ## O site
 
 | Página | O que tem |
 |---|---|
-| [Virar voto](https://duhbenhur.github.io/urna-em-camadas/) (a inicial) | a ferramenta: para quem (com a miniatura do mapa de cada candidato) → onde (uma busca para cidade, escola ou bairro) → que conversa → o mapa e a lista de estados, cidades, bairros e escolas; na cidade, as abas "Onde conversar", "Resultado do 1º turno" e "Ache a sua seção" |
+| [2º turno](https://duhbenhur.github.io/urna-em-camadas/) (a inicial) | Lula reeleito: o mapa das cidades (onde ganhou e onde virou, onde mais avançou, onde mais gente foi votar), a cidade com os dois turnos, as cidades que viraram, os estados, a abstenção, a cronologia das 17h às 19h e a conferência da soma |
+| [Ferramenta](https://duhbenhur.github.io/urna-em-camadas/#/ferramenta) (registro da campanha) | a ferramenta: para quem (com a miniatura do mapa de cada candidato) → onde (uma busca para cidade, escola ou bairro) → que conversa → o mapa e a lista de estados, cidades, bairros e escolas; na cidade, as abas "Onde conversar", "Resultado do 1º turno" e "Ache a sua seção" |
 | [Como usar](https://duhbenhur.github.io/urna-em-camadas/#/como-usar) | o guia: as três conversas, um exemplo real, o que fazer com a lista, os limites dos números, a lei completa, glossário e perguntas |
 | Folha do bairro | uma página A4 (ou texto para o grupo) com as escolas perto de uma escola ou de um bairro, sem candidato; sai da ferramenta e da página de cada urna |
 | [Confira sua urna](https://duhbenhur.github.io/urna-em-camadas/#/conferencia) | como conferir a sua urna com o boletim impresso e a soma por estado |
@@ -97,7 +102,7 @@ Verificação (com `pip install playwright`; usa o Chrome instalado): `python si
 | Pasta | Conteúdo |
 |---|---|
 | [`pipeline/`](pipeline/) | scripts numerados: download, recortes, base nacional, validação, modelos, contexto, espaço, exportação |
-| [`data/processed/`](data/processed/) | base por seção, locais de votação, resultado oficial por seção, contexto municipal, efeitos aleatórios (Parquet) |
+| [`data/processed/`](data/processed/) | base por seção, locais de votação, resultado oficial por seção, 2º turno por município, contexto municipal, efeitos aleatórios (Parquet) |
 | [`data/geo/`](data/geo/) | malhas municipal e estadual do IBGE (TopoJSON) |
 | [`resultados/`](resultados/) | saídas dos modelos (JSON) |
 | [`notebooks/`](notebooks/) | resultados dos modelos explicativos e do espaço, com figuras |
@@ -136,4 +141,4 @@ Projeto feito por **Eduardo Ben Hur** com [Claude Code](https://claude.com/claud
 
 Inspiração metodológica (a ideia de separar o resultado em camadas com um modelo multinível): GOMES, E. B. H. de Q.; TARANTIN JUNIOR, W. Efeitos das unidades federativas na renda disponível per capita por domicílio: uma análise multinível : Effects of federative units on per capita household disposable income: A multilevel analysis. **Quaestum**, [S. l.], v. 6, p. 1–21, 2025. DOI: [10.22167/2675-441X-2024824](https://doi.org/10.22167/2675-441X-2024824). Disponível em: https://ipecege.emnuvens.com.br/quaestum/article/view/824. Acesso em: 8 out. 2026.
 
-Código sob [MIT](LICENSE). Dados processados e textos sob [CC BY 4.0](LICENSE-DADOS.md).
+Código sob [MIT](LICENSE). Dados processados e textos sob [CC BY 4.0](LICENSE-DADOS.md). A foto da página inicial é de Ricardo Stuckert / Lula Oficial ([“24.10.2026 - Lula em São Paulo: O Brasil Pronto Pra Mais”](https://www.flickr.com/photos/lulaoficial/55610270110/)), sob [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br); as versões redimensionadas e recortadas em [`site/public/foto/`](site/public/foto/) e a imagem de compartilhamento ([`site/public/og.jpg`](site/public/og.jpg)), que a usa, seguem sob a mesma licença.

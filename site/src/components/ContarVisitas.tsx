@@ -39,6 +39,18 @@ export async function paraContar(pathname: string, search: string): Promise<{ pa
   const p = new URLSearchParams(search)
   if (REDIRECIONAM.includes(pathname) || pathname.startsWith('/municipio/')) return null
   if (pathname === '/') {
+    // a inicial do 2º turno: o estado e a cidade escolhidos no mapa (links antigos da ferramenta redirecionam: não contam)
+    const e = p.get('e')
+    const cd = p.get('cidade')
+    if (cd) {
+      const c = await cidade(cd)
+      return { path: `/2-turno/cidade/${c.slug}`, title: `2º turno: ${c.nome}` }
+    }
+    if (e) return { path: `/2-turno/estado/${e.toLowerCase()}`, title: `2º turno: ${e.toUpperCase()}` }
+    if (['c', 'a', 'uf', 'm', 'perto', 'bairro', 'aba', 'local', 'vista'].some((k) => p.has(k))) return null
+    return { path: '/', title: '2º turno: Brasil' }
+  }
+  if (pathname === '/ferramenta') {
     const m = p.get('m')
     const uf = p.get('uf')
     if (m) {
@@ -48,7 +60,7 @@ export async function paraContar(pathname: string, search: string): Promise<{ pa
       return { path: `/cidade/${c.slug}${parte}`, title: `Virar voto: ${c.nome}` }
     }
     if (uf) return { path: `/estado/${uf.toLowerCase()}`, title: `Virar voto: ${uf.toUpperCase()}` }
-    return { path: '/', title: 'Virar voto: Brasil' }
+    return { path: '/ferramenta', title: 'Virar voto: Brasil' }
   }
   const urna = pathname.match(/^\/urna\/([A-Za-z]{2})\//)
   if (urna) return { path: `/urna/${urna[1].toLowerCase()}`, title: `Urna: ${urna[1].toUpperCase()}` }

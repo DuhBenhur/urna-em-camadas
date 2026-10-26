@@ -48,12 +48,15 @@ python pipeline/10_hlm_stepup.py          # modelos explicativos (--bootstrap 10
 python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degrau x rampa
 python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço (API do Comex Stat)
 python pipeline/08_historia.py            # números do Entenda
+python pipeline/13_segundo_turno.py       # 2º turno por município (resultado oficial do TSE, com a conferência da soma)
+python pipeline/14_secoes_segundo_turno.py # 2º turno por urna, quando o TSE publicar os boletins (--ensaio testa com o 1º)
 python pipeline/07_exportar_site.py       # dados do site (com a trava das contas da ferramenta)`
 
 /** Os blocos da página, na ordem. O `?sec=` abre direto num deles, já com o detalhe técnico aberto. */
 const BLOCOS: [string, string][] = [
   ['simples', 'O site em uma tela'],
   ['fontes', 'De onde vêm os números'],
+  ['segundo', 'O 2º turno'],
   ['contas', 'As contas da ferramenta'],
   ['modelo', 'As camadas de uma urna'],
   ['explicacoes', 'Por que os estados votam diferente'],
@@ -285,6 +288,56 @@ export function Metodo() {
               </a>{' '}
               compara as {inteiro(conferencia.brasil.secoes)} urnas campo a campo. Essa comparação roda automaticamente a cada
               publicação do site: se uma única urna divergir, o site não é publicado.
+            </p>
+          </BlocoTecnico>
+
+          <BlocoTecnico id="m-segundo" pergunta="De onde vêm os números do 2º turno?" aberto={sec === 'segundo'}
+            resposta={
+              <>
+                Do resultado oficial do TSE, cidade por cidade. A soma das 5.571 cidades do Brasil e das cidades do exterior é
+                igual ao total anunciado, em cada número.
+              </>
+            }
+            comoFunciona={
+              <>
+                <p>
+                  O 2º turno de cada cidade fica ao lado do 1º, que vem dos boletins de urna conferidos. <strong>Virou</strong> quer
+                  dizer que, entre os dois que foram ao 2º turno, Flávio tinha mais votos que Lula no 1º turno e Lula ficou à frente
+                  no 2º. Quem teve mais votos no 1º turno entre os outros candidatos não entra nessa conta.{' '}
+                  <strong>Avançou</strong> é quanto a diferença entre os dois andou para o lado de Lula, em pontos dos votos válidos.
+                  A <strong>abstenção</strong> é a parte dos eleitores que não foi votar.
+                </p>
+                <p>
+                  Os números descrevem cidades, não pessoas: uma cidade que virou não diz quem mudou de voto, quem votou pela
+                  primeira vez no 2º turno nem para onde foram os votos dos outros candidatos.
+                </p>
+              </>
+            }>
+            <p>
+              <strong>Fonte.</strong> O site de resultados do TSE (resultados.tse.jus.br) publica um arquivo por município para a
+              eleição 6258 (Presidente, 2º turno, 25/10/2026): eleitores aptos, comparecimento, abstenção, votos válidos, brancos,
+              nulos e os votos de cada candidato, com o andamento da totalização. O <code>pipeline/13_segundo_turno.py</code> baixa
+              o cadastro de municípios, os 5.757 arquivos de município (5.571 no Brasil e 186 no exterior), o total do Brasil e o de
+              cada unidade da federação, e o total do Brasil no 1º turno (eleição 6257), para os percentuais oficiais com o exterior.
+            </p>
+            <p>
+              <strong>Conferência.</strong> Antes de gravar: a soma dos municípios com o exterior é igual ao total do Brasil em 13
+              campos (eleitorado das seções instaladas e do cadastro, comparecimento, abstenção, válidos, brancos, nulos, anulados, votos de Lula e de Flávio e as
+              seções: total, totalizadas e instaladas); a soma dos municípios de cada unidade é igual ao total dela; todos os
+              municípios estão 100% totalizados; e o comparecimento e a abstenção de cada município batem com um segundo arquivo
+              do TSE, o de abrangência de cada estado. O <code>pipeline/03_validar_controle.py</code> confere os totais contra o
+              resultado anunciado e que todo município do 1º turno tem o 2º; o <code>pipeline/07_exportar_site.py</code> só grava
+              o arquivo do site se o país mais o exterior fecharem com o total oficial.
+            </p>
+            <p>
+              <strong>Comparação entre os turnos.</strong> O 1º turno de cada município é a soma dos seus boletins de urna (as
+              497.897 urnas conferidas uma a uma). Estados e país, sem o exterior, somam os municípios. Os eleitores aptos mudam
+              um pouco de um turno para o outro (149 a menos no país, sem o exterior; em 3.725 municípios há alguma diferença,
+              de no máximo algumas centenas); a abstenção é calculada, como faz o TSE, sobre os eleitores das seções instaladas de cada turno (o total anunciado inclui
+              423 eleitores de 41 seções do exterior que não foram instaladas). Quando o TSE publica os boletins de urna do 2º
+              turno, o <code>pipeline/14_secoes_segundo_turno.py</code> monta o 2º turno urna por urna e só grava se a soma das urnas
+              de cada município for igual ao resultado oficial dele; o <code>07</code> soma as urnas por escola e confere de novo
+              com os municípios. Até lá, a comparação é por município.
             </p>
           </BlocoTecnico>
 

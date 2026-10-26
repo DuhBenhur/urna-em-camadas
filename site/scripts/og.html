@@ -4,47 +4,31 @@
 <meta charset="utf-8">
 <title>Urna em Camadas: imagem de compartilhamento</title>
 <style>
-  /* Imagem de compartilhamento (1200×630). Gerada por site/scripts/og.py → site/public/og.png
-     Os dois candidatos com o mesmo peso; o desenho é neutro (sem cor de partido): escolas perto de uma escola de partida,
-     com o anel de 2 km do "perto de você". */
+  /* Imagem de compartilhamento (1200×630). Gerada por site/scripts/og.py → site/public/og.jpg
+     Desde 26/10/2026: Lula reeleito, com a foto da abertura do site (Ricardo Stuckert / Lula Oficial, CC BY-SA 4.0) numa faixa
+     no alto. Por usar a foto, esta imagem também fica sob CC BY-SA 4.0 (o crédito vai no rodapé dela). */
   html, body { margin: 0; }
-  body { width: 1200px; height: 630px; background: #f9f9f7; color: #0b0b0b; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; }
-  .quadro { box-sizing: border-box; width: 1200px; height: 630px; padding: 64px 72px; display: grid; grid-template-columns: 1fr 360px; gap: 40px; align-items: center; }
-  .marca { font-size: 26px; font-weight: 700; color: #52514e; letter-spacing: -0.01em; margin-bottom: 22px; }
-  h1 { font-size: 64px; line-height: 1.05; margin: 0 0 22px; letter-spacing: -0.02em; font-weight: 750; }
-  p { font-size: 28px; line-height: 1.35; margin: 0; color: #52514e; max-width: 660px; }
-  .candidatos { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 30px; max-width: 620px; }
-  .candidatos div { border: 2px solid #c3c2b7; border-radius: 12px; padding: 12px 0; font-size: 26px; font-weight: 700; text-align: center; }
-  .candidatos span { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 10px; vertical-align: 1px; }
-  .rodape { margin-top: 24px; font-size: 21px; color: #6f6d68; }
+  body { width: 1200px; height: 630px; background: #140a0a; color: #fff; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; overflow: hidden; }
+  .foto { position: relative; height: 318px; background: url("../public/foto/lula-reeleito.jpg") center 40% / cover no-repeat; }
+  .foto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20, 10, 10, 0) 78%, #140a0a 100%); }
+  .texto { position: relative; margin-top: 14px; padding: 0 56px; display: grid; grid-template-columns: 1fr auto; column-gap: 40px; align-items: end; }
+  h1 { font-size: 100px; line-height: 1; margin: 0; letter-spacing: -0.02em; font-weight: 800; }
+  .numero { border-top: 3px solid #ff716b; padding-top: 10px; font-size: 40px; font-weight: 700; margin-bottom: 8px; }
+  .numero span { display: block; font-size: 22px; font-weight: 400; color: rgba(255, 255, 255, 0.82); }
+  p { grid-column: 1 / -1; font-size: 29px; line-height: 1.3; margin: 16px 0 0; color: rgba(255, 255, 255, 0.92); }
+  .rodape { position: absolute; left: 56px; right: 56px; bottom: 20px; display: flex; justify-content: space-between; gap: 24px; font-size: 17px; color: rgba(255, 255, 255, 0.7); white-space: nowrap; }
 </style>
 </head>
 <body>
-  <div class="quadro">
-    <div>
-      <div class="marca">Urna em Camadas</div>
-      <h1>Onde a sua conversa pode virar voto</h1>
-      <p>Com o 1º&nbsp;turno urna por urna, os bairros e as escolas onde há mais gente para conversar no 2º&nbsp;turno.</p>
-      <div class="candidatos">
-        <div><span style="background: #e34948"></span>Lula (PT)</div>
-        <div><span style="background: #2a78d6"></span>Flávio Bolsonaro (PL)</div>
-      </div>
-      <div class="rodape">A mesma conta para os dois · o site não pede voto · duhbenhur.github.io/urna-em-camadas</div>
-    </div>
-    <svg width="360" height="360" viewBox="0 0 360 360" aria-hidden="true">
-      <!-- escolas: círculos cinza de tamanhos diferentes; a de partida, escura, no centro -->
-      <g fill="#9c9a93" fill-opacity="0.85">
-        <circle cx="120" cy="110" r="14" /><circle cx="236" cy="96" r="9" /><circle cx="262" cy="170" r="20" />
-        <circle cx="98" cy="196" r="10" /><circle cx="150" cy="250" r="17" /><circle cx="232" cy="252" r="12" />
-        <circle cx="196" cy="128" r="7" /><circle cx="140" cy="160" r="6" /><circle cx="208" cy="204" r="8" />
-        <circle cx="282" cy="236" r="6" /><circle cx="78" cy="140" r="7" /><circle cx="180" cy="290" r="9" />
-      </g>
-      <g fill="#c3c2b7">
-        <circle cx="30" cy="40" r="8" /><circle cx="336" cy="60" r="10" /><circle cx="330" cy="318" r="7" /><circle cx="40" cy="320" r="9" />
-      </g>
-      <circle cx="180" cy="180" r="150" fill="none" stroke="#0b0b0b" stroke-width="3" stroke-dasharray="10 9" />
-      <circle cx="180" cy="180" r="15" fill="#0b0b0b" stroke="#f9f9f7" stroke-width="4" />
-    </svg>
+  <div class="foto"></div>
+  <div class="texto">
+    <h1>Lula reeleito</h1>
+    <div class="numero">64.256.232 votos<span>51,79% dos votos válidos</span></div>
+    <p>No 1º&nbsp;turno, Flávio tinha 2,2&nbsp;milhões de votos a mais. No 2º, Lula virou e venceu por 4,4&nbsp;milhões.</p>
+  </div>
+  <div class="rodape">
+    <span>Urna em Camadas · duhbenhur.github.io/urna-em-camadas</span>
+    <span>Foto: Ricardo Stuckert / Lula Oficial, CC BY-SA 4.0</span>
   </div>
 </body>
 </html>

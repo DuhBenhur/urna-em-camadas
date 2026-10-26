@@ -12,6 +12,7 @@
   --borda: rgba(11, 11, 11, 0.1);
   --lula: #e34948;
   --flavio: #2a78d6;
+  --virou: #0a5c2b;
   --neutro: #f0efec;
   --foco: #2a78d6;
   --sombra: 0 1px 2px rgba(11, 11, 11, 0.06), 0 4px 16px rgba(11, 11, 11, 0.05);
@@ -35,6 +36,7 @@
     --borda: rgba(255, 255, 255, 0.1);
     --lula: #e66767;
     --flavio: #3987e5;
+    --virou: #4fd17f;
     --neutro: #383835;
     --foco: #3987e5;
     --sombra: none;
@@ -53,6 +55,7 @@
   --borda: rgba(255, 255, 255, 0.1);
   --lula: #e66767;
   --flavio: #3987e5;
+  --virou: #4fd17f;
   --neutro: #383835;
   --foco: #3987e5;
   --sombra: none;
@@ -520,3 +523,69 @@ td.num { white-space: nowrap; }
 @media (max-width: 560px) { .col-sec { display: none; } }
 .bairro-celular { display: none; }
 @media (max-width: 560px) { .bairro-celular { display: block; color: var(--tinta-2); font-size: 0.9rem; } }
+
+/* 2º turno (inicial desde 26/10): a abertura é sempre escura. A foto (panorâmica, 2,4 : 1, com o carro de Lula no centro)
+   é uma faixa de ponta a ponta; o título entra sobre a parte de baixo dela, onde o degradê já escureceu a foto */
+.vitoria { --vitoria-fundo: #140a0a; color: #fff; background: var(--vitoria-fundo); }
+.vitoria-foto {
+  position: relative;
+  height: clamp(240px, 41vw, 620px);
+  background: url("/foto/lula-reeleito.jpg") center 42% / cover no-repeat;
+}
+.vitoria-foto::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 10, 10, 0) 50%, rgba(20, 10, 10, 0.7) 80%, var(--vitoria-fundo) 100%);
+}
+.vitoria-texto { position: relative; margin-top: clamp(-120px, -7vw, -48px); padding-bottom: 48px; }
+.vitoria-texto > * { max-width: min(720px, 100%); }
+.vitoria-kicker { color: rgba(255, 255, 255, 0.88); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8); }
+.vitoria h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 16px; text-shadow: 0 2px 18px rgba(0, 0, 0, 0.7); }
+.vitoria-lead { font-size: clamp(1.1rem, 2vw, 1.3rem); color: rgba(255, 255, 255, 0.92); }
+.vitoria-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.vitoria-numeros div { border-top: 2px solid rgba(255, 255, 255, 0.35); padding-top: 8px; }
+.vitoria-numeros dt { color: rgba(255, 255, 255, 0.82); font-size: 0.9375rem; }
+.vitoria-numeros dd { margin: 0; color: rgba(255, 255, 255, 0.82); font-size: 0.9375rem; }
+.vitoria-numeros dd:nth-of-type(1) { color: #fff; font-size: clamp(1.25rem, 2.6vw, 1.6rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+.vitoria-numeros div:first-child { border-top-color: #ff716b; }
+.vitoria-assinatura { font-size: 1.25rem; font-weight: 700; margin-top: 8px; }
+.vitoria-assinatura span { display: block; font-size: 0.9375rem; font-weight: 400; color: rgba(255, 255, 255, 0.82); }
+.vitoria-atalhos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.vitoria-atalhos button {
+  color: #fff; background: transparent; border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 999px; cursor: pointer;
+  padding: 6px 14px; min-height: 36px; display: inline-flex; align-items: center; font-size: 0.9375rem;
+}
+.vitoria-atalhos button:hover { background: rgba(255, 255, 255, 0.12); }
+.vitoria :focus-visible { outline-color: #fff; }
+.vitoria-credito { color: rgba(255, 255, 255, 0.72); font-size: 0.8125rem; margin: 20px 0 0; }
+.vitoria-credito a { color: inherit; text-decoration-color: rgba(255, 255, 255, 0.45); }
+@media (max-width: 900px) {
+  .vitoria-foto { height: 62vw; background-image: url("/foto/lula-reeleito-1000.jpg"); background-position: 46% center; }
+  .vitoria-texto { margin-top: -40px; padding-bottom: 32px; }
+}
+@media (max-width: 560px) { .vitoria-numeros { grid-template-columns: 1fr; gap: 10px; } }
+
+.capitulo-2t { margin-top: clamp(48px, 8vw, 88px); }
+.capitulo-2t h2 { margin-top: 0; }
+.campos-2t { grid-template-columns: minmax(160px, 1fr) minmax(0, 2fr); margin-top: 20px; max-width: 760px; }
+@media (max-width: 560px) { .campos-2t { grid-template-columns: 1fr; } }
+.como-ler-2t { color: var(--tinta-2); max-width: 72ch; }
+.legenda-segundo { margin-top: 12px; }
+.legenda-segundo .rotulo-pequeno { margin-bottom: 6px; }
+.legenda-segundo ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--tinta-2); font-size: 0.9375rem; }
+.cidade-2t { margin-top: 20px; max-width: 640px; }
+.cidade-2t-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.cidade-2t h3 { margin-bottom: 8px; }
+.pilula-virou { border-color: var(--virou); border-width: 2px; color: var(--tinta); white-space: nowrap; vertical-align: 2px; }
+.cronologia { list-style: none; padding: 0; margin: 20px 0 28px; max-width: 760px; }
+.cronologia li { display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--grade); }
+.cronologia-hora { font-weight: 700; font-variant-numeric: tabular-nums; }
+.fontes-2t { margin-top: 16px; color: var(--tinta-2); }
+.fontes-2t summary { cursor: pointer; min-height: 32px; }
+.fontes-2t li { overflow-wrap: anywhere; margin-bottom: 4px; }
+.registro { margin-top: 16px; margin-bottom: 0; padding: 8px 14px; border: 1px solid var(--borda); border-left: 4px solid var(--eixo); border-radius: var(--raio); background: var(--superficie); max-width: 760px; }
+.escolas-2t { margin-top: 28px; }
+.escolas-2t h4 { margin: 24px 0 8px; font-size: 1rem; }
+.escolas-2t-todas { margin-top: 20px; }
+.escolas-2t-todas summary { cursor: pointer; min-height: 32px; font-weight: 600; }

@@ -48,6 +48,24 @@ const SEQUENCIAL: Record<Rampa, { claro: string[]; escuro: string[] }> = {
 
 export const sequencialAtual = (rampa: Rampa) => (temaEscuro() ? SEQUENCIAL[rampa].escuro : SEQUENCIAL[rampa].claro)
 
+/**
+ * Mapas do 2º turno: cinza onde Flávio ganhou (ou Lula não avançou), vermelho onde Lula ganhou, e degraus da rampa vermelha
+ * acima. Cinza = degrau mais claro da rampa neutra; vermelhos = degraus da rampa de Lula acima. O cinza contra o primeiro
+ * vermelho passa na separação para daltonismo (ΔE ≥ 10 no validate_palette.js, nos dois modos); cada trio vermelho passa
+ * no --ordinal. Contraste do cinza com a superfície fica em ~2:1: a mesma informação está nas tabelas da página.
+ * `vitoria`: Flávio ganhou · Lula ganhou · virou (Flávio à frente no 1º turno, Lula no 2º), em verde (pedido do usuário, 26/10:
+ * um vermelho mais claro parecia "menos votos"). Vermelho x verde é o par que o daltonismo mais confunde: o verde fica longe do
+ * vermelho em luminosidade (escuro no tema claro, vivo no escuro) e passa com ΔE > 10 contra os outros dois (--pairs all).
+ * `avanco`: Lula não avançou · até 3 pontos · 3 a 6 · mais de 6.
+ */
+const SEGUNDO_TURNO = {
+  vitoria: { claro: ['#b4b2ad', '#e76762', '#0a5c2b'], escuro: ['#52504c', '#e24a48', '#4fd17f'] },
+  avanco: { claro: ['#b4b2ad', '#e76762', '#d2383a', '#7e1419'], escuro: ['#52504c', '#e24a48', '#ee7e77', '#f8aaa3'] },
+}
+
+export const segundoTurnoAtual = (vista: 'vitoria' | 'avanco') =>
+  temaEscuro() ? SEGUNDO_TURNO[vista].escuro : SEGUNDO_TURNO[vista].claro
+
 /** Classe de 0 a 4 numa escala sequencial: `cortes` são os 4 limites inferiores das classes 1 a 4. */
 export function classeSequencial(valor: number, cortes: [number, number, number, number]): number {
   let c = 0

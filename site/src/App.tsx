@@ -7,6 +7,7 @@ import { Conferencia } from './pages/Conferencia'
 import { Entenda } from './pages/Entenda'
 import { Folha } from './pages/Folha'
 import { Metodo } from './pages/Metodo'
+import { SegundoTurno } from './pages/SegundoTurno'
 import { Sobre } from './pages/Sobre'
 import { Urna } from './pages/Urna'
 import { Virar } from './pages/Virar'
@@ -27,6 +28,17 @@ function VoltarAoTopo() {
 function Redirecionar({ para }: { para: string }) {
   const { search } = useLocation()
   return <Navigate to={{ pathname: para, search }} replace />
+}
+
+/** Parâmetros da ferramenta "Onde virar voto", que foi a inicial até 24/10: links com eles vão para a ferramenta. */
+const PARAMETROS_FERRAMENTA = ['c', 'a', 'uf', 'm', 'perto', 'bairro', 'aba', 'local', 'vista']
+
+/** A inicial é o 2º turno; um link antigo da ferramenta (`#/?c=13&m=...`, cartões e folhas já compartilhados) abre a ferramenta. */
+function Inicio() {
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  if (PARAMETROS_FERRAMENTA.some((p) => params.has(p))) return <Navigate to={{ pathname: '/ferramenta', search }} replace />
+  return <SegundoTurno />
 }
 
 /** Capítulos da antiga análise completa: o essencial foi para o Entenda; os bastidores, para Método e dados. */
@@ -71,7 +83,7 @@ function RedirecionarMunicipio() {
   } else if (!a) {
     novos.set('aba', 'resultado')
   }
-  return <Navigate to={`/?${novos}`} replace />
+  return <Navigate to={`/ferramenta?${novos}`} replace />
 }
 
 function NaoEncontrada() {
@@ -91,9 +103,10 @@ export function App() {
       <main>
         <Suspense fallback={<div className="conteudo carregando">Carregando…</div>}>
           <Routes>
-            {/* a inicial é a ferramenta "Onde virar voto" (decisão D1 do docs/plano_reorganizacao.md) */}
-            <Route path="/" element={<Virar />} />
-            <Route path="/virar" element={<Redirecionar para="/" />} />
+            {/* desde 26/10 a inicial é o 2º turno (docs/plano_segundo_turno.md); a ferramenta "Onde virar voto" fica como registro */}
+            <Route path="/" element={<Inicio />} />
+            <Route path="/ferramenta" element={<Virar />} />
+            <Route path="/virar" element={<Redirecionar para="/ferramenta" />} />
             <Route path="/como-usar" element={<ComoUsar />} />
             <Route path="/folha" element={<Folha />} />
             <Route path="/entenda" element={<Entenda />} />
