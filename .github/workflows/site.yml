@@ -27,7 +27,9 @@ jobs:
           python-version: "3.13"
 
       - name: Instalar dependências do pipeline
-        run: pip install duckdb pandas pyarrow
+        # versões fixas: em 26/10/2026 o DuckDB 2.0 tirou o fetchone() das relações e derrubou a publicação; versão nova
+        # entra aqui só depois de rodar 03 e 07 com ela e conferir que os arquivos do site saem idênticos
+        run: pip install duckdb==2.0.0 pandas==3.1.0 pyarrow==26.0.0
 
       - name: Validar a base contra o g1 e a totalização oficial do TSE
         run: python pipeline/03_validar_controle.py

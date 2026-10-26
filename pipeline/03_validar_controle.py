@@ -75,7 +75,7 @@ def validar_base_nacional_sp() -> int:
         return 0
     colunas = [c for c in REFERENCIA_TOTALIZACAO_SP if c != "secoes"]
     somas = ", ".join(f"sum({c})" for c in colunas)
-    linha = duckdb.sql(f"SELECT count(*), {somas} FROM '{base.as_posix()}' WHERE SG_UF = 'SP'").fetchone()
+    linha = duckdb.sql(f"SELECT count(*), {somas} FROM '{base.as_posix()}' WHERE SG_UF = 'SP'").fetchall()[0]
     calculado = dict(zip(["secoes", *colunas], linha))
     return sum(not conferir(f"SP Presidente {k}", calculado[k], v) for k, v in REFERENCIA_TOTALIZACAO_SP.items())
 
@@ -103,7 +103,7 @@ def validar_totalizacao_secoes() -> int:
         SELECT count(*) AS secoes, count(o.QT_APTOS) AS no_oficial, {difs}
         FROM '{base.as_posix()}' b
         FULL JOIN '{oficial.as_posix()}' o USING (SG_UF, CD_MUNICIPIO, NR_ZONA, NR_SECAO)
-    """).fetchone()
+    """).fetchall()[0]
     secoes, no_oficial, *divergencias = linha
     falhas = not conferir("Brasil: seções da base no resultado oficial", no_oficial, secoes)
     for campo, n in zip(CAMPOS_CONFERENCIA, divergencias):
@@ -134,7 +134,7 @@ def validar_segundo_turno() -> int:
         return 0
     exterior = json.loads((ROOT / "resultados" / "13_segundo_turno.json").read_text(encoding="utf-8"))["exterior"]
     somas = ", ".join(f"sum({c})" for c in REFERENCIA_2T_BRASIL)
-    linha = duckdb.sql(f"SELECT {somas} FROM '{mun2.as_posix()}'").fetchone()
+    linha = duckdb.sql(f"SELECT {somas} FROM '{mun2.as_posix()}'").fetchall()[0]
     falhas = sum(not conferir(f"2º turno Brasil {c}", v + exterior[c], REFERENCIA_2T_BRASIL[c])
                  for c, v in zip(REFERENCIA_2T_BRASIL, linha))
     base = PROCESSED_DIR / "base_secao_2026.parquet"
@@ -143,7 +143,7 @@ def validar_segundo_turno() -> int:
             SELECT count(*) FROM (SELECT DISTINCT CD_MUNICIPIO FROM '{base.as_posix()}') b
             FULL JOIN '{mun2.as_posix()}' t USING (CD_MUNICIPIO)
             WHERE b.CD_MUNICIPIO IS NULL OR t.CD_MUNICIPIO IS NULL
-        """).fetchone()[0]
+        """).fetchall()[0][0]
         falhas += not conferir("2º turno: municípios sem par no 1º turno", sem_par, 0)
     return falhas
 
