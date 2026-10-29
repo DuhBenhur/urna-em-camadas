@@ -2,7 +2,7 @@
 
 **Lula reeleito, cidade por cidade.**
 
-Com o resultado oficial do TSE, o 2º turno presidencial de 2026 (25/10) em cada um dos 5.571 municípios, ao lado do 1º turno: onde Lula ganhou (2.875 cidades e 55.069 das 94.087 escolas), onde virou (211 cidades, 4.704 escolas e Minas Gerais: Flávio Bolsonaro à frente no 1º turno, Lula no 2º), onde mais avançou e onde mais gente foi votar (abstenção de 21,08% para 19,22%: 2.960.239 pessoas a mais). No 1º turno, Flávio tinha 2,2 milhões de votos a mais; no 2º, Lula venceu por 4,4 milhões. A página traz também a cronologia da votação até as 19h, com as fontes, e a conferência: a soma das cidades e do exterior é igual ao total anunciado pelo TSE.
+Com o resultado oficial do TSE, o 2º turno presidencial de 2026 (25/10) em cada um dos 5.571 municípios, ao lado do 1º turno: onde Lula ganhou (2.875 cidades e 55.069 das 94.087 escolas), onde virou (211 cidades, 4.704 escolas e Minas Gerais: Flávio Bolsonaro à frente no 1º turno, Lula no 2º), onde mais avançou e onde mais gente foi votar (abstenção de 21,08% para 19,22%: 2.960.239 pessoas a mais). No 1º turno, Flávio tinha 2,2 milhões de votos a mais; no 2º, Lula venceu por 4,4 milhões. A página traz também a cronologia da votação até as 19h, com as fontes, e os votos depois das 17h contados urna por urna nos registros (logs) das urnas: 34.330 no 2º turno, 29.001 deles até 17h05 (a fila, que vota por lei), o último às 19h06; no 1º turno, sem prorrogação, foram 3.710.586. E a conferência: a soma das cidades e do exterior é igual ao total anunciado pelo TSE.
 
 Durante a campanha, a inicial foi a ferramenta "Onde virar voto": com o 1º turno urna por urna, os bairros e as escolas onde havia mais gente para conversar, com a mesma conta para os dois candidatos e sem pedir voto. Ela continua no ar como registro. Depois do resultado, o autor tomou lado.
 
@@ -69,6 +69,7 @@ python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço 
 python pipeline/08_historia.py            # números do Entenda (o jogo de adivinhar, vizinhos, cidades gêmeas)
 python pipeline/13_segundo_turno.py       # 2º turno por município (resultado oficial do TSE, conferido com o total)
 python pipeline/14_secoes_segundo_turno.py --fonte totalizacao  # 2º turno por urna e por escola (resultado oficial por seção; sem --fonte, os boletins de urna)
+python pipeline/15_votos_depois_17h.py     # votos depois das 17h, nos logs das urnas (baixa 123 GB, um estado por vez, e apaga)
 python pipeline/07_exportar_site.py       # dados estáticos do site (só grava se as contas fecharem)
 ```
 
@@ -102,7 +103,7 @@ Verificação (com `pip install playwright`; usa o Chrome instalado): `python si
 | Pasta | Conteúdo |
 |---|---|
 | [`pipeline/`](pipeline/) | scripts numerados: download, recortes, base nacional, validação, modelos, contexto, espaço, exportação |
-| [`data/processed/`](data/processed/) | base por seção, locais de votação, resultado oficial por seção, 2º turno por município, contexto municipal, efeitos aleatórios (Parquet) |
+| [`data/processed/`](data/processed/) | base por seção, locais de votação, resultado oficial por seção, 2º turno por município e por seção, votos depois das 17h (por urna e por minuto), contexto municipal, efeitos aleatórios (Parquet) |
 | [`data/geo/`](data/geo/) | malhas municipal e estadual do IBGE (TopoJSON) |
 | [`resultados/`](resultados/) | saídas dos modelos (JSON) |
 | [`notebooks/`](notebooks/) | resultados dos modelos explicativos e do espaço, com figuras |
@@ -113,7 +114,7 @@ Verificação (com `pip install playwright`; usa o Chrome instalado): `python si
 
 | Fonte | Dados |
 |---|---|
-| [TSE, Portal de Dados Abertos](https://dadosabertos.tse.jus.br/) | boletins de urna, perfil do eleitorado por seção, locais de votação, candidaturas, totalização, resultado oficial por seção (detalhe e votação), códigos de municípios |
+| [TSE, Portal de Dados Abertos](https://dadosabertos.tse.jus.br/) | boletins de urna, perfil do eleitorado por seção, locais de votação, candidaturas, totalização, resultado oficial por seção (detalhe e votação), arquivos de urna do 2º turno (os logs, para os votos depois das 17h), códigos de municípios |
 | [IBGE, API de agregados](https://servicodados.ibge.gov.br/api/docs/agregados?versao=3) | Censo 2022 (cor ou raça, situação do domicílio, religião, rendimento) e PIB dos Municípios |
 | [MDS, MI Social](https://aplicacoes.mds.gov.br/sagi/) | pessoas no Bolsa Família por município (agosto de 2026) |
 | [IBGE, API de malhas](https://servicodados.ibge.gov.br/api/docs/malhas?versao=3) | malhas municipal e estadual |

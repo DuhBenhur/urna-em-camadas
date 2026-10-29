@@ -1,10 +1,11 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EscolasSegundoTurno } from '../components/EscolasSegundoTurno'
-import { GraficoHorario, VOTOS_DEPOIS_17H, type Marco } from '../components/GraficoHorario'
+import { GraficoHorario, GraficoPorMinuto, type Marco } from '../components/GraficoHorario'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { useMunicipios, normalizar } from '../lib/dados'
 import { inteiro, milhoes, pct, pp } from '../lib/formato'
+import { acumuladoDepois17h, horaCurta, useHorario, votosEntre, type Horario, type TurnoHorario } from '../lib/horario'
 import {
   abstencao, aMais, avanco, cidades, classeSegundo, coresSegundo, lerVista, lulaPct, margem, quedaAbstencao, situacao,
   ROTULOS_SEGUNDO, TITULOS_LEGENDA, useSegundoTurno, VISTAS, type CidadeDoisTurnos, type DoisTurnos, type SegundoTurno as Dados,
@@ -44,6 +45,7 @@ const plural = (n: number, um: string, varios: string) => `${inteiro(n)} ${n ===
 
 /** Fontes da cronologia das 17h às 19h (consultadas em 26/10/2026). */
 const FONTES_HORARIO = [
+  ['TSE, Portal de Dados Abertos: arquivos transmitidos para totalização (os registros das urnas usados na conta deste site)', 'https://dadosabertos.tse.jus.br/dataset/resultados-2026-arquivos-transmitidos-para-totalizacao'],
   ['Poder360: cronologia da ampliação do horário', 'https://www.poder360.com.br/poder-eleicoes-2026/leia-a-cronologia-da-ampliacao-do-horario-de-votacao-no-2o-turno/'],
   ['Poder360: Zanin prorroga a votação até as 19h', 'https://www.poder360.com.br/poder-eleicoes-2026/zanin-prorroga-votacao-do-2o-turno-ate-19h/'],
   ['CartaCapital: Lula e Flávio pedem prorrogação até as 19h', 'https://www.cartacapital.com.br/politica/lula-e-flavio-bolsonaro-pedem-ao-tse-prorrogacao-da-votacao-ate-as-19h/'],
@@ -450,28 +452,26 @@ function MaisGente({ st }: { st: Dados }) {
 }
 
 function Horario({ st }: { st: Dados }) {
+  const { dados: h, erro } = useHorario()
   const b = st.brasil.t2
-  const depois = VOTOS_DEPOIS_17H[VOTOS_DEPOIS_17H.length - 1][1]
   const margem = b.v13 - b.v22
-  const faixas: [string, number][] = [
-    ['17h00 a 17h01', VOTOS_DEPOIS_17H[1][1]],
-    ['17h01 a 17h05', VOTOS_DEPOIS_17H[2][1] - VOTOS_DEPOIS_17H[1][1]],
-    ['17h05 a 19h06 (o último voto)', depois - VOTOS_DEPOIS_17H[2][1]],
-  ]
   return (
     <section id="horario" className="capitulo-2t">
       <h2>Das 17h às 19h: por que a votação foi até mais tarde</h2>
-      <p className="resumo-capitulo">
-        As duas campanhas pediram mais tempo. A prorrogação valeu só onde a urna ainda estava aberta: urna encerrada não podia ser
-        reaberta. Depois das 17h, foram registrados {inteiro(depois)} votos ({pct(depois / b.comparecimento, 3)} de quem votou),
-        quase todos nos cinco primeiros minutos, de quem já estava na fila. Lula venceu por {inteiro(margem)} votos:{' '}
-        {inteiro(Math.round(margem / depois))} vezes mais.
-      </p>
-      <GraficoHorario marcos={CRONOLOGIA} />
-      <p className="legenda" style={{ maxWidth: 680 }}>
-        Números: os marcos da tarde, explicados abaixo. Linha: votos registrados depois das 17h, somados, minuto a minuto até
-        17h05; dali ao último voto, às 19h06, só se sabe o total (tracejado). Horário de Brasília.
-      </p>
+      {h ? <HorarioResumo h={h} comparecimento={b.comparecimento} margem={margem} /> : (
+        <p className="resumo-capitulo">
+          As duas campanhas pediram mais tempo. A prorrogação valeu só onde a urna ainda estava aberta: urna encerrada não podia ser
+          reaberta.
+        </p>
+      )}
+      {h && <GraficoHorario marcos={CRONOLOGIA} acumulado={acumuladoDepois17h(h.turnos['2'])} ultimo={h.turnos['2'].ultimo_voto} />}
+      {h && (
+        <p className="legenda" style={{ maxWidth: 680 }}>
+          Números: os marcos da tarde, explicados abaixo. Linha: votos registrados depois das 17h nos registros das urnas,
+          somados minuto a minuto, até o último, às {horaCurta(h.turnos['2'].ultimo_voto)}. Horário de Brasília.
+        </p>
+      )}
+      {erro && <p className="aviso">Não foi possível carregar a contagem dos votos depois das 17h.</p>}
       <ol className="cronologia">
         {CRONOLOGIA.map((m) => (
           <li key={m.numero}>
@@ -481,44 +481,7 @@ function Horario({ st }: { st: Dados }) {
         ))}
       </ol>
 
-      <h3>Quantos votaram depois das 17h</h3>
-      <p>
-        Às 17h, quem está na fila recebe uma senha e vota: é a regra de toda eleição (Código Eleitoral, art. 153). Por isso, a
-        maior parte dos votos depois das 17h entra nos primeiros minutos. Desta vez, foram {inteiro(VOTOS_DEPOIS_17H[2][1])} até
-        17h05. Durante o resto da prorrogação, até o último voto, às 19h06, foram {inteiro(depois - VOTOS_DEPOIS_17H[2][1])}.
-      </p>
-      <TabelaRolagem rotulo="Votos registrados depois das 17h">
-        <table className="tabela-estreita">
-          <thead>
-            <tr>
-              <th scope="col">Horário</th>
-              <th scope="col" className="num">Votos</th>
-            </tr>
-          </thead>
-          <tbody>
-            {faixas.map(([h, v]) => (
-              <tr key={h}>
-                <td>{h}</td>
-                <td className="num">{inteiro(v)}</td>
-              </tr>
-            ))}
-            <tr>
-              <th scope="row">Total depois das 17h</th>
-              <td className="num"><strong>{inteiro(depois)}</strong></td>
-            </tr>
-            <tr>
-              <th scope="row">Diferença entre Lula e Flávio</th>
-              <td className="num"><strong>{inteiro(margem)}</strong></td>
-            </tr>
-          </tbody>
-        </table>
-      </TabelaRolagem>
-      <p className="nota-tabela">
-        Levantamento da Setup News, parceira da CNN Brasil, com dados do TSE (26/10). O G1, com os registros das urnas (os logs)
-        das 497.897 seções, chegou a 35.521 votos depois das 17h. O TSE confirmou o método, mas não divulgou um número oficial.
-        Mesmo que todos esses votos fossem para o mesmo candidato, o resultado não mudaria. Este site ainda não refez a conta: os
-        arquivos de urna do 2º turno, com a hora de cada voto, não estão no Portal de Dados Abertos do TSE.
-      </p>
+      {h && <QuantosVotaram h={h} st={st} margem={margem} />}
 
       <h3>Sem ônibus, não tem voto</h3>
       <p>
@@ -532,9 +495,15 @@ function Horario({ st }: { st: Dados }) {
         Na noite da eleição, Flávio Bolsonaro disse que não reconhecia o resultado, criticou a prorrogação e anunciou que
         pediria a anulação do 2º turno. Menos de 24 horas depois, desistiu da anulação e passou a pedir a cassação da chapa de
         Lula por suposto abuso de poder, o que a Justiça Eleitoral ainda vai analisar. A própria campanha dele tinha pedido
-        votação até as 19h em cidades do Sul e do Sudeste. Depois das 17h, entraram cerca
-        de {inteiro(Math.round(depois / 1000))} mil votos, e Lula venceu por {milhoes(margem)}. E o resultado está publicado cidade
-        por cidade: qualquer pessoa pode somar e conferir, como este site fez (abaixo).
+        votação até as 19h em cidades do Sul e do Sudeste.
+        {h && (
+          <>
+            {' '}Depois das 17h, entraram {inteiro(h.turnos['2'].votos_depois_17h)} votos, contados urna por urna nos registros
+            do TSE, e Lula venceu por {milhoes(margem)}. No 1º turno, sem prorrogação nenhuma, foram{' '}
+            {milhoes(h.turnos['1'].votos_depois_17h)}.
+          </>
+        )}{' '}
+        E o resultado está publicado cidade por cidade: qualquer pessoa pode somar e conferir, como este site fez (abaixo).
       </p>
       <details className="fontes-2t">
         <summary>Fontes</summary>
@@ -545,6 +514,155 @@ function Horario({ st }: { st: Dados }) {
         </ul>
       </details>
     </section>
+  )
+}
+
+function HorarioResumo({ h, comparecimento, margem }: { h: Horario; comparecimento: number; margem: number }) {
+  const t = h.turnos['2']
+  const ate1705 = t.votos_depois_17h - t.votos_depois_1705
+  return (
+    <p className="resumo-capitulo">
+      As duas campanhas pediram mais tempo. A prorrogação valeu só onde a urna ainda estava aberta: urna encerrada não podia ser
+      reaberta. Contamos nos registros das urnas: depois das 17h, entraram {inteiro(t.votos_depois_17h)} votos (
+      {pct(t.votos_depois_17h / comparecimento, 3)} de quem votou), {pct(ate1705 / t.votos_depois_17h, 0)} deles nos cinco
+      primeiros minutos, de quem já estava na fila. Lula venceu por {inteiro(margem)} votos:{' '}
+      {inteiro(Math.round(margem / t.votos_depois_17h))} vezes mais.
+    </p>
+  )
+}
+
+function QuantosVotaram({ h, st, margem }: { h: Horario; st: Dados; margem: number }) {
+  const [t1, t2] = [h.turnos['1'], h.turnos['2']]
+  const ultimo = horaCurta(t2.ultimo_voto)
+  const ate1705 = t2.votos_depois_17h - t2.votos_depois_1705
+  const faixas: [string, number][] = [
+    ['17h00 a 17h01', votosEntre(t2, '17:00', '17:01')],
+    ['17h01 a 17h05', votosEntre(t2, '17:01', '17:05')],
+    ['17h05 a 19h00', votosEntre(t2, '17:05', '19:00')],
+    [`19h00 a ${ultimo} (o último voto)`, votosEntre(t2, '19:00', '19:30')],
+  ]
+  const vezes = Math.round(t1.votos_depois_17h / t2.votos_depois_17h)
+  // os números da Setup News/CNN: total, primeiro minuto e depois das 17h05
+  const bateSetup =
+    t2.votos_depois_17h === 34330 && votosEntre(t2, '17:00', '17:01') === 13961 && t2.votos_depois_1705 === 5329
+  const comparar: [string, (t: TurnoHorario) => string][] = [
+    ['Votos depois das 17h', (t) => inteiro(t.votos_depois_17h)],
+    ['Votos depois das 17h05', (t) => inteiro(t.votos_depois_1705)],
+    ['Urnas com voto depois das 17h', (t) => inteiro(t.urnas_com_voto_depois_17h)],
+    ['Urnas com voto depois das 17h05', (t) => inteiro(t.urnas_com_voto_depois_1705)],
+    ['Último voto', (t) => horaCurta(t.ultimo_voto)],
+  ]
+  const nomes = new Map(st.estados.map((e) => [e.uf, e.nome]))
+  const estados = Object.keys(t2.por_uf).sort((a, b) => t2.por_uf[b] - t2.por_uf[a])
+  return (
+    <>
+      <h3>Quantos votaram depois das 17h</h3>
+      <p>
+        Às 17h, quem está na fila recebe uma senha e vota: é a regra de toda eleição (Código Eleitoral, art. 153). Por isso, a
+        maior parte dos votos depois das 17h entra nos primeiros minutos. Desta vez, foram {inteiro(ate1705)} até 17h05. No resto
+        da prorrogação, até o último voto, às {ultimo}, foram {inteiro(t2.votos_depois_1705)}, em{' '}
+        {inteiro(t2.urnas_com_voto_depois_1705)} urnas: menos de 1 em cada 100.
+      </p>
+      <TabelaRolagem rotulo="Votos registrados depois das 17h no 2º turno">
+        <table className="tabela-estreita">
+          <thead>
+            <tr>
+              <th scope="col">Horário</th>
+              <th scope="col" className="num">Votos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {faixas.map(([hora, v]) => (
+              <tr key={hora}>
+                <td>{hora}</td>
+                <td className="num">{inteiro(v)}</td>
+              </tr>
+            ))}
+            <tr>
+              <th scope="row">Total depois das 17h</th>
+              <td className="num"><strong>{inteiro(t2.votos_depois_17h)}</strong></td>
+            </tr>
+            <tr>
+              <th scope="row">Diferença entre Lula e Flávio</th>
+              <td className="num"><strong>{inteiro(margem)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </TabelaRolagem>
+      <p className="nota-tabela">
+        Conta deste site com os registros (logs) das urnas que o TSE publicou em 26/10: cada voto computado, com a hora passada
+        para o horário de Brasília. Em {inteiro(t2.urnas_conferem)} das {inteiro(t2.urnas_com_log)} urnas, o número de votos do
+        registro é igual ao de quem votou no resultado oficial da seção
+        {t2.urnas_sem_log === 1 ? '; 1 não tem registro nos arquivos do TSE' : t2.urnas_sem_log > 1 ? `; ${inteiro(t2.urnas_sem_log)} não têm registro nos arquivos do TSE` : ''}.{' '}
+        {bateSetup
+          ? 'A conta é igual à da Setup News, para a CNN Brasil: 34.330 votos depois das 17h, 13.961 no primeiro minuto e 5.329 depois das 17h05.'
+          : 'A Setup News, para a CNN Brasil, chegou a 34.330 votos depois das 17h.'}{' '}
+        O G1, também com os registros das urnas, chegou a 35.521, sem publicar a conta em detalhe. A conta deste site está
+        em <Link to="/metodo?sec=segundo">Método e dados</Link>, urna por urna. Mesmo que todos esses votos fossem para o mesmo
+        candidato, o resultado não mudaria.
+      </p>
+
+      <h3>No 1º turno, sem prorrogação, a fila foi mais longa</h3>
+      <p>
+        Votar depois das 17h não é novidade. Em 4 de outubro, sem prorrogação nenhuma, as mesmas urnas registraram{' '}
+        {inteiro(t1.votos_depois_17h)} votos depois das 17h, {inteiro(vezes)} vezes mais que no 2º turno, e o último às{' '}
+        {horaCurta(t1.ultimo_voto)}. No 1º turno, cada eleitor votou seis vezes (deputado estadual, deputado federal, dois
+        senadores, governador e presidente), e a fila andou mais devagar. No 2º, com um ou dois votos por eleitor, a fila de
+        quem estava lá às 17h acabou em poucos minutos.
+      </p>
+      <GraficoPorMinuto t1={t1} t2={t2} />
+      <p className="legenda" style={{ maxWidth: 680 }}>
+        Votos registrados em cada minuto, das 16h às 19h30 (horário de Brasília), nas urnas com o registro dos dois turnos.
+      </p>
+      <TabelaRolagem rotulo="Votos depois das 17h nos dois turnos">
+        <table className="tabela-estreita">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col" className="num">2º turno (25/10)</th>
+              <th scope="col" className="num">1º turno (4/10)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparar.map(([rotulo, f]) => (
+              <tr key={rotulo}>
+                <th scope="row">{rotulo}</th>
+                <td className="num">{f(t2)}</td>
+                <td className="num">{f(t1)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TabelaRolagem>
+      <p className="nota-tabela">
+        Conta deste site com os registros das urnas do 2º turno, que guardam também o 1º: {inteiro(t1.urnas_com_log)} urnas
+        têm o registro do 1º turno, e em {inteiro(t1.urnas_conferem)} o número de votos é igual ao do resultado oficial da seção.
+        “Depois das 17h” inclui a fila, que vota por lei.
+      </p>
+      <details className="escolas-2t-todas">
+        <summary>Por estado</summary>
+        <TabelaRolagem rotulo="Votos depois das 17h por estado">
+          <table className="tabela-estreita">
+            <thead>
+              <tr>
+                <th scope="col">Estado</th>
+                <th scope="col" className="num">2º turno</th>
+                <th scope="col" className="num">1º turno</th>
+              </tr>
+            </thead>
+            <tbody>
+              {estados.map((uf) => (
+                <tr key={uf}>
+                  <td>{nomes.get(uf) ?? uf}</td>
+                  <td className="num">{inteiro(t2.por_uf[uf])}</td>
+                  <td className="num">{inteiro(t1.por_uf[uf] ?? 0)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TabelaRolagem>
+      </details>
+    </>
   )
 }
 

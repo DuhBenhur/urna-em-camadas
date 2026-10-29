@@ -66,10 +66,14 @@ visitas continua sem enviar candidato, zona, seção ou escola.
    1º minuto, 29.001 até 17h05, 5.329 de 17h05 até o último voto, às 19h06); o G1, com os logs das 497.897 seções, chegou a
    35.521. Não há número oficial do TSE. A inicial mostra um gráfico com a cronologia numerada (inclusive o pedido recebido por
    Nunes Marques por volta das 13h30, segundo a Jovem Pan, e a ligação Zanin–Nunes Marques–Fachin que restringiu a decisão) e
-   a curva dos votos depois das 17h (`components/GraficoHorario.tsx`). Este site ainda não refez a conta. Os arquivos de urna
-   (logs) do 2º turno saíram no portal em 26/10, às 19h56: 123 GB nos 27 estados (SP, 26 GB). Para a conta própria: baixar um
-   estado por vez, ler só os logs, contar os votos com a hora em horário de Brasília (fuso pela hora de abertura) e apagar o zip;
-   registrar o desenho no plano de análise antes.
+   a curva dos votos depois das 17h (`components/GraficoHorario.tsx`).
+   **Conta própria (29/10):** `pipeline/15_votos_depois_17h.py` leu os logs das urnas do 2º turno (publicados em 26/10, às 19h56:
+   123 GB nos 27 estados, um estado por vez, apagando o zip), com o desenho registrado no plano de análise antes de rodar. Resultado:
+   34.330 votos depois das 17h, igual ao da Setup News nos três números publicados (13.961 no 1º minuto, 29.001 até 17h05, 5.329
+   depois); último voto às 19h06:21. Conferem com o resultado oficial 497.889 das 497.896 urnas com log (nas 7 que não conferem,
+   nenhum voto depois das 17h); 1 urna sem log. No 1º turno, sem prorrogação, as mesmas urnas registraram 3.710.586 votos depois
+   das 17h (108 vezes mais), o último às 23h47. A inicial mostra a curva acumulada, o gráfico por minuto dos dois turnos, as
+   tabelas e a conta por estado (`site/public/dados/horario.json`, copiado pelo `07` de `resultados/15_votos_depois_17h.json`).
 3. **Das 17h às 19h, com números:** o boletim traz a hora de abertura e de encerramento de cada urna, no fuso local (no Acre a urna
    abre às 06:00 = 8h de Brasília). Inferir o fuso de cada município pela hora de abertura e contar as urnas encerradas depois das 17h
    de Brasília, comparando com o 1º turno (a fila normal também passa das 17h). Com os logs, contar os votos registrados depois das

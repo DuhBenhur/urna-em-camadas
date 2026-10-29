@@ -50,6 +50,7 @@ python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço 
 python pipeline/08_historia.py            # números do Entenda
 python pipeline/13_segundo_turno.py       # 2º turno por município (resultado oficial do TSE, com a conferência da soma)
 python pipeline/14_secoes_segundo_turno.py --fonte totalizacao  # 2º turno por urna (resultado oficial por seção)
+python pipeline/15_votos_depois_17h.py     # votos depois das 17h, nos logs das urnas (baixa 123 GB, um estado por vez)
 python pipeline/07_exportar_site.py       # dados do site (com a trava das contas da ferramenta)`
 
 /** Os blocos da página, na ordem. O `?sec=` abre direto num deles, já com o detalhe técnico aberto. */
@@ -342,6 +343,22 @@ export function Metodo() {
               municípios, e as 94.087 escolas também. Lula ganhou em 55.069 escolas; 4.704 viraram para ele e 97 para Flávio. Os
               boletins de urna do 2º turno, com a hora de abertura e de encerramento de cada urna, ainda não estavam no portal; o
               mesmo script os usa quando saírem (sem <code>--fonte</code>).
+            </p>
+            <p>
+              <strong>Votos depois das 17h.</strong> O desenho foi registrado em <code>docs/plano_de_analise.md</code> antes de
+              rodar. Fonte: os arquivos de urna do 2º turno (“arquivos transmitidos para totalização”, publicados em 26/10/2026,
+              123 GB nos 27 estados). Cada urna tem um log (<code>*-log.jez</code>, um zip com o <code>logd.dat</code>), uma linha
+              por evento, com a data e a hora locais; o log guarda a preparação, o 1º e o 2º turnos. Em cerca de 2% das urnas, o
+              arquivo traz dentro outro log, arquivado: o da urna substituída no meio do dia ou o da carga anterior; os dois
+              entram na conta, e a linha repetida conta uma vez. O <code>pipeline/15_votos_depois_17h.py</code> baixa um estado
+              por vez, lê só os logs, conta como voto cada linha “O voto do eleitor foi computado” da aplicação VOTA no dia da
+              eleição e passa a hora para o horário de Brasília: o fuso de cada município é 8 menos a hora local mais comum de
+              “Urna pronta para receber votos” (a votação abre às 8h de Brasília em todo o país); o script para se o fuso sair de
+              −1 a 3 ou se a hora de abertura mudar entre os turnos. Conferência: em cada urna, os votos do log no dia têm de ser
+              iguais ao comparecimento oficial da seção. No 2º turno, conferem 497.889 das 497.896 urnas com log (nas 7 que
+              não conferem, o log tem votos a menos ou a mais que o resultado oficial, e nenhum registrado depois das 17h), 1 urna não tem log nos arquivos, e
+              o total depois das 17h, 34.330, é igual ao da Setup News para a CNN Brasil. O log diz quando, não em quem. A hora é a do relógio da urna, e
+              “depois das 17h” inclui a fila, que vota por lei (Código Eleitoral, art. 153).
             </p>
           </BlocoTecnico>
 

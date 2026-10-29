@@ -198,6 +198,18 @@ O log de cada urna traz a preparação, o 1º turno (04/10) e o 2º (25/10). Scr
 - **Limites:** "depois das 17h" inclui a fila, que vota por lei (Código Eleitoral, art. 153). A hora é a do relógio da urna. O site
   mostra também os levantamentos da imprensa (Setup News/CNN, 34.330; G1, 35.521); se o resultado daqui for diferente, as duas
   contagens aparecem, com a explicação.
+- **Correção (29/10, depois da primeira rodada, antes de publicar):** a primeira leitura abria só o primeiro arquivo de cada
+  `.jez`. Em cerca de 2% das urnas (11.672 no 2º turno) esse arquivo é outro `.jez`, com um log arquivado: o da urna substituída
+  no meio do dia (os votos de antes da troca) ou o da carga anterior (o 1º turno). Essas urnas apareciam sem log. O script passou
+  a ler o `logd.dat` e os logs arquivados, contando uma vez a linha repetida. Em Roraima, as 1.519 urnas passaram a conferir com
+  o resultado oficial no 2º turno (antes, 1.510). Nenhuma regra de contagem mudou.
+- **Resultado (29/10):** no 2º turno, 497.896 das 497.897 urnas têm log; 497.889 conferem (nas 7 que não conferem, o log tem
+  votos a menos ou a mais que o oficial, e nenhum registrado depois das 17h). Votos depois das 17h: 34.330 (13.961 no 1º minuto,
+  29.001 até 17h05, 5.329 depois, em 3.850 urnas), todos em urnas que conferem; último voto às 19h06:21, na cidade de São Paulo (o
+  penúltimo, 19h05, também; no Rio, o último foi às 19h01). A conta é igual à da Setup News nos três números publicados; o G1 (35.521) não detalhou a sua, e a diferença fica sem
+  explicação. No 1º turno (sem prorrogação), 496.306 urnas têm o log e 496.208 conferem: 3.710.586 votos depois das 17h
+  (3.225.371 depois das 17h05, em 149.210 urnas), o último às 23h47:51. Saída: `resultados/15_votos_depois_17h.json`,
+  `data/processed/votos_depois_17h_secao_2026.parquet` (por urna e turno) e `votos_por_minuto_2026.parquet` (por estado e minuto).
 
 ## Limitações declaradas
 

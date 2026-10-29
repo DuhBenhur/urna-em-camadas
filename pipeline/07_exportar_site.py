@@ -6,6 +6,7 @@ GitHub Actions antes do build, sem os brutos do TSE. Os JSON gerados não vão p
 Arquivos (tabelas compactas: "colunas" + "linhas", para reduzir tamanho):
   resumo.json                  totais nacionais, candidatos, modelos nulos e UFs
   historia.json                números do Entenda e de Método e dados (cópia de resultados/08_historia.json)
+  horario.json                 votos depois das 17h, contados nos logs das urnas (cópia de resultados/15_votos_depois_17h.json)
   conferencia.json             soma dos boletins x resultado oficial do TSE, por UF e no Brasil
   explicacao.json              modelos explicativos (10), análise espacial (11) e tarifaço (12): capítulo 4
   municipios.json              índice dos 5.571 municípios (busca, mapa, zonas de cada município)
@@ -539,6 +540,8 @@ def main() -> None:
     gravar(SAIDA / "resumo.json", res)
     # calculado localmente pelo 08 (precisa de geopandas); aqui só é compactado e copiado
     gravar(SAIDA / "historia.json", json.loads((RESULTADOS / "08_historia.json").read_text(encoding="utf-8")))
+    if (RESULTADOS / "15_votos_depois_17h.json").exists():  # calculado localmente pelo 15 (precisa dos 123 GB de logs)
+        gravar(SAIDA / "horario.json", json.loads((RESULTADOS / "15_votos_depois_17h.json").read_text(encoding="utf-8")))
     gravar(SAIDA / "conferencia.json", conf)
     if exp is not None:
         gravar(SAIDA / "explicacao.json", exp)

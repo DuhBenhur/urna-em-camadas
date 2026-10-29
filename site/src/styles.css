@@ -605,3 +605,15 @@ td.num { white-space: nowrap; }
 .cronologia li { grid-template-columns: 96px 1fr; }
 .tabela-estreita { max-width: 460px; }
 .grafico-horario .rotulo-halo { paint-order: stroke; stroke: var(--plano); stroke-width: 4px; stroke-linejoin: round; }
+/* votos por minuto nos dois turnos (GraficoPorMinuto) e leitura com o ponteiro */
+.grafico-horario .leitura { cursor: crosshair; }
+.grafico-horario .cursor { stroke: var(--tinta-3); stroke-width: 1; pointer-events: none; }
+.grafico-horario .linha-t1 { fill: none; stroke: var(--tinta-3); stroke-width: 2; stroke-dasharray: 6 4; stroke-linejoin: round; pointer-events: none; }
+.grafico-horario .rotulo-serie { pointer-events: none; }
+.grafico-horario polyline { pointer-events: none; }
+.grafico-horario .dica span { display: block; }
+.legenda-series { display: flex; flex-wrap: wrap; gap: 4px 20px; list-style: none; margin: 0 0 8px; padding: 0; font-size: 0.875rem; color: var(--tinta-2); }
+.legenda-series li { display: flex; align-items: center; gap: 8px; }
+.amostra { display: inline-block; width: 24px; height: 0; border-top: 2px solid var(--tinta); }
+.amostra-t1 { border-top: 2px dashed var(--tinta-3); }
+.grafico-plano { position: relative; }

@@ -699,16 +699,53 @@ def bateria_segundo(nav, b: str) -> None:
     conferir("estados: a tabela marca Minas Gerais como 'virou'", re.search(r"Minas Gerais\s+virou", estados) is not None)
     votar = pg.locator("#votar").inner_text()
     conferir("mais gente: 2.960.239 pessoas a mais, e onde a abstenção subiu", "2.960.239 pessoas a mais" in votar and "subiu em" in votar)
+    # votos depois das 17h: a conta deste site nos logs das urnas (pipeline/15), conferida contra o arquivo publicado
+    h = json.loads(urllib.request.urlopen(b + "dados/horario.json").read())
+    t1, t2 = h["turnos"]["1"], h["turnos"]["2"]
+    fmt = lambda n: f"{n:,}".replace(",", ".")
+    total, ate1705 = t2["votos_depois_17h"], t2["votos_depois_17h"] - t2["votos_depois_1705"]
+    pg.evaluate("document.getElementById('horario').scrollIntoView()")
+    pg.wait_for_timeout(800)
     horario = pg.locator("#horario").inner_text()
-    conferir("19h: as duas campanhas pediram, com a cronologia (do pedido das 13h22 ao último voto, 19h06) e as 10 fontes",
-             all(t in horario for t in ["As duas campanhas pediram mais tempo", "13h22", "13h30", "17h03", "19h06", "desistiu da anulação"])
-             and pg.locator("#horario details a").count() == 10, horario[:120])
-    conferir("19h: o gráfico com os 8 marcos e os votos depois das 17h (34.330, 129 vezes menos que a diferença)",
-             pg.locator(".grafico-horario .marco").count() == 8 and pg.locator(".grafico-horario .ponto-votos").count() == 3
-             and all(t in horario for t in ["34.330", "29.001", "5.329", "129 vezes", "art. 153"]))
-    linhas_votos = [l for l in pg.locator("#horario .tabela-estreita tbody tr").all_inner_texts()]
-    faixas = [int(re.findall(r"[\d.]{3,}$", l.strip())[0].replace(".", "")) for l in linhas_votos[:3]]
-    conferir("19h: a tabela dos votos depois das 17h soma o total", sum(faixas) == 34330, str(faixas))
+    conferir("19h: as duas campanhas pediram, com a cronologia (do pedido das 13h22 ao último voto, 19h06) e as 11 fontes",
+             all(x in horario for x in ["As duas campanhas pediram mais tempo", "13h22", "13h30", "17h03", "19h06", "desistiu da anulação"])
+             and pg.locator("#horario details.fontes-2t a").count() == 11
+             and pg.locator("#horario details.fontes-2t a[href*='arquivos-transmitidos-para-totalizacao']").count() == 1, horario[:120])
+    vezes = re.search(r"Lula venceu por ([\d.]+) votos: ([\d.]+) vezes mais", horario)
+    conferir("19h: o gráfico com os 8 marcos e a linha dos votos depois das 17h (a conta própria, com o total, até 17h05 e depois)",
+             pg.locator(".grafico-horario .marco").count() == 8 and pg.locator("#horario .ponto-votos").count() == 2
+             and all(fmt(x) in horario for x in [total, ate1705, t2["votos_depois_1705"]]) and "art. 153" in horario
+             and t2["ultimo_voto"].startswith("19:06") and vezes is not None
+             and int(vezes.group(2).replace(".", "")) == round(int(vezes.group(1).replace(".", "")) / total), str(vezes and vezes.groups()))
+    tabelas = pg.locator("#horario .tabela-estreita")
+    faixas = [int(re.findall(r"[\d.]+$", l.strip())[0].replace(".", "")) for l in tabelas.nth(0).locator("tbody tr").all_inner_texts()[:4]]
+    conferir("19h: a tabela dos votos depois das 17h soma o total", sum(faixas) == total, f"{faixas} x {total}")
+    # a frase "é igual à da Setup News" só aparece se os três números baterem (total, primeiro minuto, depois das 17h05)
+    igual = (total, faixas[0], t2["votos_depois_1705"]) == (34330, 13961, 5329)
+    conferir("19h: a comparação com a imprensa diz a verdade sobre a conta (igual à da Setup News ou não)",
+             ("A conta é igual à da Setup News" in horario) == igual and "35.521" in horario, str(igual))
+    comparar = tabelas.nth(1).locator("tbody tr").first.inner_text()
+    conferir("19h: o 1º turno ao lado, nas mesmas urnas (votos depois das 17h nos dois turnos)",
+             fmt(total) in comparar and fmt(t1["votos_depois_17h"]) in comparar and fmt(t1["votos_depois_17h"]) in horario, comparar)
+    por_uf = [int(x.replace(".", "")) for x in tabelas.nth(2).locator("tbody tr").evaluate_all("rs => rs.map(r => r.cells[1].textContent)")]
+    conferir("19h: por estado, as 27 unidades somam o total", len(por_uf) == 27 and sum(por_uf) == total, f"{len(por_uf)} {sum(por_uf)}")
+    minuto = pg.locator(".grafico-minuto")
+    conferir("19h: o gráfico por minuto tem as duas linhas e a legenda",
+             minuto.locator("polyline").count() == 2 and minuto.locator(".legenda-series li").count() == 2)
+    minuto.scroll_into_view_if_needed()
+    pg.wait_for_timeout(300)
+    caixa = minuto.locator("svg").bounding_box()
+    pg.mouse.move(caixa["x"] + caixa["width"] * 0.3, caixa["y"] + caixa["height"] * 0.5)
+    pg.wait_for_timeout(300)
+    dica = minuto.locator(".dica").inner_text() if minuto.locator(".dica").count() else ""
+    conferir("19h: o ponteiro no gráfico por minuto mostra os dois turnos", "2º turno:" in dica and "1º turno:" in dica, dica)
+    pg.locator(".grafico-horario:not(.grafico-minuto)").scroll_into_view_if_needed()
+    pg.wait_for_timeout(300)
+    linha = pg.locator(".grafico-horario:not(.grafico-minuto) svg").bounding_box()
+    pg.mouse.move(linha["x"] + linha["width"] * 0.8, linha["y"] + linha["height"] * 0.6)
+    pg.wait_for_timeout(300)
+    dica = pg.locator(".grafico-horario:not(.grafico-minuto) .dica").inner_text() if pg.locator(".grafico-horario:not(.grafico-minuto) .dica").count() else ""
+    conferir("19h: o ponteiro na linha do tempo mostra o total até aquele minuto", "votos" in dica and "depois das 17h" in dica, dica)
     linhas = pg.locator("#confere tbody tr").all_inner_texts()
     somas = [[int(x.replace(".", "")) for x in re.findall(r"[\d.]{4,}", l)] for l in linhas]
     conferir("a conta confere: em cada linha, cidades + exterior = total oficial",
