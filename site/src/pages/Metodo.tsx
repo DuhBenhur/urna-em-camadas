@@ -49,7 +49,7 @@ python pipeline/11_espacial.py            # Moran, LISA, regiões de voto, degra
 python pipeline/12_tarifaco.py            # extensão: exposição ao tarifaço (API do Comex Stat)
 python pipeline/08_historia.py            # números do Entenda
 python pipeline/13_segundo_turno.py       # 2º turno por município (resultado oficial do TSE, com a conferência da soma)
-python pipeline/14_secoes_segundo_turno.py # 2º turno por urna, quando o TSE publicar os boletins (--ensaio testa com o 1º)
+python pipeline/14_secoes_segundo_turno.py --fonte totalizacao  # 2º turno por urna (resultado oficial por seção)
 python pipeline/07_exportar_site.py       # dados do site (com a trava das contas da ferramenta)`
 
 /** Os blocos da página, na ordem. O `?sec=` abre direto num deles, já com o detalhe técnico aberto. */
@@ -334,10 +334,14 @@ export function Metodo() {
               497.897 urnas conferidas uma a uma). Estados e país, sem o exterior, somam os municípios. Os eleitores aptos mudam
               um pouco de um turno para o outro (149 a menos no país, sem o exterior; em 3.725 municípios há alguma diferença,
               de no máximo algumas centenas); a abstenção é calculada, como faz o TSE, sobre os eleitores das seções instaladas de cada turno (o total anunciado inclui
-              423 eleitores de 41 seções do exterior que não foram instaladas). Quando o TSE publica os boletins de urna do 2º
-              turno, o <code>pipeline/14_secoes_segundo_turno.py</code> monta o 2º turno urna por urna e só grava se a soma das urnas
-              de cada município for igual ao resultado oficial dele; o <code>07</code> soma as urnas por escola e confere de novo
-              com os municípios. Até lá, a comparação é por município.
+              423 eleitores de 41 seções do exterior que não foram instaladas). Em 26/10/2026, o TSE atualizou o resultado oficial
+              por seção (votacao_secao e detalhe_votacao_secao) com o 2º turno. O <code>pipeline/14_secoes_segundo_turno.py</code>
+              (<code>--fonte totalizacao</code>) monta o 2º turno urna por urna, liga cada urna à sua escola pelo cadastro do 1º
+              turno e só grava se a soma das urnas de cada município for igual ao resultado oficial dele, em 8 campos; o{' '}
+              <code>07</code> soma as urnas por escola e confere de novo com os municípios. As 497.897 urnas fecham com os 5.571
+              municípios, e as 94.087 escolas também. Lula ganhou em 55.069 escolas; 4.704 viraram para ele e 97 para Flávio. Os
+              boletins de urna do 2º turno, com a hora de abertura e de encerramento de cada urna, ainda não estavam no portal; o
+              mesmo script os usa quando saírem (sem <code>--fonte</code>).
             </p>
           </BlocoTecnico>
 

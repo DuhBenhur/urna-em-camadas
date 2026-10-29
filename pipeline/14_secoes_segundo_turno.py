@@ -13,7 +13,11 @@ O TSE publica os boletins (bweb_2t) no Portal de Dados Abertos alguns dias depoi
 `--ensaio`: roda tudo com os boletins do 1º turno, que têm o mesmo formato, conferindo a soma contra a base do 1º turno, e
 grava em RAW_DIR/ensaio_2t: testa o script antes de o TSE publicar o 2º turno, sem tocar em data/processed.
 
-Uso: python pipeline/14_secoes_segundo_turno.py [--ensaio]
+`--fonte totalizacao`: em vez dos boletins, usa o resultado oficial por seção (votacao_secao e detalhe_votacao_secao, as
+tabelas da conferência do 09), que o TSE atualizou com o 2º turno em 26/10/2026, antes dos boletins. Mesma base e mesma
+conferência; só não tem a hora de abertura e de encerramento das urnas (fica nula).
+
+Uso: python pipeline/14_secoes_segundo_turno.py [--ensaio | --fonte totalizacao]
 """
 import argparse
 import importlib
@@ -80,6 +84,52 @@ def bu_uf(con: duckdb.DuckDBPyConnection, zip_path, destino) -> None:
     csv.unlink()
 
 
+TSE_ODSELE = "https://cdn.tse.jus.br/estatistica/sead/odsele"
+
+
+def secoes_da_totalizacao(con: duckdb.DuckDBPyConnection, destino) -> None:
+    """O 2º turno por seção a partir do resultado oficial (os mesmos arquivos do 09, agora com os dois turnos)."""
+    if destino.exists():
+        return
+    arquivos = {
+        "detalhe": ("detalhe_votacao_secao/detalhe_votacao_secao_2026.zip", "detalhe_votacao_secao_2026_com_2t.zip",
+                    "detalhe_votacao_secao_2026_BR.csv"),
+        "votacao": ("votacao_secao/votacao_secao_2026_BR.zip", "votacao_secao_2026_BR_com_2t.zip", "votacao_secao_2026_BR.csv"),
+    }
+    csv = {}
+    for nome, (caminho, local, membro) in arquivos.items():
+        # nome próprio: os zips do 1º turno (01, 09) continuam como estão
+        baixar_tse.baixar(f"{TSE_ODSELE}/{caminho}", RAW_DIR / local)
+        csv[nome] = extrair(RAW_DIR / local, TMP, membro)
+    chave = "SG_UF, CAST(CD_MUNICIPIO AS INT) AS CD_MUNICIPIO, CAST(NR_ZONA AS INT) AS NR_ZONA, CAST(NR_SECAO AS INT) AS NR_SECAO"
+    salvar(con, f"""
+        WITH det AS (
+            SELECT {chave},
+                   CAST(QT_APTOS AS INT) AS QT_APTOS, CAST(QT_COMPARECIMENTO AS INT) AS QT_COMPARECIMENTO,
+                   CAST(QT_ABSTENCOES AS INT) AS QT_ABSTENCOES, CAST(QT_VOTOS_BRANCOS AS INT) AS QT_BRANCOS,
+                   CAST(QT_VOTOS_NULOS AS INT) AS QT_NULOS
+            FROM {sql_csv(csv['detalhe'])}
+            WHERE NR_TURNO = '2' AND SG_UF <> 'ZZ' AND ST_SECAO_INSTALADA = 'Sim'
+        ),
+        vot AS (
+            SELECT {chave}, any_value(CAST(NR_LOCAL_VOTACAO AS INT)) AS NR_LOCAL_VOTACAO,
+                   coalesce(sum(CAST(QT_VOTOS AS INT)) FILTER (WHERE NR_VOTAVEL = '13'), 0) AS V_13,
+                   coalesce(sum(CAST(QT_VOTOS AS INT)) FILTER (WHERE NR_VOTAVEL = '22'), 0) AS V_22
+            FROM {sql_csv(csv['votacao'])}
+            WHERE NR_TURNO = '2' AND SG_UF <> 'ZZ'
+            GROUP BY ALL
+        )
+        SELECT det.SG_UF, det.CD_MUNICIPIO, det.NR_ZONA, det.NR_SECAO, vot.NR_LOCAL_VOTACAO,
+               det.QT_APTOS, det.QT_COMPARECIMENTO, det.QT_ABSTENCOES,
+               coalesce(vot.V_13, 0) + coalesce(vot.V_22, 0) AS QT_VALIDOS, det.QT_BRANCOS, det.QT_NULOS,
+               coalesce(vot.V_13, 0) AS V_13, coalesce(vot.V_22, 0) AS V_22,
+               NULL::TIMESTAMP AS DT_ABERTURA, NULL::TIMESTAMP AS DT_ENCERRAMENTO
+        FROM det LEFT JOIN vot USING (SG_UF, CD_MUNICIPIO, NR_ZONA, NR_SECAO)
+    """, destino, verbose=False)
+    for c in csv.values():
+        c.unlink()
+
+
 def oficial_por_municipio(ensaio: bool) -> pd.DataFrame:
     """O resultado de referência de cada município, com os nomes de coluna da base por seção."""
     if ensaio:  # no ensaio, a referência é a base do 1º turno (os mesmos boletins, conferidos com o TSE)
@@ -92,13 +142,20 @@ def oficial_por_municipio(ensaio: bool) -> pd.DataFrame:
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--ensaio", action="store_true", help="testa com os boletins do 1º turno, sem gravar em data/processed")
+    p.add_argument("--fonte", choices=["boletins", "totalizacao"], default="boletins",
+                   help="boletins de urna (padrão) ou o resultado oficial por seção (votacao_secao e detalhe_votacao_secao)")
     args = p.parse_args()
     inter = RAW_DIR / ("ensaio_2t" if args.ensaio else "intermediario_2t")
     destino = (inter / "base_secao_2t_2026.parquet") if args.ensaio else PROCESSED_DIR / "base_secao_2t_2026.parquet"
     TMP.mkdir(parents=True, exist_ok=True)
     inter.mkdir(parents=True, exist_ok=True)
 
-    if args.ensaio:
+    con = duckdb.connect()
+    if args.fonte == "totalizacao":
+        secoes_da_totalizacao(con, inter / "totalizacao2t.parquet")
+        print("[ok] resultado oficial do 2º turno por seção (votacao_secao e detalhe_votacao_secao)")
+        partes = f"'{(inter / 'totalizacao2t.parquet').as_posix()}'"
+    elif args.ensaio:
         zips = {uf: RAW_DIR / f"bweb_1t_{uf}_2026.zip" for uf in UFS}
         print("[ensaio] boletins do 1º turno no lugar dos do 2º")
     else:
@@ -116,17 +173,18 @@ def main() -> None:
             baixar_tse.baixar(url, zips[uf])
             baixar_tse.conferir_sha512(url, zips[uf])
 
-    con = duckdb.connect()
-    for uf in UFS:
-        bu_uf(con, zips[uf], inter / f"bu2t_{uf}.parquet")
-        print(f"[ok] {uf}", flush=True)
+    if args.fonte == "boletins":
+        for uf in UFS:
+            bu_uf(con, zips[uf], inter / f"bu2t_{uf}.parquet")
+            print(f"[ok] {uf}", flush=True)
+        partes = f"'{inter.as_posix()}/bu2t_*.parquet'"
 
     loc = (PROCESSED_DIR / "locais_votacao_2026_brasil.parquet").as_posix()
     secoes = con.sql(f"""
-        -- a escola vem do cadastro (como no 04): o número do local no boletim fica em NR_LOCAL_VOTACAO_BU
+        -- a escola vem do cadastro (como no 04): o número do local na fonte fica em NR_LOCAL_VOTACAO_BU
         SELECT b.* REPLACE (coalesce(l.NR_LOCAL_VOTACAO, b.NR_LOCAL_VOTACAO) AS NR_LOCAL_VOTACAO),
                b.NR_LOCAL_VOTACAO AS NR_LOCAL_VOTACAO_BU
-        FROM '{inter.as_posix()}/bu2t_*.parquet' b
+        FROM {partes} b
         LEFT JOIN (SELECT DISTINCT SG_UF, NR_ZONA, NR_SECAO, NR_LOCAL_VOTACAO FROM '{loc}') l USING (SG_UF, NR_ZONA, NR_SECAO)
         ORDER BY SG_UF, CD_MUNICIPIO, NR_ZONA, NR_SECAO
     """).df()

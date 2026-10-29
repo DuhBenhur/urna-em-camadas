@@ -37,14 +37,15 @@ def main() -> None:
                    CAST(QT_ABSTENCOES AS INT) AS QT_ABSTENCOES, CAST(QT_VOTOS_BRANCOS AS INT) AS QT_BRANCOS,
                    CAST(QT_VOTOS_NULOS AS INT) AS QT_NULOS_URNA
             FROM {sql_csv(detalhe)}
-            WHERE SG_UF <> 'ZZ' AND ST_SECAO_INSTALADA = 'Sim'
+            -- desde 26/10/2026 os arquivos do TSE trazem também o 2º turno: a conferência do 09 é a do 1º
+            WHERE SG_UF <> 'ZZ' AND ST_SECAO_INSTALADA = 'Sim' AND NR_TURNO = '1'
         ),
         vot AS (
             SELECT {chave_int},
                    {votos},
                    coalesce(sum(CAST(QT_VOTOS AS INT)) FILTER (WHERE NR_VOTAVEL IN ({tecnicos})), 0) AS QT_NULOS_TECNICOS
             FROM {sql_csv(votacao)}
-            WHERE SG_UF <> 'ZZ'
+            WHERE SG_UF <> 'ZZ' AND NR_TURNO = '1'
             GROUP BY ALL
         )
         SELECT det.*, vot.* EXCLUDE ({', '.join(CHAVE)})

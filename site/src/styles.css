@@ -589,3 +589,19 @@ td.num { white-space: nowrap; }
 .escolas-2t h4 { margin: 24px 0 8px; font-size: 1rem; }
 .escolas-2t-todas { margin-top: 20px; }
 .escolas-2t-todas summary { cursor: pointer; min-height: 32px; font-weight: 600; }
+/* gráfico das 17h às 19h (GraficoHorario) */
+.grafico-horario { margin-top: 20px; max-width: 900px; }
+.grafico-horario .faixa-prorrogacao { fill: var(--borda); pointer-events: none; }
+.grafico-horario .rotulo-faixa { font-size: 13px; fill: var(--tinta-2); pointer-events: none; }
+.grafico-horario .fio-marco { stroke: var(--grade); stroke-width: 1; pointer-events: none; }
+.grafico-horario .circulo-marco { fill: var(--tinta); stroke: var(--superficie); stroke-width: 2; }
+.grafico-horario .numero-marco { fill: var(--plano); font-size: 12.5px; font-weight: 700; pointer-events: none; }
+.grafico-horario .marco { cursor: default; outline: none; }
+.grafico-horario .marco:focus-visible .circulo-marco { stroke: var(--foco); stroke-width: 3; }
+.grafico-horario .linha-votos { fill: none; stroke: var(--tinta); stroke-width: 2; stroke-linejoin: round; }
+.grafico-horario .linha-votos.tracejada { stroke-dasharray: 5 5; }
+.grafico-horario .ponto-votos { fill: var(--tinta); stroke: var(--superficie); stroke-width: 2; }
+.cronologia-numero { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 6px; border-radius: 50%; background: var(--tinta); color: var(--plano); font-size: 0.8125rem; vertical-align: 1px; }
+.cronologia li { grid-template-columns: 96px 1fr; }
+.tabela-estreita { max-width: 460px; }
+.grafico-horario .rotulo-halo { paint-order: stroke; stroke: var(--plano); stroke-width: 4px; stroke-linejoin: round; }

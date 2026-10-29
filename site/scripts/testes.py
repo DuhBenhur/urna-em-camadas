@@ -700,8 +700,15 @@ def bateria_segundo(nav, b: str) -> None:
     votar = pg.locator("#votar").inner_text()
     conferir("mais gente: 2.960.239 pessoas a mais, e onde a abstenção subiu", "2.960.239 pessoas a mais" in votar and "subiu em" in votar)
     horario = pg.locator("#horario").inner_text()
-    conferir("19h: as duas campanhas pediram, com a cronologia e as 6 fontes",
-             "As duas campanhas pediram mais tempo" in horario and "17h03" in horario and pg.locator("#horario details a").count() == 6)
+    conferir("19h: as duas campanhas pediram, com a cronologia (do pedido das 13h22 ao último voto, 19h06) e as 10 fontes",
+             all(t in horario for t in ["As duas campanhas pediram mais tempo", "13h22", "13h30", "17h03", "19h06", "desistiu da anulação"])
+             and pg.locator("#horario details a").count() == 10, horario[:120])
+    conferir("19h: o gráfico com os 8 marcos e os votos depois das 17h (34.330, 129 vezes menos que a diferença)",
+             pg.locator(".grafico-horario .marco").count() == 8 and pg.locator(".grafico-horario .ponto-votos").count() == 3
+             and all(t in horario for t in ["34.330", "29.001", "5.329", "129 vezes", "art. 153"]))
+    linhas_votos = [l for l in pg.locator("#horario .tabela-estreita tbody tr").all_inner_texts()]
+    faixas = [int(re.findall(r"[\d.]{3,}$", l.strip())[0].replace(".", "")) for l in linhas_votos[:3]]
+    conferir("19h: a tabela dos votos depois das 17h soma o total", sum(faixas) == 34330, str(faixas))
     linhas = pg.locator("#confere tbody tr").all_inner_texts()
     somas = [[int(x.replace(".", "")) for x in re.findall(r"[\d.]{4,}", l)] for l in linhas]
     conferir("a conta confere: em cada linha, cidades + exterior = total oficial",

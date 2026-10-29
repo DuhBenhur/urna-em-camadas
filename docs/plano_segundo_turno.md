@@ -57,8 +57,19 @@ visitas continua sem enviar candidato, zona, seção ou escola.
    `conferir_escolas_2t`, e a inicial mostra, no cartão da cidade, "As escolas de …": o mapa (quem ganhou cada escola e onde virou),
    as escolas que viraram e todas as escolas nos dois turnos (`components/EscolasSegundoTurno.tsx`). Ensaio com os boletins do
    1º turno (`--ensaio`): 497.897 urnas e 94.087 escolas fecham sem nenhuma diferença; a trava pega um voto a mais.
-2. A conferência urna por urna do 2º turno contra o resultado oficial por seção (`09`, `03`), quando o TSE atualizar
-   votacao_secao e detalhe_votacao_secao com o 2º turno.
+2. **Pronto em 27/10 com o resultado oficial por seção (publicação esperando a autorização do usuário).** Em 26/10 o TSE atualizou votacao_secao e
+   detalhe_votacao_secao com o 2º turno (antes dos boletins). O `14 --fonte totalizacao` monta a base por seção a partir deles:
+   as 497.897 urnas fecham com os 5.571 municípios em 8 campos e as 94.087 escolas também (trava do `07`). Lula ganhou em
+   55.069 escolas; 4.704 viraram para ele e 97 para Flávio (em Maceió, 54 das 230). O `09` passou a filtrar `NR_TURNO = '1'`,
+   porque os mesmos arquivos agora trazem os dois turnos (os zips do 1º turno ficam com o nome antigo; os novos, com `_com_2t`).
+3. **Votos depois das 17h (27/10):** 34.330, segundo levantamento da Setup News para a CNN Brasil com dados do TSE (13.961 no
+   1º minuto, 29.001 até 17h05, 5.329 de 17h05 até o último voto, às 19h06); o G1, com os logs das 497.897 seções, chegou a
+   35.521. Não há número oficial do TSE. A inicial mostra um gráfico com a cronologia numerada (inclusive o pedido recebido por
+   Nunes Marques por volta das 13h30, segundo a Jovem Pan, e a ligação Zanin–Nunes Marques–Fachin que restringiu a decisão) e
+   a curva dos votos depois das 17h (`components/GraficoHorario.tsx`). Este site ainda não refez a conta. Os arquivos de urna
+   (logs) do 2º turno saíram no portal em 26/10, às 19h56: 123 GB nos 27 estados (SP, 26 GB). Para a conta própria: baixar um
+   estado por vez, ler só os logs, contar os votos com a hora em horário de Brasília (fuso pela hora de abertura) e apagar o zip;
+   registrar o desenho no plano de análise antes.
 3. **Das 17h às 19h, com números:** o boletim traz a hora de abertura e de encerramento de cada urna, no fuso local (no Acre a urna
    abre às 06:00 = 8h de Brasília). Inferir o fuso de cada município pela hora de abertura e contar as urnas encerradas depois das 17h
    de Brasília, comparando com o 1º turno (a fila normal também passa das 17h). Com os logs, contar os votos registrados depois das

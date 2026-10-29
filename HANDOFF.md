@@ -1,8 +1,8 @@
 # Handoff: estado do projeto
 
-Atualizado em 26/10/2026. Lido automaticamente pelo Claude Code (importado no `CLAUDE.md`). Ao terminar uma sessão de trabalho, atualizar este arquivo.
+Atualizado em 29/10/2026. Lido automaticamente pelo Claude Code (importado no `CLAUDE.md`). Ao terminar uma sessão de trabalho, atualizar este arquivo.
 
-> **Próxima sessão:** Lula foi reeleito em 25/10 e a inicial virou "Lula reeleito", o 2º turno por município ([`docs/plano_segundo_turno.md`](docs/plano_segundo_turno.md), onda 1). Por decisão do usuário (26/10), o site agora tem lado; a ferramenta da campanha fica em `#/ferramenta`, neutra, como registro. Pendências: as ondas 2 (boletins e arquivos de urna do 2º turno, quando o TSE publicar: escolas, urnas encerradas e votos depois das 17h) e 3 (comparecimento por faixa etária). Para ver se o TSE publicou: a página do conjunto `resultados-2026-boletim-de-urna` no Portal de Dados Abertos. Antes e depois de mexer no site, rodar `python site/scripts/testes.py` (local e ao vivo).
+> **Próxima sessão:** Lula foi reeleito em 25/10 e a inicial virou "Lula reeleito", o 2º turno por município ([`docs/plano_segundo_turno.md`](docs/plano_segundo_turno.md), onda 1). Por decisão do usuário (26/10), o site agora tem lado; a ferramenta da campanha fica em `#/ferramenta`, neutra, como registro. As escolas do 2º turno (a partir do resultado oficial por seção), o gráfico das 17h às 19h e a desistência da anulação estão prontos e testados desde 27–29/10, **sem publicar: esperam a autorização do usuário**. Pendências: a conta própria dos votos depois das 17h (os logs de urna do 2º turno saíram em 26/10, 19h56: 123 GB nos 27 estados, SP com 26 GB; hoje o site mostra os 34.330 da Setup News/CNN, com fonte) e a onda 3 (comparecimento por faixa etária, ainda só com o 1º turno). Boletins de urna do 2º turno: 26 estados em 29/10, falta RR. Para ver se o TSE publicou: a página do conjunto `resultados-2026-boletim-de-urna` no Portal de Dados Abertos. Antes e depois de mexer no site, rodar `python site/scripts/testes.py` (local e ao vivo).
 
 ## O site hoje
 
@@ -83,7 +83,7 @@ O que vale para o site todo:
 
 ## Pendências
 
-1. **Onda 2** (`docs/plano_segundo_turno.md`): **as escolas já estão prontas.** Quando o TSE publicar os bweb_2t: `python pipeline/14_secoes_segundo_turno.py` (baixa, confere o SHA-512 e a soma das urnas contra cada município) → `07` (escolas com o 2º turno, com trava) → build → testes → publicar. Na inicial, o cartão da cidade passa a mostrar "As escolas de …" (mapa com quem ganhou e onde virou, as que viraram, todas). Ensaiado em 26/10 com os boletins do 1º turno: 497.897 urnas e 94.087 escolas fecham sem diferença, e a trava pega um voto a mais. Falta, com os arquivos de urna, a conta das urnas encerradas e dos votos depois das 17h (fuso inferido pela hora de abertura; registrar o desenho no plano de análise antes).
+1. **Onda 2, escolas: pronta em 27/10, falta publicar,** com o resultado oficial por seção (`14 --fonte totalizacao`; 4.704 escolas viraram para Lula, 97 para Flávio). Falta, com os boletins e os logs do 2º turno, a conta própria das urnas encerradas e dos votos depois das 17h. Notas antigas da preparação: Quando o TSE publicar os bweb_2t: `python pipeline/14_secoes_segundo_turno.py` (baixa, confere o SHA-512 e a soma das urnas contra cada município) → `07` (escolas com o 2º turno, com trava) → build → testes → publicar. Na inicial, o cartão da cidade passa a mostrar "As escolas de …" (mapa com quem ganhou e onde virou, as que viraram, todas). Ensaiado em 26/10 com os boletins do 1º turno: 497.897 urnas e 94.087 escolas fecham sem diferença, e a trava pega um voto a mais. Falta, com os arquivos de urna, a conta das urnas encerradas e dos votos depois das 17h (fuso inferido pela hora de abertura; registrar o desenho no plano de análise antes).
 2. **Onda 3:** comparecimento por faixa etária (perfil_comparecimento_abstencao) quando sair o 2º turno.
 3. O R3 (teste com pessoas) não chegou a rodar antes do 2º turno.
 3. **Opcionais:** busca fase 2 (escola em qualquer cidade do estado, com arquivos novos por UF); teste em celular real; alcance (vídeo de 60–90 s, CSV com DOI no Zenodo e resumo em inglês, gráficos para embutir).
@@ -106,7 +106,7 @@ O que vale para o site todo:
 ```bash
 python pipeline/03_validar_controle.py     # tem que passar
 python pipeline/13_segundo_turno.py        # 2º turno por município (baixa do TSE e confere a soma)
-python pipeline/14_secoes_segundo_turno.py  # 2º turno por urna: sai com código 3 enquanto o TSE não publica; --ensaio testa com o 1º turno
+python pipeline/14_secoes_segundo_turno.py --fonte totalizacao  # 2º turno por urna (resultado oficial por seção); sem --fonte, os boletins (código 3 enquanto não saem)
 python pipeline/07_exportar_site.py        # dados do site (com a trava das contas)
 cd site && npm run dev                     # http://localhost:5173
 cd site && npm run build && npx vite preview --port 4173
@@ -123,4 +123,6 @@ Ambiente: Windows 11, Anaconda (Python 3.13), Node 22; os scripts do site usam o
 - 07/10: base nacional, conferência urna por urna, modelos (05, 10, 11, 12), site com a análise em capítulos, repositório público e publicação automática.
 - 08/10: "Onde virar voto" no centro (`docs/plano_virar_voto.md`, executado até o P2.2); plano de reorganização (`docs/plano_reorganizacao.md`); R0 e R1 publicados.
 - 09/10: R2 publicado; folha do bairro, limites em destaque, lembrar quem já votou e nota com asterisco nas tabelas; neutralidade do site reconfirmada; README, CLAUDE.md e docs revisados.
-- 26/10: Lula reeleito. Inicial nova com o 2º turno por município (onda 1), a foto como imagem principal e o site com lado (decisão do usuário); a ferramenta vai para `#/ferramenta`.
+- 26/10: Lula reeleito. Inicial nova com o 2º turno por município (onda 1), a foto como imagem principal e o site com lado (decisão do usuário); a ferramenta vai para `#/ferramenta`. CI com versões fixas (o DuckDB 2.0 derrubou a primeira publicação).
+- 27/10: escolas do 2º turno (resultado oficial por seção); gráfico das 17h às 19h com a cronologia numerada e os votos depois das 17h (34.330, Setup News/CNN). Prontos, não publicados.
+- 29/10: o texto "Quem fala em golpe" passa a dizer que Flávio desistiu da anulação e pediu a cassação da chapa de Lula; os logs de urna do 2º turno (123 GB) estão no portal.

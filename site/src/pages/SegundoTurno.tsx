@@ -1,6 +1,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { EscolasSegundoTurno } from '../components/EscolasSegundoTurno'
+import { GraficoHorario, VOTOS_DEPOIS_17H, type Marco } from '../components/GraficoHorario'
 import { TabelaRolagem } from '../components/TabelaRolagem'
 import { useMunicipios, normalizar } from '../lib/dados'
 import { inteiro, milhoes, pct, pp } from '../lib/formato'
@@ -49,15 +50,22 @@ const FONTES_HORARIO = [
   ['Metrópoles: Flávio pede mais 2 horas em cidades de SP, PR e SC', 'https://www.metropoles.com/brasil/flavio-pede-ao-tse-mais-2-horas-de-votacao-em-cidades-de-sp-pr-e-sc'],
   ['Brasil 61: votação prorrogada, pausa na apuração e transporte', 'https://brasil61.com/n/eleicoes-2026-segundo-turno-teve-votacao-prorrogada-pausa-na-apuracao-e-denuncias-sobre-transporte-bras2617370'],
   ['InfoMoney: Flávio não reconhece o resultado', 'https://www.infomoney.com.br/politica/flavio-nao-reconhece-resultado-da-eleicao-e-diz-que-pedira-anulacao-ao-tse/'],
+  ['Jovem Pan: Zanin definiu a prorrogação em conversa com Nunes Marques e Fachin', 'https://jovempan.com.br/politica/zanin-definiu-prorrogacao-da-votacao-em-conversa-com-nunes-marques-e-fachin/'],
+  ['CNN Brasil: 34 mil eleitores votaram após as 17h (levantamento da Setup News com dados do TSE)', 'https://www.cnnbrasil.com.br/eleicoes/dados-tse-votacao-apos-prorrogacao/'],
+  ['Gazeta do Povo: levantamento do G1 com os registros das urnas aponta 35.521 votos após as 17h', 'https://www.gazetadopovo.com.br/eleicoes/2026/extensao-horario-votacao-teve-35-mil-votos-17h-19h/'],
+  ['ND Mais: Flávio desiste de pedir a anulação e muda a estratégia para tentar cassar a chapa de Lula', 'https://ndmais.com.br/politica/flavio-bolsonaro-desiste-de-pedir-anulacao-da-eleicao-e-muda-estrategia-para-tentar-cassar-chapa-de-lula/'],
 ]
 
-const CRONOLOGIA: [string, string][] = [
-  ['13h22', 'A campanha de Lula pede ao TSE mais tempo de votação: faltam ônibus em cidades da Bahia.'],
-  ['15h42', 'O pedido é ampliado para todos os estados.'],
-  ['15h50', 'A campanha de Flávio Bolsonaro também pede ao TSE votação até as 19h, em cidades de São Paulo, do Paraná e de Santa Catarina, por causa de chuva, alagamentos e falta de energia.'],
-  ['16h22', 'A campanha de Lula leva o pedido ao Supremo Tribunal Federal.'],
-  ['17h03', 'O ministro Cristiano Zanin manda estender a votação até as 19h. Depois esclarece: só nas seções em que a urna ainda não tinha sido encerrada. Nas já encerradas, os votos são contados normalmente.'],
-  ['17h–19h', 'O TSE suspende a divulgação dos resultados (estava em 0,25% das urnas) e retoma às 19h, com o fim da votação em todo o país.'],
+/** Os marcos da tarde de 25/10, em horário de Brasília; o número é o mesmo no gráfico. */
+const CRONOLOGIA: Marco[] = [
+  { numero: 1, hora: '13:22', texto: 'A campanha de Lula pede ao TSE mais tempo de votação: faltam ônibus em cidades da Bahia.' },
+  { numero: 2, hora: '13:30', texto: 'Por volta das 13h30, o presidente do TSE, Kassio Nunes Marques, recebe o pedido e não decide naquele momento.' },
+  { numero: 3, hora: '15:42', texto: 'A campanha de Lula amplia o pedido para todos os estados.' },
+  { numero: 4, hora: '15:50', texto: 'A campanha de Flávio Bolsonaro também pede ao TSE votação até as 19h, em cidades de São Paulo, do Paraná e de Santa Catarina, por causa de chuva, alagamentos e falta de energia.' },
+  { numero: 5, hora: '16:22', texto: 'A campanha de Lula leva o pedido ao Supremo Tribunal Federal.' },
+  { numero: 6, hora: '16:33', texto: 'O ministro Cristiano Zanin é sorteado relator no STF.' },
+  { numero: 7, hora: '17:03', texto: 'Zanin manda estender a votação até as 19h. Numa ligação com Nunes Marques e com o presidente do STF, Edson Fachin, a decisão é restringida: vale só para as seções em que a urna ainda não tinha sido encerrada. Nas já encerradas, os votos são contados normalmente. O TSE suspende a divulgação dos resultados (estava em 0,25% das urnas) até as 19h.' },
+  { numero: 8, hora: '19:06', texto: 'O último voto do país é registrado. A divulgação dos resultados já tinha sido retomada às 19h.' },
 ]
 
 function Abertura({ st }: { st: Dados | null }) {
@@ -443,21 +451,75 @@ function MaisGente({ st }: { st: Dados }) {
 
 function Horario({ st }: { st: Dados }) {
   const b = st.brasil.t2
+  const depois = VOTOS_DEPOIS_17H[VOTOS_DEPOIS_17H.length - 1][1]
+  const margem = b.v13 - b.v22
+  const faixas: [string, number][] = [
+    ['17h00 a 17h01', VOTOS_DEPOIS_17H[1][1]],
+    ['17h01 a 17h05', VOTOS_DEPOIS_17H[2][1] - VOTOS_DEPOIS_17H[1][1]],
+    ['17h05 a 19h06 (o último voto)', depois - VOTOS_DEPOIS_17H[2][1]],
+  ]
   return (
     <section id="horario" className="capitulo-2t">
       <h2>Das 17h às 19h: por que a votação foi até mais tarde</h2>
       <p className="resumo-capitulo">
         As duas campanhas pediram mais tempo. A prorrogação valeu só onde a urna ainda estava aberta: urna encerrada não podia ser
-        reaberta. Lula venceu por {inteiro(b.v13 - b.v22)} votos.
+        reaberta. Depois das 17h, foram registrados {inteiro(depois)} votos ({pct(depois / b.comparecimento, 3)} de quem votou),
+        quase todos nos cinco primeiros minutos, de quem já estava na fila. Lula venceu por {inteiro(margem)} votos:{' '}
+        {inteiro(Math.round(margem / depois))} vezes mais.
+      </p>
+      <GraficoHorario marcos={CRONOLOGIA} />
+      <p className="legenda" style={{ maxWidth: 680 }}>
+        Números: os marcos da tarde, explicados abaixo. Linha: votos registrados depois das 17h, somados, minuto a minuto até
+        17h05; dali ao último voto, às 19h06, só se sabe o total (tracejado). Horário de Brasília.
       </p>
       <ol className="cronologia">
-        {CRONOLOGIA.map(([hora, fato]) => (
-          <li key={hora}>
-            <span className="cronologia-hora">{hora}</span>
-            <span>{fato}</span>
+        {CRONOLOGIA.map((m) => (
+          <li key={m.numero}>
+            <span className="cronologia-hora"><span className="cronologia-numero">{m.numero}</span>{m.hora.replace(':', 'h')}</span>
+            <span>{m.texto}</span>
           </li>
         ))}
       </ol>
+
+      <h3>Quantos votaram depois das 17h</h3>
+      <p>
+        Às 17h, quem está na fila recebe uma senha e vota: é a regra de toda eleição (Código Eleitoral, art. 153). Por isso, a
+        maior parte dos votos depois das 17h entra nos primeiros minutos. Desta vez, foram {inteiro(VOTOS_DEPOIS_17H[2][1])} até
+        17h05. Durante o resto da prorrogação, até o último voto, às 19h06, foram {inteiro(depois - VOTOS_DEPOIS_17H[2][1])}.
+      </p>
+      <TabelaRolagem rotulo="Votos registrados depois das 17h">
+        <table className="tabela-estreita">
+          <thead>
+            <tr>
+              <th scope="col">Horário</th>
+              <th scope="col" className="num">Votos</th>
+            </tr>
+          </thead>
+          <tbody>
+            {faixas.map(([h, v]) => (
+              <tr key={h}>
+                <td>{h}</td>
+                <td className="num">{inteiro(v)}</td>
+              </tr>
+            ))}
+            <tr>
+              <th scope="row">Total depois das 17h</th>
+              <td className="num"><strong>{inteiro(depois)}</strong></td>
+            </tr>
+            <tr>
+              <th scope="row">Diferença entre Lula e Flávio</th>
+              <td className="num"><strong>{inteiro(margem)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </TabelaRolagem>
+      <p className="nota-tabela">
+        Levantamento da Setup News, parceira da CNN Brasil, com dados do TSE (26/10). O G1, com os registros das urnas (os logs)
+        das 497.897 seções, chegou a 35.521 votos depois das 17h. O TSE confirmou o método, mas não divulgou um número oficial.
+        Mesmo que todos esses votos fossem para o mesmo candidato, o resultado não mudaria. Este site ainda não refez a conta: os
+        arquivos de urna do 2º turno, com a hora de cada voto, não estão no Portal de Dados Abertos do TSE.
+      </p>
+
       <h3>Sem ônibus, não tem voto</h3>
       <p>
         O voto é obrigatório, mas quem depende de ônibus só chega à seção se houver ônibus. No domingo, o Ministério da Justiça
@@ -467,9 +529,12 @@ function Horario({ st }: { st: Dados }) {
       </p>
       <h3>Quem fala em golpe</h3>
       <p>
-        Flávio Bolsonaro disse que não reconhece o resultado, criticou a prorrogação e anunciou que vai pedir a anulação do 2º
-        turno. Mas a própria campanha dele pediu votação até as 19h em cidades do Sul e do Sudeste. E o resultado está
-        publicado cidade por cidade: qualquer pessoa pode somar e conferir, como este site fez (abaixo).
+        Na noite da eleição, Flávio Bolsonaro disse que não reconhecia o resultado, criticou a prorrogação e anunciou que
+        pediria a anulação do 2º turno. Menos de 24 horas depois, desistiu da anulação e passou a pedir a cassação da chapa de
+        Lula por suposto abuso de poder, o que a Justiça Eleitoral ainda vai analisar. A própria campanha dele tinha pedido
+        votação até as 19h em cidades do Sul e do Sudeste. Depois das 17h, entraram cerca
+        de {inteiro(Math.round(depois / 1000))} mil votos, e Lula venceu por {milhoes(margem)}. E o resultado está publicado cidade
+        por cidade: qualquer pessoa pode somar e conferir, como este site fez (abaixo).
       </p>
       <details className="fontes-2t">
         <summary>Fontes</summary>
