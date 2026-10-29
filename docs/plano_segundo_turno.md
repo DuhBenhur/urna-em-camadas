@@ -57,7 +57,7 @@ visitas continua sem enviar candidato, zona, seção ou escola.
    `conferir_escolas_2t`, e a inicial mostra, no cartão da cidade, "As escolas de …": o mapa (quem ganhou cada escola e onde virou),
    as escolas que viraram e todas as escolas nos dois turnos (`components/EscolasSegundoTurno.tsx`). Ensaio com os boletins do
    1º turno (`--ensaio`): 497.897 urnas e 94.087 escolas fecham sem nenhuma diferença; a trava pega um voto a mais.
-2. **Pronto em 27/10 com o resultado oficial por seção (publicação esperando a autorização do usuário).** Em 26/10 o TSE atualizou votacao_secao e
+2. **Publicado em 29/10 com o resultado oficial por seção.** Em 26/10 o TSE atualizou votacao_secao e
    detalhe_votacao_secao com o 2º turno (antes dos boletins). O `14 --fonte totalizacao` monta a base por seção a partir deles:
    as 497.897 urnas fecham com os 5.571 municípios em 8 campos e as 94.087 escolas também (trava do `07`). Lula ganhou em
    55.069 escolas; 4.704 viraram para ele e 97 para Flávio (em Maceió, 54 das 230). O `09` passou a filtrar `NR_TURNO = '1'`,

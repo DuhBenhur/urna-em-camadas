@@ -178,6 +178,27 @@ Limite: é comparação de lugares. Não separa quem mudou de voto, quem passou 
 candidatos (falácia ecológica). As contas por seção (urnas encerradas depois das 17h, votos depois das 17h) e por faixa etária
 esperam os arquivos do TSE e terão o desenho registrado aqui antes de rodar.
 
+### Votos depois das 17h (registrado em 29/10/2026, antes de rodar)
+
+Pergunta: quantos votos foram registrados depois das 17h (horário de Brasília) no 2º turno, minuto a minuto, e quantos no 1º
+turno, nas mesmas urnas, quando não houve prorrogação. Fonte: os arquivos de urna do 2º turno (TSE, "arquivos transmitidos para
+totalização", `bu_imgbu_logjez_rdv_vscmr_2026_2t_{UF}.zip`, publicados em 26/10), um log por urna (`*-log.jez`: um zip com
+`logd.dat`, texto em latin-1, uma linha por evento: data e hora local, nível, código da urna, aplicação, mensagem, hash).
+O log de cada urna traz a preparação, o 1º turno (04/10) e o 2º (25/10). Script: `pipeline/15_votos_depois_17h.py`.
+
+- **Voto:** cada linha "O voto do eleitor foi computado" da aplicação VOTA no dia da eleição. O log diz quando, não em quem.
+- **Fuso:** a hora do log é a local. A votação abre às 8h de Brasília em todo o país; o fuso de cada município é a diferença entre
+  8 e a hora local mais comum de "Urna pronta para receber votos" das suas urnas naquele dia (moda; uma urna substituída abre
+  mais tarde e não muda a moda). Fuso fora de {−1, 0, 1, 2, 3} horas é erro.
+- **Conferência:** em cada seção, os votos do log no dia têm de ser iguais ao comparecimento do resultado oficial da seção
+  (`base_secao_2t_2026` e, no 1º turno, `base_secao_2026`). As seções que não conferem (urna substituída, log de outra urna,
+  arquivo faltando) entram numa conta à parte; a manchete diz o total das que conferem e o de todas.
+- **Medidas:** votos por minuto de 16h a 19h30 (Brasília) no país e por estado; total depois de 17h00 e depois de 17h05; hora do
+  último voto; urnas com voto depois das 17h e depois das 17h05; as mesmas contas no 1º turno.
+- **Limites:** "depois das 17h" inclui a fila, que vota por lei (Código Eleitoral, art. 153). A hora é a do relógio da urna. O site
+  mostra também os levantamentos da imprensa (Setup News/CNN, 34.330; G1, 35.521); se o resultado daqui for diferente, as duas
+  contagens aparecem, com a explicação.
+
 ## Limitações declaradas
 
 - O nível 1 é agregado (a seção), não o eleitor. As conclusões valem para lugares, não para pessoas (falácia ecológica).
